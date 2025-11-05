@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -257,7 +257,7 @@ export function RecordList({ records, onViewRecord, onCreateRecord }: RecordList
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowReceptionDialog(true)}
-            className="w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-2xl shadow-blue-500/50 flex items-center justify-center text-white"
+            className="w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-none shadow-blue-500/50 flex items-center justify-center text-white"
           >
             <Plus className="h-6 w-6" />
           </motion.button>
@@ -266,7 +266,7 @@ export function RecordList({ records, onViewRecord, onCreateRecord }: RecordList
 
       {/* Reception Dialog */}
       <Dialog open={showReceptionDialog} onOpenChange={setShowReceptionDialog}>
-        <DialogContent className="max-w-[95vw] lg:max-w-[90vw] xl:max-w-7xl max-h-[95vh] overflow-hidden p-0 gap-0 bg-gradient-to-br from-gray-50 to-white border-0 shadow-2xl">
+        <DialogContent className="max-w-[95vw] lg:max-w-[90vw] xl:max-w-7xl max-h-[95vh] overflow-hidden p-0 gap-0 bg-gradient-to-br from-gray-50 to-white border-0 shadow-none">
           <div className="overflow-y-auto max-h-[95vh]">
             <DialogHeader className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6 shadow-xl">
               <DialogTitle className="flex items-center gap-3 text-2xl">

@@ -13,7 +13,7 @@ export type Gender = 'male' | 'female' | 'other';
 
 export type TestType = 'blood' | 'urine' | 'xray' | 'ultrasound' | 'ct' | 'mri';
 
-export type UserRole = 'receptionist' | 'doctor' | 'technician' | 'admin';
+export type UserRole = 'receptionist' | 'doctor' | 'nurse' | 'admin';
 
 export interface Patient {
   id: string;

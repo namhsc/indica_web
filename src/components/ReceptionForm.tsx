@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
@@ -606,7 +606,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
                         transition={{ duration: 2, repeat: isScanning ? Infinity : 0 }}
                         className={`p-6 rounded-3xl bg-gradient-to-br ${
                           isScanning ? 'from-emerald-500 to-teal-500' : 'from-blue-500 to-indigo-500'
-                        } shadow-2xl`}
+                        } shadow-none`}
                       >
                         <QrCode className="h-16 w-16 text-white" />
                       </motion.div>
@@ -712,7 +712,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
             <TabsContent value="self-checkin" className="mt-0">
               <div className="space-y-6 text-center py-8">
                 <div className="flex justify-center mb-6">
-                  <div className="p-6 rounded-3xl bg-gradient-to-br from-violet-500 to-purple-500 shadow-2xl">
+                  <div className="p-6 rounded-3xl bg-gradient-to-br from-violet-500 to-purple-500 shadow-none">
                     <Sparkles className="h-16 w-16 text-white" />
                   </div>
                 </div>
@@ -759,7 +759,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
                         transition={{ duration: 2, repeat: isScanning ? Infinity : 0 }}
                         className={`p-6 rounded-3xl bg-gradient-to-br ${
                           isScanning ? 'from-pink-500 to-rose-500' : 'from-blue-500 to-indigo-500'
-                        } shadow-2xl`}
+                        } shadow-none`}
                       >
                         <Camera className="h-16 w-16 text-white" />
                       </motion.div>
@@ -872,7 +872,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
                         transition={{ duration: 2, repeat: isScanning ? Infinity : 0 }}
                         className={`p-6 rounded-3xl bg-gradient-to-br ${
                           isScanning ? 'from-orange-500 to-amber-500' : 'from-blue-500 to-indigo-500'
-                        } shadow-2xl`}
+                        } shadow-none`}
                       >
                         <CreditCard className="h-16 w-16 text-white" />
                       </motion.div>
@@ -977,7 +977,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
               <div className="space-y-6 py-4">
                 <div className="text-center mb-6">
                   <div className="flex justify-center mb-4">
-                    <div className="p-6 rounded-3xl bg-gradient-to-br from-gray-700 to-slate-700 shadow-2xl">
+                    <div className="p-6 rounded-3xl bg-gradient-to-br from-gray-700 to-slate-700 shadow-none">
                       <Users className="h-16 w-16 text-white" />
                     </div>
                   </div>

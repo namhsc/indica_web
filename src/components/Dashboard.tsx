@@ -89,7 +89,7 @@ export function Dashboard({ stats }: DashboardProps) {
       gradient: 'from-blue-500 to-cyan-500',
     },
     {
-      action: 'Kỹ thuật viên hoàn thành xét nghiệm',
+      action: 'Điều dưỡng hoàn thành xét nghiệm',
       time: '25 phút trước',
       icon: FileText,
       gradient: 'from-violet-500 to-purple-500',
@@ -109,7 +109,7 @@ export function Dashboard({ stats }: DashboardProps) {
           <h2 className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
             Dashboard
           </h2>
-          <p className="text-gray-600 mt-1">Tổng quan hệ thống quản lý hồ sơ khám bệnh</p>
+          <p className="text-gray-600 mt-1">Tổng quan hệ thống quản lý phòng khám thông minh với AI</p>
         </div>
         <div className="text-xs text-gray-500">
           Cập nhật: {new Date().toLocaleTimeString('vi-VN')}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -118,7 +118,7 @@ export function TechnicianWorkspace({ testOrders, onUpdateTestOrder }: Technicia
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Microscope className="h-5 w-5" />
-            Không gian làm việc - Kỹ thuật viên
+            Không gian làm việc - Điều dưỡng
           </CardTitle>
         </CardHeader>
         <CardContent>

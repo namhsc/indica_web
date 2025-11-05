@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -7,7 +7,6 @@ import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { 
-  Stethoscope, 
   LogIn, 
   AlertCircle, 
   Sparkles, 
@@ -22,6 +21,7 @@ import {
   Phone,
   Mail
 } from 'lucide-react';
+import logo from '@/assets/images/logo.svg';
 import { mockUsers } from '../lib/authData';
 import { motion, AnimatePresence } from 'motion/react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -67,29 +67,29 @@ export function LoginPage() {
   const features = [
     {
       icon: Clock,
-      title: 'Tiếp nhận nhanh chóng',
-      description: 'Tự động sinh mã hồ sơ và phân công bác sĩ thông minh',
+      title: 'Tiếp nhận thông minh',
+      description: 'AI tự động xử lý đăng ký, sinh mã hồ sơ và phân công bác sĩ tối ưu',
       gradient: 'from-blue-500 to-cyan-500',
       bgColor: 'bg-blue-50',
     },
     {
       icon: Shield,
-      title: 'Bảo mật cao',
-      description: 'Phân quyền theo vai trò và mã hóa dữ liệu bệnh nhân',
+      title: 'Bảo mật cao cấp',
+      description: 'Mã hóa dữ liệu y tế, phân quyền đa cấp và tuân thủ quy định bảo vệ thông tin',
       gradient: 'from-violet-500 to-purple-500',
       bgColor: 'bg-violet-50',
     },
     {
       icon: BarChart3,
-      title: 'Báo cáo chi tiết',
-      description: 'Thống kê real-time và phân tích dữ liệu toàn diện',
+      title: 'Phân tích AI thông minh',
+      description: 'Báo cáo real-time, dự đoán xu hướng và gợi ý tối ưu hóa hiệu quả hoạt động',
       gradient: 'from-amber-500 to-orange-500',
       bgColor: 'bg-amber-50',
     },
     {
       icon: Sparkles,
-      title: 'Giao diện hiện đại',
-      description: 'Thiết kế thân thiện, dễ sử dụng cho mọi đối tượng',
+      title: 'Trợ lý AI đa năng',
+      description: 'Hỗ trợ chẩn đoán, tư vấn tự động và tối ưu hóa quy trình làm việc cho từng vai trò',
       gradient: 'from-emerald-500 to-teal-500',
       bgColor: 'bg-emerald-50',
     },
@@ -149,7 +149,7 @@ export function LoginPage() {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                  className="inline-flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-3xl p-4 pr-8 shadow-2xl border border-white/20 mb-6"
+                  className="inline-flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-3xl p-4 pr-8 shadow-none border border-white/20 mb-6"
                 >
                   <div className="relative">
                     <motion.div
@@ -161,9 +161,9 @@ export function LoginPage() {
                         ]
                       }}
                       transition={{ duration: 2, repeat: Infinity }}
-                      className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl"
+                      className="p-1 bg-white rounded-2xl"
                     >
-                      <Stethoscope className="h-12 w-12 text-white" />
+                      <img src={logo} alt="Indica Clinic Logo" className="h-16 w-17" />
                     </motion.div>
                     <motion.div
                       animate={{ scale: [1, 1.2, 1] }}
@@ -176,7 +176,7 @@ export function LoginPage() {
                       Phòng khám đa khoa Indica
                     </h1>
                     <p className="text-blue-200 text-lg">
-                      Hệ thống quản lý hồ sơ khám bệnh
+                      Hệ thống quản lý phòng khám thông minh với AI
                     </p>
                   </div>
                 </motion.div>
@@ -188,8 +188,8 @@ export function LoginPage() {
                   className="space-y-4"
                 >
                   <p className="text-xl text-blue-100 leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                    Giải pháp quản lý quy trình khám bệnh hiện đại, tối ưu hóa công việc 
-                    của đội ngũ y tế với công nghệ tiên tiến và trí tuệ nhân tạo
+                    Nền tảng quản lý phòng khám thế hệ mới, tích hợp trí tuệ nhân tạo để tự động hóa 
+                    quy trình, hỗ trợ chẩn đoán thông minh và nâng cao chất lượng dịch vụ chăm sóc sức khỏe
                   </p>
                   
                   {/* Stats */}
@@ -247,15 +247,15 @@ export function LoginPage() {
               >
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
                   <Building2 className="h-4 w-4" />
-                  <span>123 Đường ABC, Quận 1, TP.HCM</span>
+                  <span>999 Giải Phóng, Hoàng Mai, Hà Nội</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
                   <Phone className="h-4 w-4" />
-                  <span>1900-xxxx</span>
+                  <span>097 272 31 35</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
                   <Mail className="h-4 w-4" />
-                  <span>info@indica.vn</span>
+                  <span>phongkhamindica@gmail.com</span>
                 </div>
               </motion.div>
             </motion.div>
@@ -267,7 +267,7 @@ export function LoginPage() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="lg:col-span-5"
             >
-              <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-xl overflow-hidden">
+              <Card className="border-none shadow-none bg-white/95 backdrop-blur-xl overflow-hidden">
                 {/* Card Header with gradient */}
                 <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white">
                   <CardTitle className="text-2xl mb-2 flex items-center gap-3">
@@ -371,32 +371,32 @@ export function LoginPage() {
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
                       <div className="space-y-2 text-sm text-gray-700">
                         <div 
-                          onClick={() => fillCredentials('admin', 'admin123')}
+                          onClick={() => fillCredentials('admin', 'admin')}
                           className="flex justify-between items-center cursor-pointer"
                         >
-                          <span>👑 Admin:</span>
-                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">admin / admin123</code>
+                          <span>Admin:</span>
+                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">admin / admin</code>
                         </div>
                         <div 
-                          onClick={() => fillCredentials('letan', 'letan123')}
+                          onClick={() => fillCredentials('letan', 'letan')}
                           className="flex justify-between items-center cursor-pointer"
                         >
-                          <span>🏥 Lễ tân:</span>
-                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">letan / letan123</code>
+                          <span>Lễ tân:</span>
+                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">letan / letan</code>
                         </div>
                         <div 
-                          onClick={() => fillCredentials('bacsi', 'bs123')}
+                          onClick={() => fillCredentials('bacsi', 'bacsi')}
                           className="flex justify-between items-center cursor-pointer"
                         >
-                          <span>👨‍⚕️ Bác sĩ:</span>
-                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">bacsi / bs123</code>
+                          <span>Bác sĩ:</span>
+                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">bacsi / bacsi</code>
                         </div>
                         <div 
-                          onClick={() => fillCredentials('kythuat', 'ktv123')}
+                          onClick={() => fillCredentials('dieuduong', 'dieuduong')}
                           className="flex justify-between items-center cursor-pointer"
                         >
-                          <span>🔬 Kỹ thuật viên:</span>
-                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">kythuat / ktv123</code>
+                          <span>Điều dưỡng:</span>
+                              <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">dieuduong / dieuduong</code>
                         </div>
                       </div>
                     </div>

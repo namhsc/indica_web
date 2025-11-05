@@ -1,16 +1,15 @@
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types/auth';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { ShieldAlert } from 'lucide-react';
 
 interface RoleGuardProps {
-  children: ReactNode;
   allowedRoles: UserRole | UserRole[];
   fallback?: ReactNode;
 }
 
-export function RoleGuard({ children, allowedRoles, fallback }: RoleGuardProps) {
+export function RoleGuard({ children, allowedRoles, fallback }: React.PropsWithChildren<RoleGuardProps>) {
   const { hasRole } = useAuth();
 
   if (!hasRole(allowedRoles)) {

@@ -213,7 +213,7 @@ export const generateMockTestOrders = (): TestOrder[] => {
   ];
 };
 
-// Mock dashboard stats
+// Mock ai stats
 export const generateDashboardStats = (records: MedicalRecord[]): DashboardStats => {
   const today = new Date().toDateString();
   

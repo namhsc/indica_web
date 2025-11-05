@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
 import {
@@ -27,21 +27,21 @@ const roleLabels = {
   admin: 'Quản trị viên',
   receptionist: 'Lễ tân',
   doctor: 'Bác sĩ',
-  technician: 'Kỹ thuật viên',
+  nurse: 'Điều dưỡng',
 };
 
 const roleGradients = {
   admin: 'from-red-500 to-orange-500',
   receptionist: 'from-blue-500 to-cyan-500',
   doctor: 'from-emerald-500 to-teal-500',
-  technician: 'from-violet-500 to-purple-500',
+  nurse: 'from-violet-500 to-purple-500',
 };
 
 const roleIcons = {
   admin: '👑',
   receptionist: '🏥',
   doctor: '👨‍⚕️',
-  technician: '🔬',
+  nurse: '🔬',
 };
 
 export function UserProfile() {

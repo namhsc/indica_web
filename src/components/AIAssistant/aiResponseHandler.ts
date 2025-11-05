@@ -1,0 +1,171 @@
+import { UserRole } from '../../types/auth';
+import { DashboardStats } from '../../types';
+import { Message } from './types';
+
+export interface AIResponseHandlerProps {
+  userInput: string;
+  userRole: UserRole;
+  stats: DashboardStats;
+  onNewRecord: () => void;
+  onViewRecords: () => void;
+}
+
+export const handleAIResponse = ({
+  userInput,
+  userRole,
+  stats,
+  onNewRecord,
+  onViewRecords,
+}: AIResponseHandlerProps): { content: string; suggestions?: string[] } => {
+  const lowerInput = userInput.toLowerCase();
+  
+  // Common responses for all roles
+  if (lowerInput.includes('thống kê') || lowerInput.includes('báo cáo')) {
+    return {
+      content: `📊 Thống kê hôm nay:\n• Tổng hồ sơ: ${stats.totalRecords}\n• Chờ khám: ${stats.pendingExamination}\n• Đang xử lý: ${stats.inProgress}\n• Hoàn thành: ${stats.completed}\n• Đã trả: ${stats.returned}`,
+      suggestions: ['Xuất báo cáo', 'Xem chi tiết']
+    };
+  }
+  
+  if (lowerInput.includes('danh sách') || lowerInput.includes('xem hồ sơ')) {
+    return {
+      content: 'Bạn muốn xem danh sách hồ sơ? Tôi có thể giúp bạn:\n✓ Xem tất cả hồ sơ\n✓ Lọc theo trạng thái\n✓ Tìm kiếm hồ sơ cụ thể',
+      suggestions: ['Lọc theo trạng thái', 'Tìm kiếm hồ sơ']
+    };
+  }
+
+  // Role-specific responses
+  if (userRole === 'receptionist') {
+    return handleReceptionistResponse(lowerInput, onNewRecord);
+  }
+  
+  if (userRole === 'doctor') {
+    return handleDoctorResponse(lowerInput, stats);
+  }
+  
+  if (userRole === 'nurse') {
+    return handleTechnicianResponse(lowerInput);
+  }
+  
+  if (userRole === 'admin') {
+    return handleAdminResponse(lowerInput, stats);
+  }
+
+  return {
+    content: `Tôi hiểu bạn đang hỏi về "${userInput}". Hãy thử các gợi ý bên dưới!`,
+    suggestions: []
+  };
+};
+
+function handleReceptionistResponse(lowerInput: string, onNewRecord: () => void) {
+  if (lowerInput.includes('tiếp nhận') || lowerInput.includes('tạo') || lowerInput.includes('mới')) {
+    return {
+      content: 'Bạn muốn tiếp nhận khách hàng mới? Tôi có thể hướng dẫn bạn:\n✓ Điền thông tin khách hàng\n✓ Chọn dịch vụ khám\n✓ Phân công bác sĩ',
+      suggestions: ['Danh sách bác sĩ trực', 'Dịch vụ phổ biến']
+    };
+  }
+  
+  if (lowerInput.includes('tìm') || lowerInput.includes('search')) {
+    return {
+      content: 'Bạn muốn tìm theo mã hồ sơ, số điện thoại hay tên bệnh nhân?',
+      suggestions: ['Tìm theo mã hồ sơ', 'Tìm theo số điện thoại', 'Tìm theo tên']
+    };
+  }
+  
+  if (lowerInput.includes('bác sĩ')) {
+    return {
+      content: 'Danh sách bác sĩ đang trực:\n• BS. Nguyễn Văn An (Nội khoa)\n• BS. Trần Thị Bình (Ngoại khoa)\n• BS. Lê Hoàng Cường (Tim mạch)\n• BS. Phạm Thị Dung (Nhi khoa)',
+      suggestions: ['Lịch trực', 'Phân công khám']
+    };
+  }
+  
+  return {
+    content: 'Tôi có thể giúp bạn:\n✓ Tiếp nhận khách hàng mới\n✓ Tìm kiếm hồ sơ\n✓ Xem thống kê\n✓ Quản lý danh sách hồ sơ',
+    suggestions: []
+  };
+}
+
+function handleDoctorResponse(lowerInput: string, stats: DashboardStats) {
+  if (lowerInput.includes('chờ khám') || lowerInput.includes('khám')) {
+    return {
+      content: `Hiện có ${stats.pendingExamination} hồ sơ chờ khám. Bạn muốn xem danh sách?`,
+      suggestions: ['Xem danh sách chờ khám', 'Lọc theo khoa', 'Ưu tiên khẩn cấp']
+    };
+  }
+  
+  if (lowerInput.includes('chẩn đoán') || lowerInput.includes('gợi ý')) {
+    return {
+      content: 'Tôi có thể giúp:\n✓ Gợi ý chẩn đoán dựa trên triệu chứng\n✓ Đề xuất xét nghiệm cần thiết\n✓ Tham khảo tiêu chuẩn lâm sàng\n✓ Tra cứu thuốc và tương tác',
+      suggestions: ['Triệu chứng thường gặp', 'Xét nghiệm khuyến nghị']
+    };
+  }
+  
+  if (lowerInput.includes('xử lý') || lowerInput.includes('cần')) {
+    return {
+      content: `Có ${stats.inProgress} hồ sơ đang chờ bạn xử lý. Muốn xem chi tiết?`,
+      suggestions: ['Xem hồ sơ ưu tiên', 'Sắp xếp theo thời gian']
+    };
+  }
+  
+  return {
+    content: 'Tôi có thể hỗ trợ:\n✓ Quản lý hồ sơ khám\n✓ Gợi ý chẩn đoán\n✓ Chỉ định xét nghiệm\n✓ Kê đơn thuốc',
+    suggestions: []
+  };
+}
+
+function handleTechnicianResponse(lowerInput: string) {
+  if (lowerInput.includes('xét nghiệm') || lowerInput.includes('chờ')) {
+    return {
+      content: 'Hiện có các xét nghiệm chờ xử lý:\n• 5 xét nghiệm máu\n• 3 xét nghiệm nước tiểu\n• 2 X-quang\n• 1 siêu âm',
+      suggestions: ['Xem chi tiết', 'Ưu tiên khẩn cấp', 'Nhập kết quả']
+    };
+  }
+  
+  if (lowerInput.includes('nhập') || lowerInput.includes('kết quả')) {
+    return {
+      content: 'Bạn muốn nhập kết quả loại xét nghiệm nào?',
+      suggestions: ['Xét nghiệm máu', 'Xét nghiệm nước tiểu', 'Hình ảnh (X-quang, CT)', 'Siêu âm']
+    };
+  }
+  
+  if (lowerInput.includes('mẫu')) {
+    return {
+      content: 'Quản lý mẫu xét nghiệm:\n✓ Tiếp nhận mẫu mới\n✓ Kiểm tra chất lượng mẫu\n✓ Phân loại và lưu trữ\n✓ Theo dõi tiến độ',
+      suggestions: ['Mẫu mới hôm nay', 'Mẫu chờ xử lý']
+    };
+  }
+  
+  return {
+    content: 'Tôi có thể giúp:\n✓ Quản lý xét nghiệm\n✓ Nhập kết quả\n✓ Kiểm tra mẫu\n✓ Báo cáo thống kê',
+    suggestions: []
+  };
+}
+
+function handleAdminResponse(lowerInput: string, stats: DashboardStats) {
+  if (lowerInput.includes('tổng quan') || lowerInput.includes('overview')) {
+    return {
+      content: `📊 Tổng quan hệ thống:\n• Tổng hồ sơ: ${stats.totalRecords}\n• Hiệu suất: 98.5%\n• Người dùng hoạt động: 12\n• Thời gian phản hồi TB: 2.3s`,
+      suggestions: ['Chi tiết hiệu suất', 'Cảnh báo hệ thống']
+    };
+  }
+  
+  if (lowerInput.includes('người dùng') || lowerInput.includes('user')) {
+    return {
+      content: 'Quản lý người dùng:\n✓ Thêm/xóa người dùng\n✓ Phân quyền vai trò\n✓ Theo dõi hoạt động\n✓ Đặt lại mật khẩu',
+      suggestions: ['Danh sách người dùng', 'Thêm người dùng mới']
+    };
+  }
+  
+  if (lowerInput.includes('cài đặt') || lowerInput.includes('setting')) {
+    return {
+      content: 'Cài đặt hệ thống:\n• Cấu hình phòng khám\n• Quản lý dịch vụ\n• Thiết lập bảo mật\n• Sao lưu & phục hồi',
+      suggestions: ['Cài đặt chung', 'Bảo mật']
+    };
+  }
+  
+  return {
+    content: 'Tôi có thể giúp:\n✓ Giám sát hệ thống\n✓ Quản lý người dùng\n✓ Báo cáo tổng hợp\n✓ Cấu hình hệ thống',
+    suggestions: []
+  };
+}
+
