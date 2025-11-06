@@ -92,7 +92,7 @@ export function AppSidebar({ isOpen, activeTab, onTabChange, userRole }: AppSide
                     }
                   }}
                   className={`
-                    w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                    w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer
                     ${isActive 
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30' 
                       : 'text-gray-700 hover:bg-gray-100/80'

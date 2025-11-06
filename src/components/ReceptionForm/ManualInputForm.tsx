@@ -170,7 +170,7 @@ export function ManualInputForm({ formData, onFormDataChange, onSubmit, hasPatie
                 key={service}
                 type="button"
                 onClick={() => handleToggleService(service)}
-                className={`p-3 rounded-lg border-2 transition-all text-sm ${
+                className={`p-3 rounded-lg border-2 transition-all text-sm cursor-pointer ${
                   formData.selectedServices.includes(service)
                     ? 'border-blue-500 bg-blue-50 text-blue-700'
                     : 'border-gray-200 hover:border-gray-300 bg-white'

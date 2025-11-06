@@ -400,7 +400,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
                             key={patient.id}
                             type="button"
                             onClick={() => handleSelectPatient(patient)}
-                            className="w-full p-4 hover:bg-blue-50 transition-colors text-left border-b border-gray-100 last:border-0"
+                            className="w-full p-4 hover:bg-blue-50 transition-colors text-left border-b border-gray-100 last:border-0 cursor-pointer"
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white">
@@ -535,7 +535,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
                         key={service}
                         type="button"
                         onClick={() => handleToggleService(service)}
-                        className={`p-3 rounded-lg border-2 transition-all text-sm ${
+                        className={`p-3 rounded-lg border-2 transition-all text-sm cursor-pointer ${
                           formData.selectedServices.includes(service)
                             ? 'border-blue-500 bg-blue-50 text-blue-700'
                             : 'border-gray-200 hover:border-gray-300 bg-white'
