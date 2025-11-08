@@ -59,7 +59,7 @@ const statusLabels: Record<RecordStatus, string> = {
 	PENDING_EXAMINATION: 'Chờ khám',
 	IN_EXAMINATION: 'Đang khám',
 	WAITING_TESTS: 'Chờ xét nghiệm',
-	WAITING_DOCTOR_REVIEW: 'Chờ bác sĩ duyệt',
+	WAITING_DOCTOR_REVIEW: 'Chờ bác sĩ kết luận',
 	COMPLETED_EXAMINATION: 'Hoàn thành',
 	RETURNED: 'Đã trả',
 };
@@ -157,7 +157,7 @@ export function RecordList({
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
 					{canCreateRecord && (
-						<motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+						<motion.div>
 							<Button
 								onClick={() => setShowReceptionDialog(true)}
 								className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/30"

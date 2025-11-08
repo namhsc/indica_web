@@ -13,7 +13,7 @@ export type Gender = 'male' | 'female' | 'other';
 
 export type TestType = 'blood' | 'urine' | 'xray' | 'ultrasound' | 'ct' | 'mri';
 
-export type UserRole = 'receptionist' | 'doctor' | 'nurse' | 'admin';
+export type UserRole = 'receptionist' | 'doctor' | 'nurse' | 'admin' | 'patient';
 
 export interface Patient {
   id: string;
@@ -83,6 +83,28 @@ export interface Medication {
 	instructions?: string; // Hướng dẫn thêm
 }
 
+export interface TreatmentReminderResponse {
+	id: string;
+	reminderId: string;
+	date: string;
+	status: 'completed' | 'pending' | 'skipped';
+	response?: string; // Phản hồi của bệnh nhân
+	value?: any; // Giá trị nếu là vital sign (ví dụ: nhiệt độ 37.5)
+	createdAt: string;
+}
+
+export interface TreatmentReminder {
+	id: string;
+	type: 'vital_sign' | 'activity' | 'medication' | 'diet' | 'exercise' | 'other';
+	title: string;
+	description?: string;
+	field?: string; // Field name for vital signs (e.g., 'temperature', 'bloodPressure', 'weight')
+	frequency?: 'daily' | 'weekly' | 'custom'; // Tần suất nhắc nhở
+	enabled: boolean;
+	priority?: 'low' | 'medium' | 'high';
+	responses?: TreatmentReminderResponse[]; // Phản hồi của bệnh nhân
+}
+
 export interface TreatmentPlan {
 	id: string;
 	recordId: string;
@@ -95,6 +117,7 @@ export interface TreatmentPlan {
 	notes?: string; // Ghi chú thêm
 	status: 'active' | 'completed' | 'cancelled';
 	updatedAt?: string;
+	reminders?: TreatmentReminder[]; // Danh sách nhắc nhở cho bệnh nhân
 }
 
 export interface DashboardStats {
@@ -105,4 +128,67 @@ export interface DashboardStats {
   completed: number;
   returned: number;
   todayRecords: number;
+}
+
+export interface Appointment {
+  id: string;
+  code: string;
+  patientName: string;
+  phoneNumber: string;
+  dateOfBirth: string;
+  gender: Gender;
+  email?: string;
+  address?: string;
+  customerId?: string;
+  insurance?: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  services: string[];
+  doctor: string;
+  doctorId: string;
+  reason?: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  createdAt: string;
+  relatedId?: string; // ID của appointment, treatment plan, etc.
+  relatedType?: 'appointment' | 'treatment' | 'record';
+}
+
+export interface TreatmentProgress {
+  id: string;
+  treatmentPlanId: string;
+  medicationId?: string; // Optional - có thể cập nhật chung cho cả phác đồ
+  date: string;
+  status?: 'taken' | 'missed' | 'skipped'; // Trạng thái uống thuốc
+  notes?: string;
+  patientFeedback?: string;
+  doctorResponse?: string;
+  createdAt: string;
+  // Các chỉ số sức khỏe hàng ngày
+  vitalSigns?: {
+    bloodPressure?: {
+      systolic: number; // Huyết áp tâm thu
+      diastolic: number; // Huyết áp tâm trương
+      time?: string; // Thời gian đo (sáng/trưa/chiều/tối)
+    };
+    bloodSugar?: {
+      value: number; // Đường huyết (mg/dL hoặc mmol/L)
+      type: 'fasting' | 'postprandial' | 'random'; // Đo lúc đói/sau ăn/ngẫu nhiên
+      time?: string;
+    };
+    heartRate?: number; // Nhịp tim (bpm)
+    weight?: number; // Cân nặng (kg)
+    temperature?: number; // Nhiệt độ (°C)
+    oxygenSaturation?: number; // SpO2 (%)
+    painLevel?: number; // Mức độ đau (1-10)
+  };
 }

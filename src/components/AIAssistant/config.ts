@@ -19,6 +19,7 @@ export const getAIConfig = (role: UserRole): AIConfig => {
 				'Xin chào Bác sĩ! Tôi là trợ lý AI hỗ trợ khám chữa bệnh. Tôi sẽ giúp bạn quản lý hồ sơ khám và chuẩn đoán. Bạn cần hỗ trợ gì?',
 			suggestions: [
 				'Có bao nhiêu hồ sơ đang chờ khám?',
+				'Xem phác đồ điều trị',
 				'Bệnh nhân nào cần tái khám trong tuần này?',
 				'Hồ sơ nào có chẩn đoán nhưng chưa có phác đồ?',
 				'Tôi đã khám bao nhiêu bệnh nhân hôm nay?',
@@ -44,6 +45,17 @@ export const getAIConfig = (role: UserRole): AIConfig => {
 				'Doanh thu tổng cộng hôm nay là bao nhiêu?',
 				'Bác sĩ nào khám nhiều bệnh nhân nhất?',
 				'Có bao nhiêu hồ sơ chưa thanh toán?',
+			],
+			color: 'from-rose-500 via-pink-500 to-rose-600',
+		},
+		patient: {
+			greeting:
+				'Xin chào! Tôi là trợ lý AI của Indica Clinic. Tôi sẽ giúp bạn quản lý lịch hẹn, theo dõi phác đồ điều trị và giải đáp các thắc mắc về sức khỏe. Bạn cần hỗ trợ gì hôm nay?',
+			suggestions: [
+				'Xem lịch hẹn của tôi',
+				'Cách cập nhật tình hình điều trị',
+				'Xem phác đồ điều trị',
+				'Thời gian khám sắp tới',
 			],
 			color: 'from-rose-500 via-pink-500 to-rose-600',
 		},

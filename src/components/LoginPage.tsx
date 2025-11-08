@@ -364,40 +364,64 @@ export function LoginPage() {
                         <span className="w-full border-t border-gray-200" />
                       </div>
                       <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-white px-2 text-gray-500">Tài khoản demo</span>
+                        <span className="bg-white px-2 text-gray-500 font-semibold">Tài khoản demo</span>
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
-                      <div className="space-y-2 text-sm text-gray-700">
-                        <div 
-                          onClick={() => fillCredentials('admin', 'admin')}
-                          className="flex justify-between items-center cursor-pointer"
-                        >
-                          <span>Admin:</span>
-                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">admin / admin</code>
-                        </div>
-                        <div 
-                          onClick={() => fillCredentials('letan', 'letan')}
-                          className="flex justify-between items-center cursor-pointer"
-                        >
-                          <span>Lễ tân:</span>
-                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">letan / letan</code>
-                        </div>
-                        <div 
-                          onClick={() => fillCredentials('bacsi', 'bacsi')}
-                          className="flex justify-between items-center cursor-pointer"
-                        >
-                          <span>Bác sĩ:</span>
-                          <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">bacsi / bacsi</code>
-                        </div>
-                        <div 
-                          onClick={() => fillCredentials('dieuduong', 'dieuduong')}
-                          className="flex justify-between items-center cursor-pointer"
-                        >
-                          <span>Điều dưỡng:</span>
-                              <code className="bg-white px-2 py-1 rounded text-xs text-blue-600">dieuduong / dieuduong</code>
-                        </div>
+                    <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-lg p-4 border border-blue-200 shadow-sm">
+                      <p className="text-xs text-gray-600 mb-3 text-center">
+                        Nhấn vào tài khoản để tự động điền thông tin đăng nhập
+                      </p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {mockUsers.map((user) => {
+                          const roleLabels: Record<string, string> = {
+                            admin: 'Quản trị viên',
+                            receptionist: 'Lễ tân',
+                            doctor: 'Bác sĩ',
+                            nurse: 'Điều dưỡng',
+                            patient: 'Bệnh nhân',
+                          };
+                          const roleColors: Record<string, string> = {
+                            admin: 'from-red-500 to-pink-500',
+                            receptionist: 'from-blue-500 to-cyan-500',
+                            doctor: 'from-green-500 to-emerald-500',
+                            nurse: 'from-purple-500 to-violet-500',
+                            patient: 'from-orange-500 to-amber-500',
+                          };
+                          
+                          return (
+                            <motion.div
+                              key={user.id}
+                              whileHover={{ scale: 1.02, x: 4 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => fillCredentials(user.username, user.password)}
+                              className={`flex items-center justify-between p-3 rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-300 transition-all bg-white/80 hover:bg-white shadow-sm hover:shadow-md group`}
+                            >
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className={`p-2 bg-gradient-to-br ${roleColors[user.role] || 'from-gray-500 to-gray-600'} rounded-lg shadow-sm group-hover:scale-110 transition-transform`}>
+                                  <UserRound className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm text-gray-800 truncate">
+                                    {user.fullName}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {roleLabels[user.role] || user.role}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 ml-2">
+                                <code className="bg-gray-100 group-hover:bg-gray-200 px-2 py-1 rounded text-xs text-gray-700 font-mono border border-gray-200">
+                                  {user.username}
+                                </code>
+                                <span className="text-gray-400 text-xs">/</span>
+                                <code className="bg-gray-100 group-hover:bg-gray-200 px-2 py-1 rounded text-xs text-gray-700 font-mono border border-gray-200">
+                                  {user.password}
+                                </code>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

@@ -8,13 +8,6 @@ import {
 	PaginationNext,
 	PaginationEllipsis,
 } from './ui/pagination';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from './ui/select';
 
 interface PaginationControlsProps {
 	currentPage: number;
@@ -84,37 +77,8 @@ export function PaginationControls({
 	}
 
 	return (
-		<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
-			<div className="flex items-center gap-2 text-sm text-gray-600">
-				<span>
-					Hiển thị {startIndex} - {endIndex} trong tổng số {totalItems} mục
-				</span>
-				{onItemsPerPageChange && (
-					<div className="flex items-center gap-2">
-						<span>|</span>
-						<span>Số mục/trang:</span>
-						<Select
-							value={itemsPerPage.toString()}
-							onValueChange={(value) =>
-								onItemsPerPageChange(parseInt(value, 10))
-							}
-						>
-							<SelectTrigger className="w-20 h-8">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{itemsPerPageOptions.map((option) => (
-									<SelectItem key={option} value={option.toString()}>
-										{option}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-				)}
-			</div>
-
-			<Pagination>
+		<div className="w-full flex justify-center mt-4 px-0">
+				<Pagination className="w-full sm:w-auto">
 				<PaginationContent>
 					<PaginationItem>
 						<PaginationPrevious

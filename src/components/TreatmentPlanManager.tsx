@@ -26,8 +26,8 @@ import {
 } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner@2.0.3';
-import { TreatmentPlan, Medication } from '../types';
-import { Pill, Plus, X, Calendar, FileText } from 'lucide-react';
+import { TreatmentPlan, Medication, TreatmentReminder } from '../types';
+import { Pill, Plus, X, Calendar, FileText, Bell, AlertCircle } from 'lucide-react';
 
 interface TreatmentPlanManagerProps {
 	recordId: string;
@@ -97,6 +97,9 @@ export function TreatmentPlanManager({
 		treatmentPlan?.followUpInstructions || '',
 	);
 	const [notes, setNotes] = useState(treatmentPlan?.notes || '');
+	const [reminders, setReminders] = useState<TreatmentReminder[]>(
+		treatmentPlan?.reminders || [],
+	);
 
 	// Sync state when treatmentPlan changes
 	useEffect(() => {
@@ -106,12 +109,14 @@ export function TreatmentPlanManager({
 			setFollowUpDate(treatmentPlan.followUpDate || '');
 			setFollowUpInstructions(treatmentPlan.followUpInstructions || '');
 			setNotes(treatmentPlan.notes || '');
+			setReminders(treatmentPlan.reminders || []);
 		} else {
 			setMedications([]);
 			setInstructions('');
 			setFollowUpDate('');
 			setFollowUpInstructions('');
 			setNotes('');
+			setReminders([]);
 		}
 	}, [treatmentPlan]);
 
@@ -155,6 +160,18 @@ export function TreatmentPlanManager({
 			}
 		}
 
+		// Validate reminders
+		for (const reminder of reminders) {
+			if (!reminder.title) {
+				toast.error('Vui lòng điền tiêu đề cho tất cả nhắc nhở');
+				return;
+			}
+			if (reminder.type === 'vital_sign' && !reminder.field) {
+				toast.error('Vui lòng chọn chỉ số sức khỏe cho nhắc nhở loại "Chỉ số sức khỏe"');
+				return;
+			}
+		}
+
 		const planData: Omit<TreatmentPlan, 'id' | 'createdAt' | 'createdBy'> = {
 			recordId,
 			medications,
@@ -164,6 +181,7 @@ export function TreatmentPlanManager({
 			notes: notes || undefined,
 			status: treatmentPlan?.status || 'active',
 			updatedAt: new Date().toISOString(),
+			reminders: reminders.length > 0 ? reminders : undefined,
 		};
 
 		if (treatmentPlan && onUpdate) {
@@ -183,6 +201,7 @@ export function TreatmentPlanManager({
 			setFollowUpDate(treatmentPlan.followUpDate || '');
 			setFollowUpInstructions(treatmentPlan.followUpInstructions || '');
 			setNotes(treatmentPlan.notes || '');
+			setReminders(treatmentPlan.reminders || []);
 		}
 		setShowDialog(true);
 	};
@@ -492,6 +511,215 @@ export function TreatmentPlanManager({
 						onChange={(e) => setNotes(e.target.value)}
 						rows={2}
 					/>
+				</div>
+
+				{/* Reminders Configuration */}
+				<div className="space-y-4 border-t pt-4">
+					<div className="flex justify-between items-center">
+						<Label className="flex items-center gap-2">
+							<Bell className="h-4 w-4" />
+							Nhắc nhở cho bệnh nhân
+						</Label>
+						<Button
+							type="button"
+							size="sm"
+							variant="outline"
+							onClick={() => {
+								const newReminder: TreatmentReminder = {
+									id: `reminder_${Date.now()}`,
+									type: 'vital_sign',
+									title: '',
+									description: '',
+									field: '',
+									frequency: 'daily',
+									enabled: true,
+									priority: 'medium',
+								};
+								setReminders([...reminders, newReminder]);
+							}}
+						>
+							<Plus className="h-4 w-4 mr-1" />
+							Thêm nhắc nhở
+						</Button>
+					</div>
+
+					<div className="space-y-3">
+						{reminders.map((reminder, index) => (
+							<Card key={reminder.id} className="p-4">
+								<div className="flex justify-between items-start mb-3">
+									<span className="font-medium text-sm">
+										Nhắc nhở {index + 1}
+									</span>
+									<Button
+										type="button"
+										size="sm"
+										variant="ghost"
+										onClick={() => {
+											setReminders(reminders.filter((r) => r.id !== reminder.id));
+										}}
+									>
+										<X className="h-4 w-4" />
+									</Button>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div className="space-y-2">
+										<Label>Loại nhắc nhở *</Label>
+										<Select
+											value={reminder.type}
+											onValueChange={(value: TreatmentReminder['type']) => {
+												const updated = reminders.map((r) =>
+													r.id === reminder.id
+														? { ...r, type: value }
+														: r,
+												);
+												setReminders(updated);
+											}}
+										>
+											<SelectTrigger>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="vital_sign">Chỉ số sức khỏe</SelectItem>
+												<SelectItem value="activity">Hoạt động</SelectItem>
+												<SelectItem value="medication">Thuốc</SelectItem>
+												<SelectItem value="diet">Khẩu phần ăn</SelectItem>
+												<SelectItem value="exercise">Tập luyện</SelectItem>
+												<SelectItem value="other">Khác</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+
+									{reminder.type === 'vital_sign' && (
+										<div className="space-y-2">
+											<Label>Chỉ số cần cập nhật *</Label>
+											<Select
+												value={reminder.field || ''}
+												onValueChange={(value) => {
+													const updated = reminders.map((r) =>
+														r.id === reminder.id ? { ...r, field: value } : r,
+													);
+													setReminders(updated);
+												}}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Chọn chỉ số" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="temperature">Nhiệt độ</SelectItem>
+													<SelectItem value="bloodPressure">Huyết áp</SelectItem>
+													<SelectItem value="bloodSugar">Đường huyết</SelectItem>
+													<SelectItem value="heartRate">Nhịp tim</SelectItem>
+													<SelectItem value="weight">Cân nặng</SelectItem>
+													<SelectItem value="oxygenSaturation">SpO2</SelectItem>
+													<SelectItem value="painLevel">Mức độ đau</SelectItem>
+												</SelectContent>
+											</Select>
+										</div>
+									)}
+
+									<div className="space-y-2">
+										<Label>Tiêu đề nhắc nhở *</Label>
+										<Input
+											placeholder="Ví dụ: Cập nhật nhiệt độ, Ghi nhận khẩu phần ăn..."
+											value={reminder.title}
+											onChange={(e) => {
+												const updated = reminders.map((r) =>
+													r.id === reminder.id ? { ...r, title: e.target.value } : r,
+												);
+												setReminders(updated);
+											}}
+										/>
+									</div>
+
+									<div className="space-y-2">
+										<Label>Mô tả</Label>
+										<Textarea
+											placeholder="Mô tả chi tiết về nhắc nhở..."
+											value={reminder.description || ''}
+											onChange={(e) => {
+												const updated = reminders.map((r) =>
+													r.id === reminder.id
+														? { ...r, description: e.target.value }
+														: r,
+												);
+												setReminders(updated);
+											}}
+											rows={2}
+										/>
+									</div>
+
+									<div className="space-y-2">
+										<Label>Tần suất</Label>
+										<Select
+											value={reminder.frequency || 'daily'}
+											onValueChange={(value: 'daily' | 'weekly' | 'custom') => {
+												const updated = reminders.map((r) =>
+													r.id === reminder.id ? { ...r, frequency: value } : r,
+												);
+												setReminders(updated);
+											}}
+										>
+											<SelectTrigger>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="daily">Hàng ngày</SelectItem>
+												<SelectItem value="weekly">Hàng tuần</SelectItem>
+												<SelectItem value="custom">Tùy chỉnh</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+
+									<div className="space-y-2">
+										<Label>Độ ưu tiên</Label>
+										<Select
+											value={reminder.priority || 'medium'}
+											onValueChange={(value: 'low' | 'medium' | 'high') => {
+												const updated = reminders.map((r) =>
+													r.id === reminder.id ? { ...r, priority: value } : r,
+												);
+												setReminders(updated);
+											}}
+										>
+											<SelectTrigger>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="low">Thấp</SelectItem>
+												<SelectItem value="medium">Trung bình</SelectItem>
+												<SelectItem value="high">Cao</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+
+									<div className="flex items-center gap-2">
+										<input
+											type="checkbox"
+											checked={reminder.enabled}
+											onChange={(e) => {
+												const updated = reminders.map((r) =>
+													r.id === reminder.id
+														? { ...r, enabled: e.target.checked }
+														: r,
+												);
+												setReminders(updated);
+											}}
+											className="rounded"
+										/>
+										<Label>Kích hoạt nhắc nhở</Label>
+									</div>
+								</div>
+							</Card>
+						))}
+
+						{reminders.length === 0 && (
+							<div className="text-center py-8 text-gray-500 text-sm">
+								<Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+								<p>Chưa có nhắc nhở nào. Nhấn "Thêm nhắc nhở" để tạo mới.</p>
+							</div>
+						)}
+					</div>
 				</div>
 
 				{/* Actions */}

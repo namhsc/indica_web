@@ -11,7 +11,7 @@ import {
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { LogOut, User, Shield, ChevronDown } from 'lucide-react';
+import { LogOut, User, Shield, ChevronDown, FileText } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,7 @@ const roleLabels = {
   receptionist: 'Lễ tân',
   doctor: 'Bác sĩ',
   nurse: 'Điều dưỡng',
+  patient: 'Bệnh nhân',
 };
 
 const roleGradients = {
@@ -35,6 +36,7 @@ const roleGradients = {
   receptionist: 'from-blue-500 to-cyan-500',
   doctor: 'from-emerald-500 to-teal-500',
   nurse: 'from-violet-500 to-purple-500',
+  patient: 'from-cyan-500 to-blue-500',
 };
 
 const roleIcons = {
@@ -42,6 +44,7 @@ const roleIcons = {
   receptionist: '🏥',
   doctor: '👨‍⚕️',
   nurse: '🔬',
+  patient: '👤',
 };
 
 export function UserProfile() {
@@ -103,6 +106,14 @@ export function UserProfile() {
                     <span className="text-gray-900">{user.specialty}</span>
                   </div>
                 )}
+                {user.role === 'patient' && (
+                  <div className="space-y-1">
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">Mã bệnh nhân:</span>{' '}
+                      <span className="text-gray-900">BN-{user.id.slice(-4).toUpperCase()}</span>
+                    </div>
+                  </div>
+                )}
                 <div className="text-xs text-gray-600">{user.email}</div>
               </div>
             </div>
@@ -110,12 +121,18 @@ export function UserProfile() {
           <DropdownMenuSeparator />
           <DropdownMenuItem className="cursor-pointer hover:bg-gray-50">
             <User className="h-4 w-4 mr-2 text-gray-600" />
-            Thông tin cá nhân
+            {user.role === 'patient' ? 'Hồ sơ bệnh nhân' : 'Thông tin cá nhân'}
           </DropdownMenuItem>
           {user.role === 'admin' && (
             <DropdownMenuItem className="cursor-pointer hover:bg-gray-50">
               <Shield className="h-4 w-4 mr-2 text-gray-600" />
               Quản lý hệ thống
+            </DropdownMenuItem>
+          )}
+          {user.role === 'patient' && (
+            <DropdownMenuItem className="cursor-pointer hover:bg-gray-50">
+              <FileText className="h-4 w-4 mr-2 text-gray-600" />
+              Lịch sử khám bệnh
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />

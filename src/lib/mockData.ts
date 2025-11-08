@@ -1,4 +1,4 @@
-import { MedicalRecord, TestOrder, DashboardStats, TreatmentPlan, Medication } from '../types';
+import { MedicalRecord, TestOrder, DashboardStats, TreatmentPlan, Medication, Appointment, Notification, TreatmentReminder } from '../types';
 import { mockAppointments } from './mockPatients';
 
 // Mock doctors
@@ -525,6 +525,91 @@ export const generateMockTreatmentPlans = (records: MedicalRecord[]): TreatmentP
     // Generate notes
     const notes = `Phác đồ điều trị cho ${record.patient.fullName}. Theo dõi diễn biến và tái khám đúng hẹn.`;
     
+    // Generate reminders based on diagnosis/reason
+    const reminders: TreatmentReminder[] = [];
+    
+    // Add temperature reminder for fever/cold cases
+    if (record.reason.includes('ho') || record.reason.includes('cảm') || record.reason.includes('sốt')) {
+      reminders.push({
+        id: `reminder_${record.id}_temp`,
+        type: 'vital_sign',
+        title: 'Cập nhật nhiệt độ',
+        description: 'Vui lòng đo và cập nhật nhiệt độ cơ thể 2 lần/ngày (sáng và chiều)',
+        field: 'temperature',
+        frequency: 'daily',
+        enabled: true,
+        priority: 'high',
+      });
+    }
+    
+    // Add blood pressure reminder for cardiovascular cases
+    if (record.reason.includes('huyết áp') || record.reason.includes('tim') || record.diagnosis?.includes('huyết áp')) {
+      reminders.push({
+        id: `reminder_${record.id}_bp`,
+        type: 'vital_sign',
+        title: 'Cập nhật huyết áp',
+        description: 'Vui lòng đo và cập nhật huyết áp mỗi ngày vào buổi sáng',
+        field: 'bloodPressure',
+        frequency: 'daily',
+        enabled: true,
+        priority: 'high',
+      });
+    }
+    
+    // Add blood sugar reminder for diabetes cases
+    if (record.reason.includes('tiểu đường') || record.reason.includes('đường huyết') || record.diagnosis?.includes('tiểu đường')) {
+      reminders.push({
+        id: `reminder_${record.id}_bs`,
+        type: 'vital_sign',
+        title: 'Cập nhật đường huyết',
+        description: 'Vui lòng đo đường huyết trước và sau ăn theo hướng dẫn',
+        field: 'bloodSugar',
+        frequency: 'daily',
+        enabled: true,
+        priority: 'high',
+      });
+    }
+    
+    // Add diet reminder for digestive cases
+    if (record.reason.includes('dạ dày') || record.reason.includes('tiêu hóa') || record.diagnosis?.includes('dạ dày')) {
+      reminders.push({
+        id: `reminder_${record.id}_diet`,
+        type: 'diet',
+        title: 'Ghi nhận khẩu phần ăn',
+        description: 'Vui lòng ghi lại các bữa ăn trong ngày để bác sĩ theo dõi',
+        frequency: 'daily',
+        enabled: true,
+        priority: 'medium',
+      });
+    }
+    
+    // Add weight reminder for general health monitoring
+    if (record.reason.includes('tổng quát') || record.reason.includes('sức khỏe')) {
+      reminders.push({
+        id: `reminder_${record.id}_weight`,
+        type: 'vital_sign',
+        title: 'Cập nhật cân nặng',
+        description: 'Vui lòng cân và cập nhật cân nặng mỗi tuần vào buổi sáng',
+        field: 'weight',
+        frequency: 'weekly',
+        enabled: true,
+        priority: 'low',
+      });
+    }
+    
+    // Add general activity reminder
+    if (record.status === 'COMPLETED_EXAMINATION' && reminders.length === 0) {
+      reminders.push({
+        id: `reminder_${record.id}_activity`,
+        type: 'activity',
+        title: 'Ghi nhận hoạt động hàng ngày',
+        description: 'Vui lòng ghi lại các hoạt động và cảm nhận về tình hình sức khỏe',
+        frequency: 'daily',
+        enabled: true,
+        priority: 'medium',
+      });
+    }
+    
     const treatmentPlan: TreatmentPlan = {
       id: `tp_${record.id}`,
       recordId: record.id,
@@ -537,10 +622,169 @@ export const generateMockTreatmentPlans = (records: MedicalRecord[]): TreatmentP
       notes,
       status: record.status === 'RETURNED' ? 'completed' : 'active',
       updatedAt: record.updatedAt || record.createdAt,
+      reminders: reminders.length > 0 ? reminders : undefined,
     };
     
     treatmentPlans.push(treatmentPlan);
   });
+  
+  return treatmentPlans;
+};
+
+// Generate mock treatment plans for a specific patient
+export const generateMockTreatmentPlansForPatient = (patientName: string, records: MedicalRecord[]): TreatmentPlan[] => {
+  const treatmentPlans: TreatmentPlan[] = [];
+  
+  // Filter records for this patient
+  let patientRecords = records.filter(r => r.patient.fullName === patientName);
+  
+  // If no records exist for this patient, create a mock record
+  if (patientRecords.length === 0) {
+    const mockRecord: MedicalRecord = {
+      id: `patient_record_${Date.now()}`,
+      receiveCode: `RC${Date.now()}`,
+      patient: {
+        id: `patient_${Date.now()}`,
+        fullName: patientName,
+        phoneNumber: '0900000000',
+        dateOfBirth: '1990-01-01',
+        gender: 'male',
+      },
+      reason: 'Khám tổng quát',
+      requestedServices: ['Khám tổng quát'],
+      status: 'COMPLETED_EXAMINATION',
+      assignedDoctor: {
+        id: 'doc1',
+        name: 'BS. Nguyễn Văn An',
+        specialty: 'Nội khoa',
+      },
+      diagnosis: 'Khám sức khỏe tổng quát, cần theo dõi và điều trị',
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      paymentStatus: 'completed',
+      totalAmount: 300000,
+      paidAmount: 300000,
+    };
+    patientRecords = [mockRecord];
+  }
+  
+  // Create 1-3 treatment plans for the patient
+  const numPlans = Math.min(patientRecords.length, Math.floor(Math.random() * 3) + 1);
+  
+  for (let i = 0; i < numPlans; i++) {
+    const record = patientRecords[i] || patientRecords[0];
+    if (!record) continue;
+    
+    const seedBase = i * 1000;
+    const numMedications = randomInt(2, 4, seedBase);
+    const medications: Medication[] = [];
+    
+    const selectedMedNames = new Set<string>();
+    for (let j = 0; j < numMedications; j++) {
+      let med;
+      let attempts = 0;
+      const seed = seedBase * 17 + j * 23;
+      do {
+        med = randomElement(commonMedications, seed + attempts);
+        attempts++;
+      } while (selectedMedNames.has(med.name) && attempts < 20);
+      
+      if (med && !selectedMedNames.has(med.name)) {
+        selectedMedNames.add(med.name);
+        const frequency = randomElement(med.frequency, seed + 100);
+        const duration = randomElement(med.duration, seed + 200);
+        const quantity = randomInt(10, 30, seed + 300);
+        
+        medications.push({
+          id: `med_patient_${i}_${j}`,
+          name: med.name,
+          dosage: med.dosage,
+          frequency,
+          duration,
+          quantity,
+          unit: med.unit,
+          instructions: med.instructions,
+        });
+      }
+    }
+    
+    // Generate instructions
+    const instructions = 'Uống thuốc đúng liều, đúng giờ theo chỉ định. Nếu có phản ứng bất thường, ngừng thuốc và tái khám ngay.';
+    
+    // Generate follow-up date (7-14 days from now)
+    const followUpDays = randomInt(7, 14, seedBase + 400);
+    const followUpDate = new Date();
+    followUpDate.setDate(followUpDate.getDate() + followUpDays);
+    
+    const followUpInstructions = 'Tái khám để đánh giá kết quả điều trị và điều chỉnh phác đồ nếu cần.';
+    
+    // Generate reminders for patient treatment plans
+    const reminders: TreatmentReminder[] = [];
+    
+    // Always add temperature reminder for patient
+    reminders.push({
+      id: `reminder_patient_${i}_temp`,
+      type: 'vital_sign',
+      title: 'Cập nhật nhiệt độ',
+      description: 'Vui lòng đo và cập nhật nhiệt độ cơ thể mỗi ngày',
+      field: 'temperature',
+      frequency: 'daily',
+      enabled: true,
+      priority: 'high',
+    });
+    
+    // Add blood pressure reminder
+    reminders.push({
+      id: `reminder_patient_${i}_bp`,
+      type: 'vital_sign',
+      title: 'Cập nhật huyết áp',
+      description: 'Vui lòng đo và cập nhật huyết áp mỗi ngày vào buổi sáng',
+      field: 'bloodPressure',
+      frequency: 'daily',
+      enabled: true,
+      priority: 'medium',
+    });
+    
+    // Add diet reminder
+    reminders.push({
+      id: `reminder_patient_${i}_diet`,
+      type: 'diet',
+      title: 'Ghi nhận khẩu phần ăn',
+      description: 'Vui lòng ghi lại các bữa ăn trong ngày (sáng, trưa, tối)',
+      frequency: 'daily',
+      enabled: true,
+      priority: 'medium',
+    });
+    
+    // Add weight reminder (weekly)
+    reminders.push({
+      id: `reminder_patient_${i}_weight`,
+      type: 'vital_sign',
+      title: 'Cập nhật cân nặng',
+      description: 'Vui lòng cân và cập nhật cân nặng mỗi tuần vào buổi sáng',
+      field: 'weight',
+      frequency: 'weekly',
+      enabled: true,
+      priority: 'low',
+    });
+    
+    const treatmentPlan: TreatmentPlan = {
+      id: `tp_patient_${Date.now()}_${i}`,
+      recordId: record.id,
+      createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      createdBy: record.assignedDoctor?.name || mockDoctors[Math.floor(Math.random() * mockDoctors.length)].name,
+      medications,
+      instructions,
+      followUpDate: followUpDate.toISOString(),
+      followUpInstructions,
+      notes: `Phác đồ điều trị cho ${patientName}. Theo dõi diễn biến và tái khám đúng hẹn.`,
+      status: i === 0 ? 'active' : (Math.random() > 0.5 ? 'completed' : 'active'),
+      updatedAt: new Date().toISOString(),
+      reminders: reminders.length > 0 ? reminders : undefined,
+    };
+    
+    treatmentPlans.push(treatmentPlan);
+  }
   
   return treatmentPlans;
 };
@@ -558,4 +802,170 @@ export const generateDashboardStats = (records: MedicalRecord[]): DashboardStats
     returned: records.filter(r => r.status === 'RETURNED').length,
     todayRecords: records.filter(r => new Date(r.createdAt).toDateString() === today).length,
   };
+};
+
+// Generate mock notifications
+export const generateMockNotifications = (patientName?: string): Notification[] => {
+  const notifications: Notification[] = [];
+  const now = new Date();
+  
+  // Sample notifications
+  const sampleNotifications = [
+    {
+      title: 'Lịch hẹn đã được xác nhận',
+      message: 'Lịch hẹn của bạn vào ngày mai đã được xác nhận. Vui lòng đến đúng giờ.',
+      type: 'success' as const,
+      relatedType: 'appointment' as const,
+    },
+    {
+      title: 'Nhắc nhở uống thuốc',
+      message: 'Đã đến giờ uống thuốc theo phác đồ điều trị. Vui lòng uống đúng liều lượng.',
+      type: 'info' as const,
+      relatedType: 'treatment' as const,
+    },
+    {
+      title: 'Kết quả xét nghiệm đã có',
+      message: 'Kết quả xét nghiệm của bạn đã sẵn sàng. Vui lòng xem trong hồ sơ y tế.',
+      type: 'info' as const,
+      relatedType: 'record' as const,
+    },
+    {
+      title: 'Lịch hẹn sắp đến',
+      message: 'Bạn có lịch hẹn vào ngày mai. Vui lòng chuẩn bị và đến đúng giờ.',
+      type: 'warning' as const,
+      relatedType: 'appointment' as const,
+    },
+  ];
+  
+  // Generate 5-10 notifications
+  const count = Math.floor(Math.random() * 6) + 5;
+  for (let i = 0; i < count; i++) {
+    const sample = sampleNotifications[Math.floor(Math.random() * sampleNotifications.length)];
+    const daysAgo = Math.floor(Math.random() * 7); // 0-6 days ago
+    const createdAt = new Date(now);
+    createdAt.setDate(createdAt.getDate() - daysAgo);
+    createdAt.setHours(Math.floor(Math.random() * 24));
+    createdAt.setMinutes(Math.floor(Math.random() * 60));
+    
+    notifications.push({
+      id: `notif_${Date.now()}_${i}`,
+      title: sample.title,
+      message: sample.message,
+      type: sample.type,
+      read: Math.random() > 0.3, // 70% read
+      createdAt: createdAt.toISOString(),
+      relatedType: sample.relatedType,
+    });
+  }
+  
+  return notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
+// Convert mockAppointments to Appointment type
+export const generateMockAppointments = (): Appointment[] => {
+  return mockAppointments.map((apt) => ({
+    id: apt.id,
+    code: apt.code,
+    patientName: apt.patientName,
+    phoneNumber: apt.phoneNumber,
+    dateOfBirth: apt.dateOfBirth,
+    gender: apt.gender as 'male' | 'female' | 'other',
+    email: apt.email,
+    address: apt.address,
+    customerId: apt.customerId,
+    insurance: apt.insurance,
+    appointmentDate: apt.appointmentDate,
+    appointmentTime: apt.appointmentTime,
+    services: Array.isArray(apt.services) ? apt.services : [apt.services as string],
+    doctor: apt.doctor,
+    doctorId: apt.doctorId,
+    reason: apt.reason,
+    status: apt.status as 'pending' | 'confirmed' | 'cancelled' | 'completed',
+    createdAt: new Date(`${apt.appointmentDate}T${apt.appointmentTime}`).toISOString(),
+    updatedAt: new Date(`${apt.appointmentDate}T${apt.appointmentTime}`).toISOString(),
+  }));
+};
+
+// Generate mock appointments for a specific patient
+export const generateMockAppointmentsForPatient = (patientName: string, patientEmail?: string): Appointment[] => {
+  const appointments: Appointment[] = [];
+  const today = new Date();
+  
+  // Generate 5-8 appointments for the patient
+  const appointmentCount = Math.floor(Math.random() * 4) + 5; // 5-8 appointments
+  
+  const statuses: Array<'pending' | 'confirmed' | 'cancelled' | 'completed'> = ['pending', 'confirmed', 'cancelled', 'completed'];
+  const reasons = [
+    'Kiểm tra sức khỏe định kỳ',
+    'Đau đầu, mệt mỏi',
+    'Khám tổng quát',
+    'Tái khám',
+    'Đau bụng',
+    'Sốt, ho',
+    'Khám chuyên khoa',
+    'Xét nghiệm',
+  ];
+  
+  const servicesList = [
+    ['Khám nội tổng quát'],
+    ['Khám tai mũi họng'],
+    ['Khám ngoại khoa'],
+    ['Siêu âm bụng'],
+    ['Xét nghiệm máu'],
+    ['Khám nội tổng quát', 'Xét nghiệm máu'],
+    ['Khám tim mạch'],
+    ['Khám da liễu'],
+  ];
+  
+  for (let i = 0; i < appointmentCount; i++) {
+    // Generate dates: some in the past, some in the future
+    const daysOffset = Math.floor(Math.random() * 60) - 20; // -20 to +40 days
+    const appointmentDate = new Date(today);
+    appointmentDate.setDate(today.getDate() + daysOffset);
+    
+    // Only future appointments can be pending or confirmed
+    const isFuture = daysOffset >= 0;
+    const status = isFuture 
+      ? (Math.random() > 0.3 ? 'pending' : 'confirmed')
+      : (Math.random() > 0.5 ? 'completed' : 'cancelled');
+    
+    const timeSlots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
+    const appointmentTime = timeSlots[Math.floor(Math.random() * timeSlots.length)];
+    
+    const dateStr = appointmentDate.toISOString().split('T')[0].replace(/-/g, '');
+    const code = `LH${dateStr}${String(i + 1).padStart(3, '0')}`;
+    
+    const doctor = mockDoctors[Math.floor(Math.random() * mockDoctors.length)];
+    const services = servicesList[Math.floor(Math.random() * servicesList.length)];
+    const reason = reasons[Math.floor(Math.random() * reasons.length)];
+    
+    appointments.push({
+      id: `apt_patient_${Date.now()}_${i}`,
+      code,
+      patientName,
+      phoneNumber: patientEmail || '0900000000',
+      dateOfBirth: '1990-01-01',
+      gender: 'male' as const,
+      email: patientEmail,
+      address: '',
+      customerId: `KH${String(i + 1).padStart(3, '0')}`,
+      insurance: '',
+      appointmentDate: appointmentDate.toISOString().split('T')[0],
+      appointmentTime,
+      services,
+      doctor: doctor.name,
+      doctorId: doctor.id,
+      reason,
+      status,
+      createdAt: new Date(appointmentDate.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(appointmentDate.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+  }
+  
+  // Sort by date (newest first)
+  return appointments.sort((a, b) => {
+    const dateA = new Date(`${a.appointmentDate}T${a.appointmentTime}`);
+    const dateB = new Date(`${b.appointmentDate}T${b.appointmentTime}`);
+    return dateB.getTime() - dateA.getTime();
+  });
 };

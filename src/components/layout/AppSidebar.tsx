@@ -9,6 +9,11 @@ import {
 	FolderOpen,
 	Menu,
 	X,
+	User,
+	Calendar,
+	Pill,
+	FileText,
+	Bell,
 } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import logo from '@/assets/images/logo.svg';
@@ -20,6 +25,8 @@ interface NavigationItem {
 	label: string;
 	icon: React.ComponentType<{ className?: string }>;
 	roles: UserRole[];
+	children?: NavigationItem[];
+	badge?: number;
 }
 
 interface AppSidebarProps {
@@ -28,6 +35,7 @@ interface AppSidebarProps {
 	onTabChange: (tab: string) => void;
 	onToggleSidebar: () => void;
 	userRole: UserRole | undefined;
+	unreadNotificationsCount?: number;
 }
 
 const navigationItems: NavigationItem[] = [
@@ -61,6 +69,19 @@ const navigationItems: NavigationItem[] = [
 		icon: FolderCheck,
 		roles: ['admin', 'receptionist'],
 	},
+	// Patient menu items - displayed directly without parent menu
+	{
+		id: 'ai',
+		label: 'Trợ lý AI',
+		icon: LayoutDashboard,
+		roles: ['patient'],
+	},
+	{
+		id: 'patient-treatment',
+		label: 'Phác đồ điều trị',
+		icon: Pill,
+		roles: ['patient'],
+	},
 ];
 
 export function AppSidebar({
@@ -69,13 +90,38 @@ export function AppSidebar({
 	onTabChange,
 	onToggleSidebar,
 	userRole,
+	unreadNotificationsCount = 0,
 }: AppSidebarProps) {
+	const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set());
+
 	const canAccessItem = (item: NavigationItem): boolean => {
 		if (!userRole) return false;
 		return item.roles.includes(userRole);
 	};
 
 	const accessibleItems = navigationItems.filter(canAccessItem);
+
+	const toggleExpand = (itemId: string) => {
+		const newExpanded = new Set(expandedItems);
+		if (newExpanded.has(itemId)) {
+			newExpanded.delete(itemId);
+		} else {
+			newExpanded.add(itemId);
+		}
+		setExpandedItems(newExpanded);
+	};
+
+	const isItemActive = (item: NavigationItem): boolean => {
+		if (activeTab === item.id) return true;
+		if (item.children) {
+			return item.children.some((child) => activeTab === child.id);
+		}
+		return false;
+	};
+
+	const isChildActive = (child: NavigationItem): boolean => {
+		return activeTab === child.id;
+	};
 
 	return (
 		<AnimatePresence mode="wait">
@@ -122,31 +168,106 @@ export function AppSidebar({
 					<nav className="p-4 space-y-2 flex-1 overflow-y-auto">
 						{accessibleItems.map((item) => {
 							const Icon = item.icon;
-							const isActive = activeTab === item.id;
+							const isActive = isItemActive(item);
+							const isExpanded = expandedItems.has(item.id);
+							const hasChildren = item.children && item.children.length > 0;
+							// Show badge for notifications
+							const showBadge = item.id === 'patient-notifications' && unreadNotificationsCount > 0;
 
 							return (
-								<motion.button
-									key={item.id}
-									whileHover={{ scale: 1.02, x: 4 }}
-									whileTap={{ scale: 0.98 }}
-									onClick={() => {
-										onTabChange(item.id);
-										if (window.innerWidth < 1024) {
-											// Close sidebar on mobile after selection
-										}
-									}}
-									className={`
-                    w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer
-                    ${
-											isActive
-												? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-												: 'text-gray-700 hover:bg-gray-100/80'
-										}
-                  `}
-								>
-									<Icon className="h-5 w-5 flex-shrink-0" />
-									<span className="text-sm">{item.label}</span>
-								</motion.button>
+								<div key={item.id} className="space-y-1">
+									<motion.button
+										whileHover={{ scale: 1.02, x: 4 }}
+										whileTap={{ scale: 0.98 }}
+										onClick={() => {
+											if (hasChildren) {
+												toggleExpand(item.id);
+											} else {
+												onTabChange(item.id);
+											}
+											if (window.innerWidth < 1024) {
+												// Close sidebar on mobile after selection
+											}
+										}}
+										className={`
+                      w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer
+                      ${
+												isActive
+													? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+													: 'text-gray-700 hover:bg-gray-100/80'
+											}
+                    `}
+									>
+										<div className="flex items-center gap-3 flex-1">
+											<Icon className="h-5 w-5 flex-shrink-0" />
+											<span className="text-sm">{item.label}</span>
+										</div>
+										<div className="flex items-center gap-2">
+											{showBadge && (
+												<span className="h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+													{unreadNotificationsCount}
+												</span>
+											)}
+											{hasChildren && (
+												<motion.div
+													animate={{ rotate: isExpanded ? 90 : 0 }}
+													transition={{ duration: 0.2 }}
+												>
+													<X className="h-4 w-4 rotate-45" />
+												</motion.div>
+											)}
+										</div>
+									</motion.button>
+
+									{/* Children menu */}
+									{hasChildren && isExpanded && (
+										<motion.div
+											initial={{ opacity: 0, height: 0 }}
+											animate={{ opacity: 1, height: 'auto' }}
+											exit={{ opacity: 0, height: 0 }}
+											transition={{ duration: 0.2 }}
+											className="ml-4 space-y-1 border-l-2 border-gray-200 pl-2"
+										>
+											{item.children
+												?.filter((child) => canAccessItem(child))
+												.map((child) => {
+													const ChildIcon = child.icon;
+													const childIsActive = isChildActive(child);
+													const childShowBadge = child.id === 'patient-notifications' && unreadNotificationsCount > 0;
+
+													return (
+														<motion.button
+															key={child.id}
+															whileHover={{ scale: 1.02, x: 4 }}
+															whileTap={{ scale: 0.98 }}
+															onClick={() => {
+																onTabChange(child.id);
+																if (window.innerWidth < 1024) {
+																	// Close sidebar on mobile after selection
+																}
+															}}
+															className={`
+                                w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 cursor-pointer text-sm
+                                ${
+																	childIsActive
+																		? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20'
+																		: 'text-gray-600 hover:bg-gray-100/80'
+																}
+                              `}
+														>
+															<ChildIcon className="h-4 w-4 flex-shrink-0" />
+															<span className="flex-1 text-left">{child.label}</span>
+															{(child.badge && child.badge > 0) || childShowBadge ? (
+																<span className="h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+																	{childShowBadge ? unreadNotificationsCount : child.badge}
+																</span>
+															) : null}
+														</motion.button>
+													);
+												})}
+										</motion.div>
+									)}
+								</div>
 							);
 						})}
 					</nav>

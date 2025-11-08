@@ -31,7 +31,7 @@ const statusLabels: Record<RecordStatus, string> = {
 	PENDING_EXAMINATION: 'Chờ khám',
 	IN_EXAMINATION: 'Đang khám',
 	WAITING_TESTS: 'Chờ xét nghiệm',
-	WAITING_DOCTOR_REVIEW: 'Chờ bác sĩ duyệt',
+	WAITING_DOCTOR_REVIEW: 'Chờ bác sĩ kết luận',
 	COMPLETED_EXAMINATION: 'Hoàn thành',
 	RETURNED: 'Đã trả',
 };

@@ -35,6 +35,14 @@ export const mockUsers: (User & { password: string })[] = [
     role: 'nurse',
     email: 'dieuduong@gmail.com',
   },
+  {
+    id: 'patient1',
+    username: 'benhnhan',
+    password: 'benhnhan',
+    fullName: 'Nguyễn Văn Bệnh',
+    role: 'patient',
+    email: 'benhnhan@gmail.com',
+  },
 ];
 
 export const authenticateUser = async (username: string, password: string): Promise<User | null> => {

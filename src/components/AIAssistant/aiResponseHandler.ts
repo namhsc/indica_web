@@ -50,6 +50,10 @@ export const handleAIResponse = ({
   if (userRole === 'admin') {
     return handleAdminResponse(lowerInput, stats);
   }
+  
+  if (userRole === 'patient') {
+    return handlePatientResponse(lowerInput, onViewRecords);
+  }
 
   return {
     content: `Tôi hiểu bạn đang hỏi về "${userInput}". Hãy thử các gợi ý bên dưới!`,
@@ -166,6 +170,55 @@ function handleAdminResponse(lowerInput: string, stats: DashboardStats) {
   return {
     content: 'Tôi có thể giúp:\n✓ Giám sát hệ thống\n✓ Quản lý người dùng\n✓ Báo cáo tổng hợp\n✓ Cấu hình hệ thống',
     suggestions: []
+  };
+}
+
+function handlePatientResponse(lowerInput: string, onViewRecords: () => void) {
+  if (lowerInput.includes('lịch hẹn') || lowerInput.includes('hẹn') || lowerInput.includes('appointment')) {
+    return {
+      content: 'Bạn muốn xem lịch hẹn của mình? Tôi có thể giúp bạn:\n✓ Xem các cuộc hẹn sắp tới\n✓ Đặt lịch hẹn mới\n✓ Hủy hoặc thay đổi lịch hẹn\n✓ Xem lịch sử khám',
+      suggestions: ['Xem lịch hẹn', 'Đặt lịch hẹn mới']
+    };
+  }
+  
+  if (lowerInput.includes('phác đồ') || lowerInput.includes('điều trị') || lowerInput.includes('treatment')) {
+    return {
+      content: 'Bạn muốn xem phác đồ điều trị? Tôi có thể giúp:\n✓ Xem danh sách thuốc đang uống\n✓ Hướng dẫn cách uống thuốc\n✓ Cập nhật tình hình điều trị\n✓ Gửi phản hồi cho bác sĩ',
+      suggestions: ['Xem phác đồ điều trị', 'Cách cập nhật tình hình']
+    };
+  }
+  
+  if (lowerInput.includes('thuốc') || lowerInput.includes('medication') || lowerInput.includes('uống')) {
+    return {
+      content: 'Về thuốc bạn đang uống:\n✓ Xem danh sách thuốc\n✓ Hướng dẫn cách uống\n✓ Tác dụng phụ\n✓ Tương tác thuốc\n✓ Thời gian uống',
+      suggestions: ['Danh sách thuốc', 'Hướng dẫn uống thuốc']
+    };
+  }
+  
+  if (lowerInput.includes('cập nhật') || lowerInput.includes('tình hình') || lowerInput.includes('update')) {
+    return {
+      content: 'Cập nhật tình hình điều trị:\n✓ Nhập các chỉ số sức khỏe (huyết áp, đường huyết, nhịp tim)\n✓ Ghi nhận tình trạng uống thuốc\n✓ Ghi chú về tác dụng phụ\n✓ Gửi phản hồi cho bác sĩ',
+      suggestions: ['Cập nhật hôm nay', 'Xem hướng dẫn']
+    };
+  }
+  
+  if (lowerInput.includes('hồ sơ') || lowerInput.includes('record') || lowerInput.includes('medical')) {
+    return {
+      content: 'Bạn muốn xem hồ sơ y tế của mình? Tôi có thể giúp:\n✓ Xem lịch sử khám\n✓ Xem kết quả xét nghiệm\n✓ Xem chẩn đoán và điều trị\n✓ Tải xuống hồ sơ',
+      suggestions: ['Xem hồ sơ y tế']
+    };
+  }
+  
+  if (lowerInput.includes('sức khỏe') || lowerInput.includes('health') || lowerInput.includes('bệnh')) {
+    return {
+      content: 'Tôi có thể tư vấn về:\n✓ Các triệu chứng thường gặp\n✓ Cách chăm sóc sức khỏe\n✓ Chế độ ăn uống\n✓ Tập luyện\n\n⚠️ Lưu ý: Thông tin chỉ mang tính tham khảo. Vui lòng tham khảo ý kiến bác sĩ cho các vấn đề nghiêm trọng.',
+      suggestions: ['Chế độ ăn uống', 'Tập luyện']
+    };
+  }
+  
+  return {
+    content: 'Tôi có thể giúp bạn:\n✓ Quản lý lịch hẹn\n✓ Theo dõi phác đồ điều trị\n✓ Xem hồ sơ y tế\n✓ Giải đáp thắc mắc về sức khỏe\n✓ Hướng dẫn sử dụng hệ thống',
+    suggestions: ['Xem lịch hẹn', 'Xem phác đồ điều trị', 'Xem hồ sơ y tế']
   };
 }
 
