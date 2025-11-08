@@ -21,6 +21,11 @@ export interface Patient {
   phoneNumber: string;
   dateOfBirth: string;
   gender: Gender;
+  address?: string;
+  email?: string;
+  customerId?: string;
+  cccdNumber?: string;
+  insurance?: string;
 }
 
 export interface MedicalRecord {
