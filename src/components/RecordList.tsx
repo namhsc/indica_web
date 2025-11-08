@@ -40,6 +40,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { ReceptionForm } from './ReceptionForm';
 import { useAuth } from '../contexts/AuthContext';
+import { usePagination } from '../hooks/usePagination';
+import { PaginationControls } from './PaginationControls';
 
 interface RecordListProps {
 	records: MedicalRecord[];
@@ -98,6 +100,20 @@ export function RecordList({
 		return matchesSearch && matchesStatus;
 	});
 
+	const [itemsPerPage, setItemsPerPage] = useState(10);
+	const {
+		currentPage,
+		totalPages,
+		paginatedData: paginatedRecords,
+		totalItems,
+		startIndex,
+		endIndex,
+		goToPage,
+	} = usePagination({
+		data: filteredRecords,
+		itemsPerPage,
+	});
+
 	const formatDate = (dateString: string) => {
 		const date = new Date(dateString);
 		return date.toLocaleDateString('vi-VN', {
@@ -138,7 +154,7 @@ export function RecordList({
 				<div className="flex items-center gap-3">
 					<div className="px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm">
 						<span className="text-sm text-gray-600">Tổng:</span>
-						<span className="text-sm ml-1">{filteredRecords.length}</span>
+						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
 					{canCreateRecord && (
 						<motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -218,7 +234,7 @@ export function RecordList({
 										</TableCell>
 									</TableRow>
 								) : (
-									filteredRecords.map((record, index) => (
+									paginatedRecords.map((record, index) => (
 										<motion.tr
 											key={record.id}
 											initial={{ opacity: 0, y: 20 }}
@@ -293,6 +309,16 @@ export function RecordList({
 							</TableBody>
 						</Table>
 					</div>
+					<PaginationControls
+						currentPage={currentPage}
+						totalPages={totalPages}
+						totalItems={totalItems}
+						itemsPerPage={itemsPerPage}
+						startIndex={startIndex}
+						endIndex={endIndex}
+						onPageChange={goToPage}
+						onItemsPerPageChange={setItemsPerPage}
+					/>
 				</CardContent>
 			</Card>
 

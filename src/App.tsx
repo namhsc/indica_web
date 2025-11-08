@@ -13,10 +13,11 @@ import { AppSidebar } from "./components/layout/AppSidebar";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Button } from "./components/ui/button";
 import { Menu } from "lucide-react";
-import { MedicalRecord, TestOrder, TestType } from "./types";
+import { MedicalRecord, TestOrder, TestType, TreatmentPlan } from "./types";
 import {
   generateMockRecords,
   generateMockTestOrders,
+  generateMockTreatmentPlans,
   generateDashboardStats,
 } from "./lib/mockData";
 import { motion } from "motion/react";
@@ -26,6 +27,7 @@ function MainApp() {
   const { user, isAuthenticated } = useAuth();
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [testOrders, setTestOrders] = useState<TestOrder[]>([]);
+  const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(
     null
   );
@@ -45,8 +47,26 @@ function MainApp() {
   // Initialize with mock data
   useEffect(() => {
     if (isAuthenticated) {
-      setRecords(generateMockRecords());
+      const mockRecords = generateMockRecords();
+      setRecords(mockRecords);
       setTestOrders(generateMockTestOrders());
+      
+      // Generate treatment plans for examined records
+      const mockTreatmentPlans = generateMockTreatmentPlans(mockRecords);
+      setTreatmentPlans(mockTreatmentPlans);
+      
+      // Update records with treatmentPlanId
+      const updatedRecords = mockRecords.map(record => {
+        const treatmentPlan = mockTreatmentPlans.find(tp => tp.recordId === record.id);
+        if (treatmentPlan) {
+          return {
+            ...record,
+            treatmentPlanId: treatmentPlan.id,
+          };
+        }
+        return record;
+      });
+      setRecords(updatedRecords);
     }
   }, [isAuthenticated]);
 
@@ -140,6 +160,42 @@ function MainApp() {
     );
   };
 
+  const handleCreateTreatmentPlan = (
+    planData: Omit<TreatmentPlan, "id" | "createdAt" | "createdBy">
+  ) => {
+    const newPlan: TreatmentPlan = {
+      ...planData,
+      id: `tp_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      createdBy: user?.fullName || "Bác sĩ",
+    };
+
+    setTreatmentPlans([...treatmentPlans, newPlan]);
+
+    // Update record with treatment plan ID
+    setRecords(
+      records.map((r) =>
+        r.id === planData.recordId
+          ? {
+              ...r,
+              treatmentPlanId: newPlan.id,
+              updatedAt: new Date().toISOString(),
+            }
+          : r
+      )
+    );
+  };
+
+  const handleUpdateTreatmentPlan = (plan: TreatmentPlan) => {
+    setTreatmentPlans(
+      treatmentPlans.map((tp) =>
+        tp.id === plan.id
+          ? { ...plan, updatedAt: new Date().toISOString() }
+          : tp
+      )
+    );
+  };
+
   if (!isAuthenticated) {
     return <LoginPage />;
   }
@@ -229,8 +285,11 @@ function MainApp() {
               <RoleGuard allowedRoles={["admin", "doctor"]}>
                 <DoctorWorkspace
                   records={records}
+                  treatmentPlans={treatmentPlans}
                   onUpdateRecord={handleUpdateRecord}
                   onCreateTestOrder={handleCreateTestOrder}
+                  onCreateTreatmentPlan={handleCreateTreatmentPlan}
+                  onUpdateTreatmentPlan={handleUpdateTreatmentPlan}
                 />
               </RoleGuard>
             )}
@@ -260,6 +319,7 @@ function MainApp() {
       <RecordDetail
         record={selectedRecord}
         testOrders={testOrders}
+        treatmentPlans={treatmentPlans}
         onClose={() => setSelectedRecord(null)}
       />
     </div>

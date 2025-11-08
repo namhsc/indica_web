@@ -1,0 +1,4 @@
+﻿id,recordId,receiveCode,patientName,testType,testName,orderedBy,orderedAt,status,results,completedAt,completedBy
+t1,1,RC20251105001,Nguyễn Văn Anh,blood,Xét nghiệm máu tổng quát,BS. Nguyễn Văn An,2025-11-08T14:14:40.515Z,pending,,,
+t2,3,RC20251105003,Lê Hoàng Cường,ultrasound,Siêu âm bụng,BS. Nguyễn Văn An,2025-11-08T13:14:40.515Z,in_progress,,,
+t3,2,RC20251105002,Trần Thị Bích,blood,Xét nghiệm sinh hóa máu,BS. Trần Thị Bình,2025-11-08T12:14:40.515Z,completed,"{""values"":{""Glucose"":""5.2 mmol/L"",""Cholesterol"":""4.8 mmol/L"",""Triglyceride"":""1.2 mmol/L""},""notes"":""Kết quả bình thường""}",2025-11-08T13:44:40.515Z,KTV. Nguyễn Thị Hoa

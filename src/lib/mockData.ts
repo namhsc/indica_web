@@ -1,4 +1,4 @@
-import { MedicalRecord, TestOrder, DashboardStats } from '../types';
+import { MedicalRecord, TestOrder, DashboardStats, TreatmentPlan, Medication } from '../types';
 import { mockAppointments } from './mockPatients';
 
 // Mock doctors
@@ -117,33 +117,111 @@ export const mockExaminationPackages: ExaminationPackage[] = [
 
 // Generate mock medical records
 export const generateMockRecords = (): MedicalRecord[] => {
-  // First, create records from appointments with PENDING_CHECKIN status
-  const appointmentRecords: MedicalRecord[] = mockAppointments.map((apt, index) => ({
-    id: `apt_${apt.id}`,
-    receiveCode: apt.code.replace('LH', 'RC'),
-    patient: {
-      id: `p_apt_${index}`,
-      fullName: apt.patientName,
-      phoneNumber: apt.phoneNumber,
-      dateOfBirth: apt.dateOfBirth,
-      gender: apt.gender,
-    },
-    reason: apt.reason,
-    requestedServices: apt.services,
-    status: 'PENDING_CHECKIN' as const,
-    assignedDoctor: {
-      id: apt.doctorId,
-      name: apt.doctor,
-      specialty: mockDoctors.find(d => d.id === apt.doctorId)?.specialty || 'Tổng quát',
-    },
-    createdAt: new Date(`${apt.appointmentDate}T${apt.appointmentTime}`).toISOString(),
-    updatedAt: new Date(`${apt.appointmentDate}T${apt.appointmentTime}`).toISOString(),
-    paymentStatus: 'pending',
-    totalAmount: 0,
-    paidAmount: 0,
-    appointmentId: apt.id,
-    appointmentTime: `${apt.appointmentDate} ${apt.appointmentTime}`,
-  }));
+  // Phân bố trạng thái cho appointments: 15% PENDING_CHECKIN, 25% PENDING_EXAMINATION, 20% IN_EXAMINATION, 
+  // 15% WAITING_TESTS, 10% WAITING_DOCTOR_REVIEW, 10% COMPLETED_EXAMINATION, 5% RETURNED
+  const statusDistribution: Array<{ status: MedicalRecord['status']; weight: number }> = [
+    { status: 'PENDING_CHECKIN', weight: 0.15 },
+    { status: 'PENDING_EXAMINATION', weight: 0.25 },
+    { status: 'IN_EXAMINATION', weight: 0.20 },
+    { status: 'WAITING_TESTS', weight: 0.15 },
+    { status: 'WAITING_DOCTOR_REVIEW', weight: 0.10 },
+    { status: 'COMPLETED_EXAMINATION', weight: 0.10 },
+    { status: 'RETURNED', weight: 0.05 },
+  ];
+
+  const getStatusForIndex = (index: number): MedicalRecord['status'] => {
+    // Create a shuffled pattern for better distribution
+    // Use a pseudo-random function based on index to create deterministic but well-distributed results
+    const seed = (index * 17 + 23) % 100; // 0-99
+    let cumulative = 0;
+    for (const item of statusDistribution) {
+      cumulative += item.weight * 100;
+      if (seed < cumulative) {
+        return item.status;
+      }
+    }
+    return 'PENDING_EXAMINATION'; // fallback
+  };
+
+  // Create records from appointments with mixed statuses
+  const appointmentRecords: MedicalRecord[] = mockAppointments.map((apt, index) => {
+    const status = getStatusForIndex(index);
+    const createdAt = new Date(`${apt.appointmentDate}T${apt.appointmentTime}`);
+    const updatedAt = new Date(createdAt);
+    
+    // Adjust timestamps based on status to make it realistic
+    if (status === 'PENDING_CHECKIN') {
+      // Recent appointments
+      updatedAt.setTime(createdAt.getTime());
+    } else if (status === 'PENDING_EXAMINATION') {
+      // Checked in, waiting for doctor
+      updatedAt.setTime(createdAt.getTime() + 15 * 60000); // 15 minutes later
+    } else if (status === 'IN_EXAMINATION') {
+      // Currently being examined
+      updatedAt.setTime(createdAt.getTime() + 30 * 60000); // 30 minutes later
+    } else if (status === 'WAITING_TESTS') {
+      // Waiting for test results
+      updatedAt.setTime(createdAt.getTime() + 60 * 60000); // 1 hour later
+    } else if (status === 'WAITING_DOCTOR_REVIEW') {
+      // Tests done, waiting for doctor review
+      updatedAt.setTime(createdAt.getTime() + 90 * 60000); // 1.5 hours later
+    } else if (status === 'COMPLETED_EXAMINATION') {
+      // Completed
+      updatedAt.setTime(createdAt.getTime() + 120 * 60000); // 2 hours later
+    } else if (status === 'RETURNED') {
+      // Returned to patient
+      updatedAt.setTime(createdAt.getTime() + 150 * 60000); // 2.5 hours later
+    }
+
+    const baseRecord: MedicalRecord = {
+      id: `apt_${apt.id}`,
+      receiveCode: apt.code.replace('LH', 'RC'),
+      patient: {
+        id: `p_apt_${index}`,
+        fullName: apt.patientName,
+        phoneNumber: apt.phoneNumber,
+        dateOfBirth: apt.dateOfBirth,
+        gender: apt.gender,
+      },
+      reason: apt.reason,
+      requestedServices: apt.services,
+      status,
+      assignedDoctor: {
+        id: apt.doctorId,
+        name: apt.doctor,
+        specialty: mockDoctors.find(d => d.id === apt.doctorId)?.specialty || 'Tổng quát',
+      },
+      createdAt: createdAt.toISOString(),
+      updatedAt: updatedAt.toISOString(),
+      paymentStatus: status === 'RETURNED' || status === 'COMPLETED_EXAMINATION' ? 'completed' : 
+                     status === 'WAITING_TESTS' || status === 'IN_EXAMINATION' ? 'partial' : 'pending',
+      totalAmount: Math.floor(((index * 37 + 41) % 500000) + 200000), // Deterministic random
+      paidAmount: 0,
+      appointmentId: apt.id,
+      appointmentTime: `${apt.appointmentDate} ${apt.appointmentTime}`,
+    };
+
+    // Add diagnosis for completed or in-progress records
+    if (status === 'IN_EXAMINATION' || status === 'WAITING_TESTS' || 
+        status === 'WAITING_DOCTOR_REVIEW' || status === 'COMPLETED_EXAMINATION' || status === 'RETURNED') {
+      baseRecord.diagnosis = 'Đang chẩn đoán...';
+      if (status === 'COMPLETED_EXAMINATION' || status === 'RETURNED') {
+        baseRecord.diagnosis = 'Chẩn đoán hoàn tất, đã kê đơn thuốc';
+        baseRecord.paidAmount = baseRecord.totalAmount || 0;
+      } else if (status === 'WAITING_TESTS' || status === 'WAITING_DOCTOR_REVIEW') {
+        baseRecord.paidAmount = Math.floor((baseRecord.totalAmount || 0) * 0.5);
+      } else if (status === 'IN_EXAMINATION') {
+        baseRecord.paidAmount = Math.floor((baseRecord.totalAmount || 0) * 0.3);
+      }
+    }
+
+    if (status === 'RETURNED') {
+      baseRecord.signature = 'data:image/png;base64,signature_data';
+      baseRecord.returnedAt = updatedAt.toISOString();
+    }
+
+    return baseRecord;
+  });
 
   const records: MedicalRecord[] = [
     {
@@ -305,6 +383,166 @@ export const generateMockTestOrders = (): TestOrder[] => {
       completedBy: 'KTV. Nguyễn Thị Hoa',
     },
   ];
+};
+
+// Mock medications database
+const commonMedications: Array<{
+  name: string;
+  dosage: string;
+  frequency: string[];
+  duration: string[];
+  unit: string;
+  instructions?: string;
+}> = [
+  // Kháng sinh
+  { name: 'Amoxicillin', dosage: '500mg', frequency: ['3 lần/ngày', '2 lần/ngày'], duration: ['7 ngày', '10 ngày'], unit: 'viên', instructions: 'Uống sau ăn' },
+  { name: 'Azithromycin', dosage: '500mg', frequency: ['1 lần/ngày'], duration: ['3 ngày', '5 ngày'], unit: 'viên', instructions: 'Uống trước ăn 1 giờ' },
+  { name: 'Cefuroxime', dosage: '250mg', frequency: ['2 lần/ngày'], duration: ['7 ngày'], unit: 'viên', instructions: 'Uống sau ăn' },
+  { name: 'Ciprofloxacin', dosage: '500mg', frequency: ['2 lần/ngày'], duration: ['7 ngày', '10 ngày'], unit: 'viên', instructions: 'Uống nhiều nước' },
+  
+  // Giảm đau, hạ sốt
+  { name: 'Paracetamol', dosage: '500mg', frequency: ['3-4 lần/ngày', 'Khi sốt/đau'], duration: ['3 ngày', '5 ngày'], unit: 'viên', instructions: 'Cách nhau ít nhất 4-6 giờ' },
+  { name: 'Ibuprofen', dosage: '400mg', frequency: ['3 lần/ngày'], duration: ['3 ngày', '5 ngày'], unit: 'viên', instructions: 'Uống sau ăn' },
+  
+  // Chống viêm
+  { name: 'Diclofenac', dosage: '50mg', frequency: ['2-3 lần/ngày'], duration: ['5 ngày', '7 ngày'], unit: 'viên', instructions: 'Uống sau ăn' },
+  { name: 'Prednisolone', dosage: '5mg', frequency: ['1-2 lần/ngày'], duration: ['5 ngày', '7 ngày'], unit: 'viên', instructions: 'Uống sau ăn sáng' },
+  
+  // Dạ dày
+  { name: 'Omeprazole', dosage: '20mg', frequency: ['1 lần/ngày'], duration: ['7 ngày', '14 ngày'], unit: 'viên', instructions: 'Uống trước ăn sáng 30 phút' },
+  { name: 'Ranitidine', dosage: '150mg', frequency: ['2 lần/ngày'], duration: ['7 ngày', '14 ngày'], unit: 'viên', instructions: 'Uống trước ăn' },
+  
+  // Ho
+  { name: 'Codein', dosage: '15mg', frequency: ['3 lần/ngày'], duration: ['5 ngày'], unit: 'viên', instructions: 'Uống sau ăn' },
+  { name: 'Dextromethorphan', dosage: '15mg', frequency: ['3 lần/ngày'], duration: ['5 ngày'], unit: 'viên', instructions: 'Uống sau ăn' },
+  
+  // Cảm cúm
+  { name: 'Chlorpheniramine', dosage: '4mg', frequency: ['3 lần/ngày'], duration: ['5 ngày'], unit: 'viên', instructions: 'Có thể gây buồn ngủ' },
+  { name: 'Pseudoephedrine', dosage: '60mg', frequency: ['3 lần/ngày'], duration: ['5 ngày'], unit: 'viên', instructions: 'Uống sau ăn' },
+  
+  // Vitamin
+  { name: 'Vitamin C', dosage: '1000mg', frequency: ['1 lần/ngày'], duration: ['7 ngày', '10 ngày'], unit: 'viên', instructions: 'Uống sau ăn' },
+  { name: 'Vitamin D3', dosage: '2000 IU', frequency: ['1 lần/ngày'], duration: ['30 ngày'], unit: 'viên', instructions: 'Uống sau ăn sáng' },
+  { name: 'Vitamin B Complex', dosage: '1 viên', frequency: ['1 lần/ngày'], duration: ['30 ngày'], unit: 'viên', instructions: 'Uống sau ăn' },
+  
+  // Tim mạch
+  { name: 'Amlodipine', dosage: '5mg', frequency: ['1 lần/ngày'], duration: ['30 ngày'], unit: 'viên', instructions: 'Uống vào buổi sáng' },
+  { name: 'Atenolol', dosage: '50mg', frequency: ['1 lần/ngày'], duration: ['30 ngày'], unit: 'viên', instructions: 'Uống vào buổi sáng' },
+  
+  // Da liễu
+  { name: 'Hydrocortisone cream', dosage: '1%', frequency: ['2 lần/ngày'], duration: ['7 ngày'], unit: 'tuýp', instructions: 'Bôi mỏng lên vùng da bị tổn thương' },
+  { name: 'Clotrimazole cream', dosage: '1%', frequency: ['2 lần/ngày'], duration: ['7 ngày', '14 ngày'], unit: 'tuýp', instructions: 'Bôi sạch vùng da' },
+  
+  // Mắt
+  { name: 'Chloramphenicol eye drops', dosage: '0.5%', frequency: ['3-4 lần/ngày'], duration: ['7 ngày'], unit: 'chai', instructions: 'Nhỏ mắt, mỗi lần 1-2 giọt' },
+  { name: 'Tobramycin eye drops', dosage: '0.3%', frequency: ['3-4 lần/ngày'], duration: ['7 ngày'], unit: 'chai', instructions: 'Nhỏ mắt, mỗi lần 1-2 giọt' },
+];
+
+// Helper functions for deterministic random
+const seededRandom = (seed: number): number => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+const randomElement = <T>(array: T[], seed: number): T => {
+  const index = Math.floor(seededRandom(seed) * array.length);
+  return array[index];
+};
+
+const randomInt = (min: number, max: number, seed: number): number => {
+  return Math.floor(seededRandom(seed) * (max - min + 1)) + min;
+};
+
+// Generate mock treatment plans for records
+export const generateMockTreatmentPlans = (records: MedicalRecord[]): TreatmentPlan[] => {
+  const treatmentPlans: TreatmentPlan[] = [];
+  
+  // Only create treatment plans for records that have been examined
+  const examinedRecords = records.filter(r => 
+    r.status === 'COMPLETED_EXAMINATION' || 
+    r.status === 'RETURNED' || 
+    r.status === 'WAITING_DOCTOR_REVIEW' ||
+    (r.diagnosis && r.diagnosis !== 'Đang chẩn đoán...')
+  );
+  
+  examinedRecords.forEach((record, index) => {
+    // Use record ID as seed for deterministic results
+    const seedBase = parseInt(record.id.replace(/\D/g, '')) || index;
+    
+    // Determine number of medications (1-4 medications)
+    const numMedications = randomInt(1, 4, seedBase);
+    const medications: Medication[] = [];
+    
+    // Select random medications
+    const selectedMedNames = new Set<string>();
+    for (let i = 0; i < numMedications; i++) {
+      let med;
+      let attempts = 0;
+      const seed = seedBase * 17 + i * 23;
+      do {
+        med = randomElement(commonMedications, seed + attempts);
+        attempts++;
+      } while (selectedMedNames.has(med.name) && attempts < 20);
+      
+      if (med && !selectedMedNames.has(med.name)) {
+        selectedMedNames.add(med.name);
+        const frequency = randomElement(med.frequency, seed + 100);
+        const duration = randomElement(med.duration, seed + 200);
+        const quantity = randomInt(10, 30, seed + 300);
+        
+        medications.push({
+          id: `med_${record.id}_${i}`,
+          name: med.name,
+          dosage: med.dosage,
+          frequency,
+          duration,
+          quantity,
+          unit: med.unit,
+          instructions: med.instructions,
+        });
+      }
+    }
+    
+    // Generate instructions based on diagnosis/reason
+    let instructions = '';
+    if (record.reason.includes('ho') || record.reason.includes('cảm')) {
+      instructions = 'Nghỉ ngơi đầy đủ, uống nhiều nước, tránh lạnh. Nếu sốt cao hoặc ho kéo dài, tái khám ngay.';
+    } else if (record.reason.includes('đau') || record.reason.includes('viêm')) {
+      instructions = 'Uống thuốc đúng liều, đúng giờ. Nếu đau tăng hoặc có dấu hiệu bất thường, tái khám ngay.';
+    } else if (record.reason.includes('dạ dày') || record.reason.includes('tiêu hóa')) {
+      instructions = 'Uống thuốc trước ăn, tránh thức ăn cay nóng, rượu bia. Ăn uống điều độ, đúng giờ.';
+    } else {
+      instructions = 'Uống thuốc đúng liều, đúng giờ theo chỉ định. Nếu có phản ứng bất thường, ngừng thuốc và tái khám.';
+    }
+    
+    // Generate follow-up date (7-14 days from now)
+    const followUpDays = randomInt(7, 14, seedBase + 400);
+    const followUpDate = new Date();
+    followUpDate.setDate(followUpDate.getDate() + followUpDays);
+    
+    const followUpInstructions = 'Tái khám để đánh giá kết quả điều trị và điều chỉnh phác đồ nếu cần.';
+    
+    // Generate notes
+    const notes = `Phác đồ điều trị cho ${record.patient.fullName}. Theo dõi diễn biến và tái khám đúng hẹn.`;
+    
+    const treatmentPlan: TreatmentPlan = {
+      id: `tp_${record.id}`,
+      recordId: record.id,
+      createdAt: record.updatedAt || record.createdAt,
+      createdBy: record.assignedDoctor?.name || 'Bác sĩ',
+      medications,
+      instructions,
+      followUpDate: followUpDate.toISOString(),
+      followUpInstructions,
+      notes,
+      status: record.status === 'RETURNED' ? 'completed' : 'active',
+      updatedAt: record.updatedAt || record.createdAt,
+    };
+    
+    treatmentPlans.push(treatmentPlan);
+  });
+  
+  return treatmentPlans;
 };
 
 // Mock ai stats

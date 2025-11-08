@@ -1,0 +1,5 @@
+﻿id,username,fullName,role,email,specialty
+admin1,admin,Nguyễn Văn Quản,admin,admin@gmail.com,
+rec1,letan,Nguyễn Thị Lan,receptionist,letan@gmail.com,
+doc1,bacsi,BS. Nguyễn Văn An,doctor,bacsi@gmail.com,Nội khoa
+tech1,dieuduong,Nguyễn Thị Hoa,nurse,dieuduong@gmail.com,

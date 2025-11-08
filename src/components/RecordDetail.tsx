@@ -2,7 +2,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { MedicalRecord, TestOrder, RecordStatus } from '../types';
+import {
+	MedicalRecord,
+	TestOrder,
+	TreatmentPlan,
+	RecordStatus,
+} from '../types';
 import {
 	User,
 	Stethoscope,
@@ -12,10 +17,12 @@ import {
 	DollarSign,
 	Clock,
 } from 'lucide-react';
+import { TreatmentPlanManager } from './TreatmentPlanManager';
 
 interface RecordDetailProps {
 	record: MedicalRecord | null;
 	testOrders: TestOrder[];
+	treatmentPlans: TreatmentPlan[];
 	onClose: () => void;
 }
 
@@ -42,11 +49,15 @@ const statusColors: Record<RecordStatus, string> = {
 export function RecordDetail({
 	record,
 	testOrders,
+	treatmentPlans,
 	onClose,
 }: RecordDetailProps) {
 	if (!record) return null;
 
 	const recordTestOrders = testOrders.filter((t) => t.recordId === record.id);
+	const recordTreatmentPlan = treatmentPlans.find(
+		(tp) => tp.recordId === record.id,
+	);
 
 	const formatDate = (dateString: string) => {
 		return new Date(dateString).toLocaleString('vi-VN', {
@@ -196,6 +207,17 @@ export function RecordDetail({
 							)}
 						</CardContent>
 					</Card>
+
+					{/* Treatment Plan */}
+					{recordTreatmentPlan && (
+						<TreatmentPlanManager
+							recordId={record.id}
+							doctorName={record.assignedDoctor?.name || 'Bác sĩ'}
+							treatmentPlan={recordTreatmentPlan}
+							onSave={() => {}}
+							readOnly={true}
+						/>
+					)}
 
 					{/* Test Orders */}
 					{recordTestOrders.length > 0 && (

@@ -21,6 +21,8 @@ import { Label } from './ui/label';
 import { toast } from 'sonner@2.0.3';
 import { TestOrder } from '../types';
 import { Microscope, Upload, Plus, X } from 'lucide-react';
+import { usePagination } from '../hooks/usePagination';
+import { PaginationControls } from './PaginationControls';
 
 interface TechnicianWorkspaceProps {
 	testOrders: TestOrder[];
@@ -63,6 +65,20 @@ export function TechnicianWorkspace({
 	const activeOrders = testOrders.filter(
 		(order) => order.status === 'pending' || order.status === 'in_progress',
 	);
+
+	const [itemsPerPage, setItemsPerPage] = useState(10);
+	const {
+		currentPage,
+		totalPages,
+		paginatedData: paginatedOrders,
+		totalItems,
+		startIndex,
+		endIndex,
+		goToPage,
+	} = usePagination({
+		data: activeOrders,
+		itemsPerPage,
+	});
 
 	const handleStartTest = (order: TestOrder) => {
 		onUpdateTestOrder(order.id, { status: 'in_progress' });
@@ -141,13 +157,14 @@ export function TechnicianWorkspace({
 				</CardHeader>
 				<CardContent>
 					<div className="space-y-4">
-						{activeOrders.length === 0 ? (
+						{totalItems === 0 ? (
 							<div className="text-center py-8 text-gray-500">
 								Không có phiếu xét nghiệm nào cần thực hiện
 							</div>
 						) : (
-							<div className="space-y-3">
-								{activeOrders.map((order) => (
+							<>
+								<div className="space-y-3">
+									{paginatedOrders.map((order) => (
 									<div
 										key={order.id}
 										className="p-4 border rounded-lg border-gray-200"
@@ -191,8 +208,19 @@ export function TechnicianWorkspace({
 											</div>
 										</div>
 									</div>
-								))}
-							</div>
+									))}
+								</div>
+								<PaginationControls
+									currentPage={currentPage}
+									totalPages={totalPages}
+									totalItems={totalItems}
+									itemsPerPage={itemsPerPage}
+									startIndex={startIndex}
+									endIndex={endIndex}
+									onPageChange={goToPage}
+									onItemsPerPageChange={setItemsPerPage}
+								/>
+							</>
 						)}
 					</div>
 				</CardContent>

@@ -1,0 +1,131 @@
+﻿id,treatmentPlanId,recordId,name,dosage,frequency,duration,quantity,unit,instructions
+med_apt_apt005_0,tp_apt_apt005,apt_apt005,Ibuprofen,400mg,3 lần/ngày,5 ngày,15,viên,Uống sau ăn
+med_apt_apt005_1,tp_apt_apt005,apt_apt005,Paracetamol,500mg,Khi sốt/đau,3 ngày,10,viên,Cách nhau ít nhất 4-6 giờ
+med_apt_apt005_2,tp_apt_apt005,apt_apt005,Tobramycin eye drops,0.3%,3-4 lần/ngày,7 ngày,24,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_apt_apt005_3,tp_apt_apt005,apt_apt005,Atenolol,50mg,1 lần/ngày,30 ngày,11,viên,Uống vào buổi sáng
+med_apt_apt010_0,tp_apt_apt010,apt_apt010,Dextromethorphan,15mg,3 lần/ngày,5 ngày,25,viên,Uống sau ăn
+med_apt_apt010_1,tp_apt_apt010,apt_apt010,Ranitidine,150mg,2 lần/ngày,7 ngày,14,viên,Uống trước ăn
+med_apt_apt010_2,tp_apt_apt010,apt_apt010,Pseudoephedrine,60mg,3 lần/ngày,5 ngày,16,viên,Uống sau ăn
+med_apt_apt010_3,tp_apt_apt010,apt_apt010,Clotrimazole cream,1%,2 lần/ngày,7 ngày,14,tuýp,Bôi sạch vùng da
+med_apt_apt011_0,tp_apt_apt011,apt_apt011,Diclofenac,50mg,2-3 lần/ngày,5 ngày,28,viên,Uống sau ăn
+med_apt_apt016_0,tp_apt_apt016,apt_apt016,Pseudoephedrine,60mg,3 lần/ngày,5 ngày,12,viên,Uống sau ăn
+med_apt_apt016_1,tp_apt_apt016,apt_apt016,Paracetamol,500mg,3-4 lần/ngày,5 ngày,19,viên,Cách nhau ít nhất 4-6 giờ
+med_apt_apt016_2,tp_apt_apt016,apt_apt016,Omeprazole,20mg,1 lần/ngày,14 ngày,15,viên,Uống trước ăn sáng 30 phút
+med_apt_apt016_3,tp_apt_apt016,apt_apt016,Amoxicillin,500mg,2 lần/ngày,7 ngày,19,viên,Uống sau ăn
+med_apt_apt017_0,tp_apt_apt017,apt_apt017,Atenolol,50mg,1 lần/ngày,30 ngày,27,viên,Uống vào buổi sáng
+med_apt_apt022_0,tp_apt_apt022,apt_apt022,Chloramphenicol eye drops,0.5%,3-4 lần/ngày,7 ngày,24,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_apt_apt022_1,tp_apt_apt022,apt_apt022,Prednisolone,5mg,1-2 lần/ngày,5 ngày,28,viên,Uống sau ăn sáng
+med_apt_apt023_0,tp_apt_apt023,apt_apt023,Hydrocortisone cream,1%,2 lần/ngày,7 ngày,27,tuýp,Bôi mỏng lên vùng da bị tổn thương
+med_apt_apt023_1,tp_apt_apt023,apt_apt023,Ranitidine,150mg,2 lần/ngày,7 ngày,22,viên,Uống trước ăn
+med_apt_apt023_2,tp_apt_apt023,apt_apt023,Diclofenac,50mg,2-3 lần/ngày,5 ngày,22,viên,Uống sau ăn
+med_apt_apt023_3,tp_apt_apt023,apt_apt023,Ibuprofen,400mg,3 lần/ngày,3 ngày,27,viên,Uống sau ăn
+med_apt_apt028_0,tp_apt_apt028,apt_apt028,Hydrocortisone cream,1%,2 lần/ngày,7 ngày,28,tuýp,Bôi mỏng lên vùng da bị tổn thương
+med_apt_apt029_0,tp_apt_apt029,apt_apt029,Ibuprofen,400mg,3 lần/ngày,5 ngày,26,viên,Uống sau ăn
+med_apt_apt029_1,tp_apt_apt029,apt_apt029,Diclofenac,50mg,2-3 lần/ngày,5 ngày,30,viên,Uống sau ăn
+med_apt_apt029_2,tp_apt_apt029,apt_apt029,Azithromycin,500mg,1 lần/ngày,3 ngày,24,viên,Uống trước ăn 1 giờ
+med_apt_apt034_0,tp_apt_apt034,apt_apt034,Amlodipine,5mg,1 lần/ngày,30 ngày,14,viên,Uống vào buổi sáng
+med_apt_apt034_1,tp_apt_apt034,apt_apt034,Ibuprofen,400mg,3 lần/ngày,3 ngày,22,viên,Uống sau ăn
+med_apt_apt034_2,tp_apt_apt034,apt_apt034,Omeprazole,20mg,1 lần/ngày,7 ngày,21,viên,Uống trước ăn sáng 30 phút
+med_apt_apt034_3,tp_apt_apt034,apt_apt034,Amoxicillin,500mg,3 lần/ngày,7 ngày,16,viên,Uống sau ăn
+med_apt_apt040_0,tp_apt_apt040,apt_apt040,Ranitidine,150mg,2 lần/ngày,7 ngày,12,viên,Uống trước ăn
+med_apt_apt046_0,tp_apt_apt046,apt_apt046,Vitamin C,1000mg,1 lần/ngày,7 ngày,14,viên,Uống sau ăn
+med_apt_apt046_1,tp_apt_apt046,apt_apt046,Azithromycin,500mg,1 lần/ngày,5 ngày,19,viên,Uống trước ăn 1 giờ
+med_apt_apt046_2,tp_apt_apt046,apt_apt046,Pseudoephedrine,60mg,3 lần/ngày,5 ngày,21,viên,Uống sau ăn
+med_apt_apt046_3,tp_apt_apt046,apt_apt046,Ciprofloxacin,500mg,2 lần/ngày,10 ngày,29,viên,Uống nhiều nước
+med_apt_apt052_0,tp_apt_apt052,apt_apt052,Ciprofloxacin,500mg,2 lần/ngày,7 ngày,14,viên,Uống nhiều nước
+med_apt_apt052_1,tp_apt_apt052,apt_apt052,Vitamin D3,2000 IU,1 lần/ngày,30 ngày,24,viên,Uống sau ăn sáng
+med_apt_apt057_0,tp_apt_apt057,apt_apt057,Amoxicillin,500mg,2 lần/ngày,7 ngày,24,viên,Uống sau ăn
+med_apt_apt057_1,tp_apt_apt057,apt_apt057,Chloramphenicol eye drops,0.5%,3-4 lần/ngày,7 ngày,26,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_apt_apt057_2,tp_apt_apt057,apt_apt057,Omeprazole,20mg,1 lần/ngày,7 ngày,11,viên,Uống trước ăn sáng 30 phút
+med_apt_apt058_0,tp_apt_apt058,apt_apt058,Vitamin D3,2000 IU,1 lần/ngày,30 ngày,14,viên,Uống sau ăn sáng
+med_apt_apt058_1,tp_apt_apt058,apt_apt058,Vitamin B Complex,1 viên,1 lần/ngày,30 ngày,29,viên,Uống sau ăn
+med_apt_apt058_2,tp_apt_apt058,apt_apt058,Ciprofloxacin,500mg,2 lần/ngày,7 ngày,14,viên,Uống nhiều nước
+med_apt_apt063_0,tp_apt_apt063,apt_apt063,Diclofenac,50mg,2-3 lần/ngày,5 ngày,28,viên,Uống sau ăn
+med_apt_apt063_1,tp_apt_apt063,apt_apt063,Amoxicillin,500mg,2 lần/ngày,7 ngày,14,viên,Uống sau ăn
+med_apt_apt063_2,tp_apt_apt063,apt_apt063,Clotrimazole cream,1%,2 lần/ngày,7 ngày,22,tuýp,Bôi sạch vùng da
+med_apt_apt064_0,tp_apt_apt064,apt_apt064,Vitamin D3,2000 IU,1 lần/ngày,30 ngày,25,viên,Uống sau ăn sáng
+med_apt_apt064_1,tp_apt_apt064,apt_apt064,Dextromethorphan,15mg,3 lần/ngày,5 ngày,25,viên,Uống sau ăn
+med_apt_apt069_0,tp_apt_apt069,apt_apt069,Codein,15mg,3 lần/ngày,5 ngày,13,viên,Uống sau ăn
+med_apt_apt070_0,tp_apt_apt070,apt_apt070,Vitamin D3,2000 IU,1 lần/ngày,30 ngày,24,viên,Uống sau ăn sáng
+med_apt_apt070_1,tp_apt_apt070,apt_apt070,Paracetamol,500mg,3-4 lần/ngày,3 ngày,21,viên,Cách nhau ít nhất 4-6 giờ
+med_apt_apt070_2,tp_apt_apt070,apt_apt070,Clotrimazole cream,1%,2 lần/ngày,14 ngày,19,tuýp,Bôi sạch vùng da
+med_apt_apt070_3,tp_apt_apt070,apt_apt070,Ibuprofen,400mg,3 lần/ngày,3 ngày,24,viên,Uống sau ăn
+med_apt_apt075_0,tp_apt_apt075,apt_apt075,Vitamin C,1000mg,1 lần/ngày,7 ngày,16,viên,Uống sau ăn
+med_apt_apt076_0,tp_apt_apt076,apt_apt076,Atenolol,50mg,1 lần/ngày,30 ngày,25,viên,Uống vào buổi sáng
+med_apt_apt081_0,tp_apt_apt081,apt_apt081,Ranitidine,150mg,2 lần/ngày,14 ngày,18,viên,Uống trước ăn
+med_apt_apt087_0,tp_apt_apt087,apt_apt087,Codein,15mg,3 lần/ngày,5 ngày,10,viên,Uống sau ăn
+med_apt_apt087_1,tp_apt_apt087,apt_apt087,Ranitidine,150mg,2 lần/ngày,7 ngày,24,viên,Uống trước ăn
+med_apt_apt087_2,tp_apt_apt087,apt_apt087,Omeprazole,20mg,1 lần/ngày,14 ngày,16,viên,Uống trước ăn sáng 30 phút
+med_apt_apt087_3,tp_apt_apt087,apt_apt087,Chlorpheniramine,4mg,3 lần/ngày,5 ngày,27,viên,Có thể gây buồn ngủ
+med_apt_apt093_0,tp_apt_apt093,apt_apt093,Azithromycin,500mg,1 lần/ngày,5 ngày,18,viên,Uống trước ăn 1 giờ
+med_apt_apt099_0,tp_apt_apt099,apt_apt099,Diclofenac,50mg,2-3 lần/ngày,5 ngày,12,viên,Uống sau ăn
+med_apt_apt099_1,tp_apt_apt099,apt_apt099,Vitamin D3,2000 IU,1 lần/ngày,30 ngày,24,viên,Uống sau ăn sáng
+med_apt_apt099_2,tp_apt_apt099,apt_apt099,Chlorpheniramine,4mg,3 lần/ngày,5 ngày,17,viên,Có thể gây buồn ngủ
+med_apt_apt099_3,tp_apt_apt099,apt_apt099,Pseudoephedrine,60mg,3 lần/ngày,5 ngày,23,viên,Uống sau ăn
+med_apt_apt105_0,tp_apt_apt105,apt_apt105,Codein,15mg,3 lần/ngày,5 ngày,29,viên,Uống sau ăn
+med_apt_apt105_1,tp_apt_apt105,apt_apt105,Clotrimazole cream,1%,2 lần/ngày,7 ngày,24,tuýp,Bôi sạch vùng da
+med_apt_apt105_2,tp_apt_apt105,apt_apt105,Ibuprofen,400mg,3 lần/ngày,3 ngày,24,viên,Uống sau ăn
+med_apt_apt110_0,tp_apt_apt110,apt_apt110,Diclofenac,50mg,2-3 lần/ngày,5 ngày,29,viên,Uống sau ăn
+med_apt_apt110_1,tp_apt_apt110,apt_apt110,Ibuprofen,400mg,3 lần/ngày,5 ngày,17,viên,Uống sau ăn
+med_apt_apt110_2,tp_apt_apt110,apt_apt110,Vitamin D3,2000 IU,1 lần/ngày,30 ngày,25,viên,Uống sau ăn sáng
+med_apt_apt111_0,tp_apt_apt111,apt_apt111,Diclofenac,50mg,2-3 lần/ngày,7 ngày,15,viên,Uống sau ăn
+med_apt_apt111_1,tp_apt_apt111,apt_apt111,Atenolol,50mg,1 lần/ngày,30 ngày,29,viên,Uống vào buổi sáng
+med_apt_apt116_0,tp_apt_apt116,apt_apt116,Hydrocortisone cream,1%,2 lần/ngày,7 ngày,22,tuýp,Bôi mỏng lên vùng da bị tổn thương
+med_apt_apt116_1,tp_apt_apt116,apt_apt116,Dextromethorphan,15mg,3 lần/ngày,5 ngày,27,viên,Uống sau ăn
+med_apt_apt116_2,tp_apt_apt116,apt_apt116,Amlodipine,5mg,1 lần/ngày,30 ngày,17,viên,Uống vào buổi sáng
+med_apt_apt117_0,tp_apt_apt117,apt_apt117,Pseudoephedrine,60mg,3 lần/ngày,5 ngày,22,viên,Uống sau ăn
+med_apt_apt122_0,tp_apt_apt122,apt_apt122,Azithromycin,500mg,1 lần/ngày,3 ngày,21,viên,Uống trước ăn 1 giờ
+med_apt_apt123_0,tp_apt_apt123,apt_apt123,Chlorpheniramine,4mg,3 lần/ngày,5 ngày,19,viên,Có thể gây buồn ngủ
+med_apt_apt123_1,tp_apt_apt123,apt_apt123,Diclofenac,50mg,2-3 lần/ngày,5 ngày,14,viên,Uống sau ăn
+med_apt_apt123_2,tp_apt_apt123,apt_apt123,Ibuprofen,400mg,3 lần/ngày,5 ngày,26,viên,Uống sau ăn
+med_apt_apt123_3,tp_apt_apt123,apt_apt123,Tobramycin eye drops,0.3%,3-4 lần/ngày,7 ngày,18,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_apt_apt128_0,tp_apt_apt128,apt_apt128,Cefuroxime,250mg,2 lần/ngày,7 ngày,12,viên,Uống sau ăn
+med_apt_apt128_1,tp_apt_apt128,apt_apt128,Chloramphenicol eye drops,0.5%,3-4 lần/ngày,7 ngày,23,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_apt_apt129_0,tp_apt_apt129,apt_apt129,Prednisolone,5mg,1-2 lần/ngày,7 ngày,25,viên,Uống sau ăn sáng
+med_apt_apt129_1,tp_apt_apt129,apt_apt129,Vitamin B Complex,1 viên,1 lần/ngày,30 ngày,19,viên,Uống sau ăn
+med_apt_apt134_0,tp_apt_apt134,apt_apt134,Tobramycin eye drops,0.3%,3-4 lần/ngày,7 ngày,13,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_apt_apt140_0,tp_apt_apt140,apt_apt140,Ciprofloxacin,500mg,2 lần/ngày,10 ngày,18,viên,Uống nhiều nước
+med_apt_apt140_1,tp_apt_apt140,apt_apt140,Diclofenac,50mg,2-3 lần/ngày,5 ngày,29,viên,Uống sau ăn
+med_apt_apt146_0,tp_apt_apt146,apt_apt146,Diclofenac,50mg,2-3 lần/ngày,5 ngày,21,viên,Uống sau ăn
+med_apt_apt146_1,tp_apt_apt146,apt_apt146,Vitamin D3,2000 IU,1 lần/ngày,30 ngày,23,viên,Uống sau ăn sáng
+med_apt_apt146_2,tp_apt_apt146,apt_apt146,Pseudoephedrine,60mg,3 lần/ngày,5 ngày,26,viên,Uống sau ăn
+med_apt_apt152_0,tp_apt_apt152,apt_apt152,Tobramycin eye drops,0.3%,3-4 lần/ngày,7 ngày,19,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_apt_apt157_0,tp_apt_apt157,apt_apt157,Vitamin C,1000mg,1 lần/ngày,10 ngày,28,viên,Uống sau ăn
+med_apt_apt157_1,tp_apt_apt157,apt_apt157,Azithromycin,500mg,1 lần/ngày,5 ngày,11,viên,Uống trước ăn 1 giờ
+med_apt_apt157_2,tp_apt_apt157,apt_apt157,Diclofenac,50mg,2-3 lần/ngày,5 ngày,12,viên,Uống sau ăn
+med_apt_apt158_0,tp_apt_apt158,apt_apt158,Atenolol,50mg,1 lần/ngày,30 ngày,28,viên,Uống vào buổi sáng
+med_apt_apt163_0,tp_apt_apt163,apt_apt163,Ibuprofen,400mg,3 lần/ngày,3 ngày,18,viên,Uống sau ăn
+med_apt_apt163_1,tp_apt_apt163,apt_apt163,Azithromycin,500mg,1 lần/ngày,3 ngày,27,viên,Uống trước ăn 1 giờ
+med_apt_apt163_2,tp_apt_apt163,apt_apt163,Chloramphenicol eye drops,0.5%,3-4 lần/ngày,7 ngày,12,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_apt_apt163_3,tp_apt_apt163,apt_apt163,Ranitidine,150mg,2 lần/ngày,7 ngày,18,viên,Uống trước ăn
+med_apt_apt164_0,tp_apt_apt164,apt_apt164,Prednisolone,5mg,1-2 lần/ngày,5 ngày,13,viên,Uống sau ăn sáng
+med_apt_apt164_1,tp_apt_apt164,apt_apt164,Chlorpheniramine,4mg,3 lần/ngày,5 ngày,25,viên,Có thể gây buồn ngủ
+med_apt_apt169_0,tp_apt_apt169,apt_apt169,Azithromycin,500mg,1 lần/ngày,3 ngày,14,viên,Uống trước ăn 1 giờ
+med_apt_apt170_0,tp_apt_apt170,apt_apt170,Pseudoephedrine,60mg,3 lần/ngày,5 ngày,30,viên,Uống sau ăn
+med_apt_apt170_1,tp_apt_apt170,apt_apt170,Dextromethorphan,15mg,3 lần/ngày,5 ngày,11,viên,Uống sau ăn
+med_apt_apt175_0,tp_apt_apt175,apt_apt175,Diclofenac,50mg,2-3 lần/ngày,5 ngày,13,viên,Uống sau ăn
+med_apt_apt175_1,tp_apt_apt175,apt_apt175,Vitamin B Complex,1 viên,1 lần/ngày,30 ngày,14,viên,Uống sau ăn
+med_apt_apt175_2,tp_apt_apt175,apt_apt175,Prednisolone,5mg,1-2 lần/ngày,7 ngày,21,viên,Uống sau ăn sáng
+med_apt_apt176_0,tp_apt_apt176,apt_apt176,Azithromycin,500mg,1 lần/ngày,5 ngày,19,viên,Uống trước ăn 1 giờ
+med_apt_apt176_1,tp_apt_apt176,apt_apt176,Cefuroxime,250mg,2 lần/ngày,7 ngày,24,viên,Uống sau ăn
+med_apt_apt176_2,tp_apt_apt176,apt_apt176,Atenolol,50mg,1 lần/ngày,30 ngày,16,viên,Uống vào buổi sáng
+med_apt_apt181_0,tp_apt_apt181,apt_apt181,Tobramycin eye drops,0.3%,3-4 lần/ngày,7 ngày,13,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_apt_apt181_1,tp_apt_apt181,apt_apt181,Vitamin C,1000mg,1 lần/ngày,7 ngày,28,viên,Uống sau ăn
+med_apt_apt187_0,tp_apt_apt187,apt_apt187,Chlorpheniramine,4mg,3 lần/ngày,5 ngày,20,viên,Có thể gây buồn ngủ
+med_apt_apt187_1,tp_apt_apt187,apt_apt187,Cefuroxime,250mg,2 lần/ngày,7 ngày,22,viên,Uống sau ăn
+med_apt_apt193_0,tp_apt_apt193,apt_apt193,Vitamin C,1000mg,1 lần/ngày,10 ngày,18,viên,Uống sau ăn
+med_apt_apt193_1,tp_apt_apt193,apt_apt193,Ciprofloxacin,500mg,2 lần/ngày,10 ngày,22,viên,Uống nhiều nước
+med_apt_apt199_0,tp_apt_apt199,apt_apt199,Hydrocortisone cream,1%,2 lần/ngày,7 ngày,13,tuýp,Bôi mỏng lên vùng da bị tổn thương
+med_2_0,tp_2,2,Hydrocortisone cream,1%,2 lần/ngày,7 ngày,25,tuýp,Bôi mỏng lên vùng da bị tổn thương
+med_2_1,tp_2,2,Vitamin C,1000mg,1 lần/ngày,7 ngày,13,viên,Uống sau ăn
+med_2_2,tp_2,2,Cefuroxime,250mg,2 lần/ngày,7 ngày,14,viên,Uống sau ăn
+med_2_3,tp_2,2,Clotrimazole cream,1%,2 lần/ngày,7 ngày,25,tuýp,Bôi sạch vùng da
+med_3_0,tp_3,3,Diclofenac,50mg,2-3 lần/ngày,5 ngày,13,viên,Uống sau ăn
+med_4_0,tp_4,4,Vitamin B Complex,1 viên,1 lần/ngày,30 ngày,11,viên,Uống sau ăn
+med_4_1,tp_4,4,Clotrimazole cream,1%,2 lần/ngày,7 ngày,27,tuýp,Bôi sạch vùng da
+med_4_2,tp_4,4,Atenolol,50mg,1 lần/ngày,30 ngày,27,viên,Uống vào buổi sáng
+med_4_3,tp_4,4,Hydrocortisone cream,1%,2 lần/ngày,7 ngày,18,tuýp,Bôi mỏng lên vùng da bị tổn thương
+med_5_0,tp_5,5,Ibuprofen,400mg,3 lần/ngày,5 ngày,15,viên,Uống sau ăn
+med_5_1,tp_5,5,Paracetamol,500mg,Khi sốt/đau,3 ngày,10,viên,Cách nhau ít nhất 4-6 giờ
+med_5_2,tp_5,5,Tobramycin eye drops,0.3%,3-4 lần/ngày,7 ngày,24,chai,"Nhỏ mắt, mỗi lần 1-2 giọt"
+med_5_3,tp_5,5,Atenolol,50mg,1 lần/ngày,30 ngày,11,viên,Uống vào buổi sáng
