@@ -128,10 +128,10 @@ export function RecordList({
 					<h2 className="text-2xl font-bold flex flex-col gap-2">
 						<div className="flex items-center gap-2">
 							<ClipboardList className="h-5 w-5" />
-							Danh sách hồ sơ
+							Danh sách khách hàng
 						</div>
 						<p className="text-gray-600 mt-1">
-							Quản lý, tra cứu và tiếp nhận hồ sơ bệnh nhân
+							Quản lý, tra cứu và tiếp nhận khách hàng
 						</p>
 					</h2>
 				</div>
@@ -147,7 +147,7 @@ export function RecordList({
 								className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/30"
 							>
 								<Plus className="h-4 w-4 mr-2" />
-								Tiếp nhận hồ sơ
+								Tiếp nhận khách hàng
 							</Button>
 						</motion.div>
 					)}
@@ -160,7 +160,7 @@ export function RecordList({
 						<div className="flex-1 relative">
 							<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
 							<Input
-								placeholder="Tìm kiếm theo mã hồ sơ, tên, số điện thoại..."
+								placeholder="Tìm kiếm theo mã khách hàng, tên, số điện thoại..."
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
 								className="pl-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
@@ -189,7 +189,7 @@ export function RecordList({
 						<Table>
 							<TableHeader>
 								<TableRow className="bg-gray-50/80 hover:bg-gray-50">
-									<TableHead>Mã hồ sơ</TableHead>
+									<TableHead>Mã khách hàng</TableHead>
 									<TableHead>Bệnh nhân</TableHead>
 									<TableHead>Ngày tiếp nhận</TableHead>
 									<TableHead>Dịch vụ</TableHead>
@@ -203,7 +203,7 @@ export function RecordList({
 										<TableCell colSpan={6} className="text-center py-12">
 											<div className="flex flex-col items-center gap-3 text-gray-500">
 												<FileText className="h-12 w-12 text-gray-300" />
-												<p>Không tìm thấy hồ sơ nào</p>
+												<p>Không tìm thấy khách hàng nào</p>
 												{canCreateRecord && (
 													<Button
 														onClick={() => setShowReceptionDialog(true)}
@@ -211,7 +211,7 @@ export function RecordList({
 														className="mt-2"
 													>
 														<Plus className="h-4 w-4 mr-2" />
-														Tiếp nhận hồ sơ mới
+														Tiếp nhận khách hàng mới
 													</Button>
 												)}
 											</div>
@@ -318,25 +318,11 @@ export function RecordList({
 			<Dialog open={showReceptionDialog} onOpenChange={setShowReceptionDialog}>
 				<DialogContent className="max-w-[95vw] lg:max-w-[90vw] xl:max-w-7xl max-h-[95vh] overflow-hidden p-0 gap-0 bg-gradient-to-br from-gray-50 to-white border-0 shadow-none">
 					<div className="overflow-y-auto max-h-[95vh]">
-						<DialogHeader className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6 shadow-xl">
-							<DialogTitle className="flex items-center gap-3 text-2xl">
-								<motion.div
-									initial={{ rotate: 0 }}
-									animate={{ rotate: 360 }}
-									transition={{ duration: 0.6 }}
-									className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl"
-								>
-									<Zap className="h-7 w-7 text-white" />
-								</motion.div>
-								<span>Tiếp nhận hồ sơ mới</span>
-							</DialogTitle>
-							<DialogDescription className="text-blue-100 text-base mt-2">
-								Chọn phương thức nhập thông tin bệnh nhân phù hợp để bắt đầu quy
-								trình khám chữa bệnh
-							</DialogDescription>
-						</DialogHeader>
 						<div className="p-6">
-							<ReceptionForm onSubmit={handleCreateRecord} />
+							<ReceptionForm
+								onSubmit={handleCreateRecord}
+								onClose={() => setShowReceptionDialog(false)}
+							/>
 						</div>
 					</div>
 				</DialogContent>

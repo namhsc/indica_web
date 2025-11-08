@@ -40,10 +40,10 @@ export const generateReceiveCode = (recordNumber: number): string => {
 export const getFunctionName = (tabId: string): string => {
 	const functionNames: Record<string, string> = {
 		ai: 'Trợ lý AI',
-		records: 'Hồ sơ',
+		records: 'Khách hàng',
 		doctor: 'Bác sĩ',
 		nurse: 'Điều dưỡng',
-		return: 'Trả hồ sơ',
+		return: 'Trả khách hàng',
 	};
 	return functionNames[tabId] || 'Hệ thống quản lý phòng khám đa khoa Indica';
 };

@@ -39,7 +39,7 @@ const navigationItems: NavigationItem[] = [
 	},
 	{
 		id: 'records',
-		label: 'Hồ sơ',
+		label: 'Khách hàng',
 		icon: FolderOpen,
 		roles: ['admin', 'receptionist', 'doctor', 'nurse'],
 	},
@@ -57,7 +57,7 @@ const navigationItems: NavigationItem[] = [
 	},
 	{
 		id: 'return',
-		label: 'Trả hồ sơ',
+		label: 'Trả khách hàng',
 		icon: FolderCheck,
 		roles: ['admin', 'receptionist'],
 	},

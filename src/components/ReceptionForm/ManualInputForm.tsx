@@ -257,7 +257,7 @@ export function ManualInputForm({
 					className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg"
 				>
 					<UserPlus className="h-5 w-5 mr-2" />
-					Tiếp nhận hồ sơ
+					Tiếp nhận khách hàng
 				</Button>
 			</form>
 		</>
