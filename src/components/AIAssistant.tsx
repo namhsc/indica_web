@@ -45,6 +45,7 @@ export function AIAssistant({
   // const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
+    console.log("isStreaming", isStreaming);
     if (!messagesAI.length) {
       setMessages([
         {
@@ -85,7 +86,6 @@ export function AIAssistant({
             content: displayText,
             type: (isUser ? "user" : "ai") as "user" | "ai",
             timestamp: new Date(content.created_at),
-            suggestions: aiConfig.suggestions,
           };
         }),
         // Thêm streaming message nếu đang streaming
@@ -93,8 +93,8 @@ export function AIAssistant({
           ? [
               {
                 id: "streaming",
-                text: streamingMessage,
-                sender: "ai" as const,
+                content: streamingMessage,
+                type: "ai",
                 timestamp: new Date(),
               },
             ]
@@ -102,28 +102,6 @@ export function AIAssistant({
       ]);
     }
   }, [messagesAI, streamingMessage, isStreaming]);
-
-  // const addUserMessage = (content: string) => {
-  //   const newMessage: Message = {
-  //     id: Date.now().toString(),
-  //     type: "user",
-  //     content,
-  //     timestamp: new Date(),
-  //   };
-  //   setMessages((prev) => [...prev, newMessage]);
-  // };
-
-  // const addAIMessage = (content: string, suggestions?: string[]) => {
-  //   setIsTyping(false);
-  //   const newMessage: Message = {
-  //     id: Date.now().toString(),
-  //     type: "ai",
-  //     content,
-  //     timestamp: new Date(),
-  //     suggestions,
-  //   };
-  //   setMessages((prev) => [...prev, newMessage]);
-  // };
 
   const sendMessage = (message: string) => {
     if (!message.trim()) return;
