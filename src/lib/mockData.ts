@@ -50,7 +50,7 @@ export const mockDoctors = [
   { id: 'doc31', name: 'BS. Phạm Thị Thảo', specialty: 'Chẩn đoán hình ảnh' },
 ];
 
-// Mock services
+// Mock services (deprecated - kept for backward compatibility)
 export const mockServices = [
   'Khám tổng quát',
   'Xét nghiệm máu',
@@ -60,6 +60,59 @@ export const mockServices = [
   'Chụp CT',
   'Chụp MRI',
   'Điện tim',
+];
+
+// Gói khám với các dịch vụ con
+export interface ExaminationPackage {
+  id: string;
+  name: string;
+  description?: string;
+  services: string[]; // Các dịch vụ con trong gói
+}
+
+export const mockExaminationPackages: ExaminationPackage[] = [
+  {
+    id: 'pkg1',
+    name: 'Gói khám sức khỏe tổng quát',
+    description: 'Khám sức khỏe định kỳ cơ bản',
+    services: ['Khám tổng quát', 'Xét nghiệm máu', 'Xét nghiệm nước tiểu', 'Điện tim'],
+  },
+  {
+    id: 'pkg2',
+    name: 'Gói khám tim mạch',
+    description: 'Chuyên sâu về tim mạch',
+    services: ['Khám tổng quát', 'Điện tim', 'Xét nghiệm máu', 'Siêu âm tim'],
+  },
+  {
+    id: 'pkg3',
+    name: 'Gói khám tiêu hóa',
+    description: 'Chẩn đoán các bệnh về tiêu hóa',
+    services: ['Khám tổng quát', 'Siêu âm bụng', 'Xét nghiệm máu', 'Xét nghiệm nước tiểu'],
+  },
+  {
+    id: 'pkg4',
+    name: 'Gói khám hình ảnh cơ bản',
+    description: 'Chẩn đoán hình ảnh cơ bản',
+    services: ['Chụp X-quang', 'Siêu âm'],
+  },
+  {
+    id: 'pkg5',
+    name: 'Gói khám hình ảnh nâng cao',
+    description: 'Chẩn đoán hình ảnh chuyên sâu',
+    services: ['Chụp CT', 'Chụp MRI', 'Siêu âm'],
+  },
+  {
+    id: 'pkg6',
+    name: 'Gói khám xét nghiệm đầy đủ',
+    description: 'Xét nghiệm toàn diện',
+    services: ['Xét nghiệm máu', 'Xét nghiệm nước tiểu', 'Xét nghiệm sinh hóa'],
+  },
+  {
+    id: 'pkg7',
+    name: 'Gói khám sức khỏe cao cấp',
+    description: 'Khám sức khỏe toàn diện',
+    services: ['Khám tổng quát', 'Xét nghiệm máu', 'Xét nghiệm nước tiểu', 'Chụp X-quang', 'Siêu âm', 'Điện tim'],
+  },
 ];
 
 // Generate mock medical records

@@ -23,7 +23,7 @@ import {
 } from './ui/command';
 import { toast } from 'sonner@2.0.3';
 import { MedicalRecord, Gender } from '../types';
-import { mockDoctors, mockServices } from '../lib/mockData';
+import { mockDoctors, mockExaminationPackages } from '../lib/mockData';
 import { mockExistingPatients } from '../lib/mockPatients';
 import administrativeData from '../administrative.json';
 import {
@@ -69,6 +69,8 @@ type InputMethod =
 	| 'insurance'
 	| 'group';
 
+type ExaminationType = 'specialty' | 'doctor' | 'package';
+
 export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 	const [inputMethod, setInputMethod] = useState<InputMethod>('manual');
 	const [formData, setFormData] = useState({
@@ -84,7 +86,8 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 		cccdNumber: '',
 		insurance: '',
 		reason: '',
-		selectedServices: [] as string[],
+		examinationType: 'specialty' as ExaminationType, // Loại khám mặc định: 'specialty' | 'doctor' | 'package'
+		selectedPackage: '', // ID của gói khám đã chọn (chỉ được chọn 1 gói)
 		assignedDoctorId: '',
 		specialty: '',
 	});
@@ -290,24 +293,55 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 		toast.success(`Đã load thông tin của ${patient.fullName}`);
 	};
 
-	const handleToggleService = (service: string) => {
+	const handleSelectPackage = (packageId: string) => {
 		setFormData({
 			...formData,
-			selectedServices: formData.selectedServices.includes(service)
-				? formData.selectedServices.filter((s) => s !== service)
-				: [...formData.selectedServices, service],
+			// Nếu chọn lại gói đã chọn thì bỏ chọn, nếu chọn gói khác thì thay thế
+			selectedPackage: formData.selectedPackage === packageId ? '' : packageId,
 		});
+	};
+
+	// Chuyển đổi gói khám đã chọn thành danh sách dịch vụ con
+	const getServicesFromPackage = (packageId: string): string[] => {
+		if (!packageId) return [];
+		const pkg = mockExaminationPackages.find((p) => p.id === packageId);
+		return pkg ? pkg.services : [];
 	};
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
-		if (
-			!formData.fullName ||
-			!formData.phoneNumber ||
-			formData.selectedServices.length === 0
+		// Validation theo loại khám
+		let isValid = true;
+		let errorMessage = 'Vui lòng điền đầy đủ thông tin bắt buộc';
+
+		if (!formData.fullName || !formData.phoneNumber) {
+			isValid = false;
+		} else if (!formData.examinationType) {
+			errorMessage = 'Vui lòng chọn loại khám';
+			isValid = false;
+		} else if (
+			formData.examinationType === 'package' &&
+			!formData.selectedPackage
 		) {
-			toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+			errorMessage = 'Vui lòng chọn gói khám';
+			isValid = false;
+		} else if (
+			formData.examinationType === 'specialty' &&
+			!formData.specialty
+		) {
+			errorMessage = 'Vui lòng chọn chuyên khoa';
+			isValid = false;
+		} else if (
+			formData.examinationType === 'doctor' &&
+			!formData.assignedDoctorId
+		) {
+			errorMessage = 'Vui lòng chọn bác sĩ';
+			isValid = false;
+		}
+
+		if (!isValid) {
+			toast.error(errorMessage);
 			return;
 		}
 
@@ -324,9 +358,44 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 		const fullAddress =
 			addressParts.length > 0 ? addressParts.join(', ') : formData.address;
 
-		const assignedDoctor = formData.assignedDoctorId
-			? mockDoctors.find((d) => d.id === formData.assignedDoctorId)
-			: undefined;
+		// Xác định bác sĩ và dịch vụ theo loại khám
+		let assignedDoctor:
+			| { id: string; name: string; specialty: string }
+			| undefined;
+		let requestedServices: string[] = [];
+
+		if (formData.examinationType === 'package') {
+			requestedServices = getServicesFromPackage(formData.selectedPackage);
+			// Có thể tự động gán bác sĩ dựa trên gói khám nếu cần
+		} else if (formData.examinationType === 'specialty') {
+			// Khám chuyên khoa - có thể có hoặc không có bác sĩ cụ thể
+			requestedServices = [`Khám ${formData.specialty}`];
+			if (formData.assignedDoctorId) {
+				const doctor = mockDoctors.find(
+					(d) => d.id === formData.assignedDoctorId,
+				);
+				if (doctor) {
+					assignedDoctor = {
+						id: doctor.id,
+						name: doctor.name,
+						specialty: doctor.specialty,
+					};
+				}
+			}
+		} else if (formData.examinationType === 'doctor') {
+			// Khám theo bác sĩ
+			const doctor = mockDoctors.find(
+				(d) => d.id === formData.assignedDoctorId,
+			);
+			if (doctor) {
+				assignedDoctor = {
+					id: doctor.id,
+					name: doctor.name,
+					specialty: doctor.specialty,
+				};
+				requestedServices = [`Khám ${doctor.specialty}`];
+			}
+		}
 
 		onSubmit({
 			patient: {
@@ -340,14 +409,8 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 				cccdNumber: formData.cccdNumber,
 				insurance: formData.insurance,
 			},
-			requestedServices: formData.selectedServices,
-			assignedDoctor: assignedDoctor
-				? {
-						id: assignedDoctor.id,
-						name: assignedDoctor.name,
-						specialty: assignedDoctor.specialty,
-				  }
-				: undefined,
+			requestedServices,
+			assignedDoctor,
 			status: 'PENDING_EXAMINATION',
 			diagnosis: undefined,
 			reason: formData.reason,
@@ -513,7 +576,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 						cccdNumber: '',
 						insurance: '',
 					},
-					requestedServices: [record.service],
+					requestedServices: [record.service], // Giữ nguyên cho group import
 					assignedDoctor: {
 						id: doctor.id,
 						name: doctor.name,
@@ -567,25 +630,8 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 					>
 						{/* Manual Input */}
 						<TabsContent value="manual" className="mt-0">
-							{formData.fullName && searchTerm && (
-								<motion.div
-									initial={{ opacity: 0, height: 0 }}
-									animate={{ opacity: 1, height: 'auto' }}
-									className="mb-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4"
-								>
-									<div className="flex items-center gap-2 mb-2">
-										<CheckCircle2 className="h-5 w-5 text-green-600" />
-										<p className="text-green-700">
-											✅ Thông tin bệnh nhân đã được tự động điền - Vui lòng
-											chọn <strong>Dịch vụ khám</strong> và{' '}
-											<strong>Bác sĩ</strong>
-										</p>
-									</div>
-								</motion.div>
-							)}
-
 							<form onSubmit={handleSubmit} className="space-y-6">
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 									<div className="space-y-2">
 										<Label htmlFor="fullName">Họ và tên *</Label>
 										<Input
@@ -619,7 +665,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 									</div>
 
 									<div className="space-y-2">
-										<Label htmlFor="dateOfBirth">Ngày sinh</Label>
+										<Label htmlFor="dateOfBirth">Ngày sinh *</Label>
 										<Input
 											id="dateOfBirth"
 											type="date"
@@ -635,7 +681,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 									</div>
 
 									<div className="space-y-2">
-										<Label htmlFor="gender">Giới tính</Label>
+										<Label htmlFor="gender">Giới tính *</Label>
 										<Select
 											value={formData.gender}
 											onValueChange={(value) =>
@@ -652,280 +698,132 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 											</SelectContent>
 										</Select>
 									</div>
-								</div>
-
-								<div className="space-y-4">
-									{/* Số căn cước công dân và Bảo hiểm y tế - cùng 1 hàng */}
-									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-										<div className="space-y-2">
-											<Label htmlFor="cccdNumber">Số căn cước công dân</Label>
-											<div className="relative">
-												<Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-												<Input
-													id="cccdNumber"
-													value={formData.cccdNumber}
-													onChange={(e) =>
-														setFormData({
-															...formData,
-															cccdNumber: e.target.value,
-														})
-													}
-													placeholder="Nhập số CCCD"
-													className="pl-10 border-gray-300 focus:border-blue-500"
-												/>
-											</div>
-										</div>
-
-										<div className="space-y-2">
-											<Label htmlFor="insurance">Bảo hiểm y tế</Label>
-											<div className="relative">
-												<Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-												<Input
-													id="insurance"
-													value={formData.insurance}
-													onChange={(e) =>
-														setFormData({
-															...formData,
-															insurance: e.target.value,
-														})
-													}
-													placeholder="Mã thẻ BHYT"
-													className="pl-10 border-gray-300 focus:border-blue-500"
-												/>
-											</div>
-										</div>
-									</div>
-
-									{/* Tỉnh/Thành phố và Xã/Phường - cùng 1 hàng */}
-									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-										{/* Tỉnh/Thành phố */}
-										<div className="space-y-2">
-											<Label className="text-sm text-gray-600">
-												Tỉnh/Thành phố
-											</Label>
-											<Popover
-												open={provinceOpen}
-												onOpenChange={setProvinceOpen}
-											>
-												<PopoverTrigger asChild>
-													<Button
-														variant="outline"
-														role="combobox"
-														aria-expanded={provinceOpen}
-														className="w-full justify-between border-gray-300 focus:border-blue-500"
-													>
-														{formData.provinceId && selectedProvince
-															? selectedProvince.NAME
-															: 'Chọn tỉnh/thành phố...'}
-														<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-													</Button>
-												</PopoverTrigger>
-												<PopoverContent
-													className="w-[400px] p-0 !h-[80px] !max-h-[80px] "
-													style={{
-														height: '280px',
-														maxheight: '280px',
-														overflow: 'hidden',
-													}}
-													align="start"
-												>
-													<Command className="h-full flex flex-col overflow-hidden">
-														<CommandInput
-															placeholder="Tìm kiếm tỉnh/thành phố..."
-															value={provinceSearch}
-															onValueChange={setProvinceSearch}
-														/>
-														<CommandList
-															className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
-															style={{
-																scrollbarWidth: 'thin',
-																scrollbarColor: '#cbd5e1 #f1f5f9',
-																maxHeight: '50px !important',
-																height: '50px',
-																overflowY: 'auto',
-															}}
-														>
-															<CommandEmpty>
-																Không tìm thấy tỉnh/thành phố.
-															</CommandEmpty>
-															<CommandGroup>
-																{provinces.map((province) => (
-																	<CommandItem
-																		key={province.ID}
-																		value={province.NAME}
-																		className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
-																		onSelect={() => {
-																			setFormData({
-																				...formData,
-																				provinceId: province.ID,
-																				wardId: '', // Reset ward when province changes
-																			});
-																			setProvinceOpen(false);
-																			setProvinceSearch('');
-																		}}
-																	>
-																		{province.NAME}
-																	</CommandItem>
-																))}
-															</CommandGroup>
-														</CommandList>
-													</Command>
-												</PopoverContent>
-											</Popover>
-										</div>
-
-										{/* Xã/Phường */}
-										<div className="space-y-2">
-											<Label className="text-sm text-gray-600">Xã/Phường</Label>
-											<Popover open={wardOpen} onOpenChange={setWardOpen}>
-												<PopoverTrigger asChild>
-													<Button
-														variant="outline"
-														role="combobox"
-														aria-expanded={wardOpen}
-														disabled={!formData.provinceId}
-														className="w-full justify-between border-gray-300 focus:border-blue-500 disabled:opacity-50"
-													>
-														{formData.wardId && selectedProvince
-															? selectedProvince.WARDS?.find(
-																	(w: any) => w.ID === formData.wardId,
-															  )?.TEN || 'Chọn xã/phường...'
-															: 'Chọn xã/phường...'}
-														<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-													</Button>
-												</PopoverTrigger>
-												<PopoverContent
-													className="w-[400px] p-0 !h-[80px] !max-h-[80px]"
-													style={{
-														height: '280px',
-														maxheight: '280px',
-														overflow: 'hidden',
-													}}
-													align="start"
-												>
-													<Command className="h-full flex flex-col overflow-hidden">
-														<CommandInput
-															placeholder="Tìm kiếm xã/phường..."
-															value={wardSearch}
-															onValueChange={setWardSearch}
-														/>
-														<CommandList
-															className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
-															style={{
-																scrollbarWidth: 'thin',
-																scrollbarColor: '#cbd5e1 #f1f5f9',
-																maxHeight: '50px !important',
-																height: '50px',
-																overflowY: 'auto',
-															}}
-														>
-															<CommandEmpty>
-																Không tìm thấy xã/phường.
-															</CommandEmpty>
-															<CommandGroup>
-																{wards.map((ward: any) => (
-																	<CommandItem
-																		key={ward.ID}
-																		value={ward.TEN}
-																		className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
-																		onSelect={() => {
-																			setFormData({
-																				...formData,
-																				wardId: ward.ID,
-																			});
-																			setWardOpen(false);
-																			setWardSearch('');
-																		}}
-																	>
-																		{ward.TEN}
-																	</CommandItem>
-																))}
-															</CommandGroup>
-														</CommandList>
-													</Command>
-												</PopoverContent>
-											</Popover>
-										</div>
-									</div>
-
-									{/* Địa chỉ chi tiết */}
 									<div className="space-y-2">
-										<Label
-											htmlFor="addressDetail"
-											className="text-sm text-gray-600"
-										>
-											Địa chỉ chi tiết
-										</Label>
-										<Textarea
-											id="addressDetail"
-											value={formData.addressDetail}
-											onChange={(e) =>
-												setFormData({
-													...formData,
-													addressDetail: e.target.value,
-												})
-											}
-											placeholder="Ví dụ: 123 Đường ABC"
-											className="border-gray-300 focus:border-blue-500 resize-none"
-											rows={2}
-										/>
+										<Label htmlFor="cccdNumber">Số căn cước công dân *</Label>
+										<div className="relative">
+											<Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+											<Input
+												id="cccdNumber"
+												value={formData.cccdNumber}
+												onChange={(e) =>
+													setFormData({
+														...formData,
+														cccdNumber: e.target.value,
+													})
+												}
+												placeholder="Nhập số CCCD"
+												className="pl-10 border-gray-300 focus:border-blue-500"
+											/>
+										</div>
 									</div>
-								</div>
 
-								<div className="space-y-2">
-									<Label className="flex items-center gap-2">
-										Dịch vụ khám *
-										{formData.fullName &&
-											searchTerm &&
-											formData.selectedServices.length === 0 && (
-												<Badge variant="destructive" className="animate-pulse">
-													Chưa chọn
-												</Badge>
-											)}
-									</Label>
-									<div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-										{mockServices.map((service) => (
-											<button
-												key={service}
-												type="button"
-												onClick={() => handleToggleService(service)}
-												className={`p-3 rounded-lg border-2 transition-all text-sm cursor-pointer ${
-													formData.selectedServices.includes(service)
-														? 'border-blue-500 bg-blue-50 text-blue-700'
-														: 'border-gray-200 hover:border-gray-300 bg-white'
-												}`}
-											>
-												<div className="flex items-center gap-2">
-													{formData.selectedServices.includes(service) && (
-														<CheckCircle2 className="h-4 w-4 text-blue-600" />
-													)}
-													<span>{service}</span>
-												</div>
-											</button>
-										))}
-									</div>
-								</div>
-
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
-										<Label
-											htmlFor="specialty"
-											className="flex items-center gap-2"
-										>
-											Khám chuyên khoa
-										</Label>
-										<Popover
-											open={specialtyOpen}
-											onOpenChange={setSpecialtyOpen}
-										>
+										<Label htmlFor="insurance">Bảo hiểm y tế</Label>
+										<div className="relative">
+											<Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+											<Input
+												id="insurance"
+												value={formData.insurance}
+												onChange={(e) =>
+													setFormData({
+														...formData,
+														insurance: e.target.value,
+													})
+												}
+												placeholder="Mã thẻ BHYT"
+												className="pl-10 border-gray-300 focus:border-blue-500"
+											/>
+										</div>
+									</div>
+
+									{/* Tỉnh/Thành phố */}
+									<div className="space-y-2">
+										<Label>Tỉnh/Thành phố *</Label>
+										<Popover open={provinceOpen} onOpenChange={setProvinceOpen}>
 											<PopoverTrigger asChild>
 												<Button
 													variant="outline"
 													role="combobox"
-													aria-expanded={specialtyOpen}
+													aria-expanded={provinceOpen}
 													className="w-full justify-between border-gray-300 focus:border-blue-500"
 												>
-													{formData.specialty || 'Chọn chuyên khoa...'}
+													{formData.provinceId && selectedProvince
+														? selectedProvince.NAME
+														: 'Chọn tỉnh/thành phố...'}
+													<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+												</Button>
+											</PopoverTrigger>
+											<PopoverContent
+												className="w-[400px] p-0 !h-[80px] !max-h-[80px] "
+												style={{
+													height: '280px',
+													maxheight: '280px',
+													overflow: 'hidden',
+												}}
+												align="start"
+											>
+												<Command className="h-full flex flex-col overflow-hidden">
+													<CommandInput
+														placeholder="Tìm kiếm tỉnh/thành phố..."
+														value={provinceSearch}
+														onValueChange={setProvinceSearch}
+													/>
+													<CommandList
+														className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+														style={{
+															scrollbarWidth: 'thin',
+															scrollbarColor: '#cbd5e1 #f1f5f9',
+															maxHeight: '50px !important',
+															height: '50px',
+															overflowY: 'auto',
+														}}
+													>
+														<CommandEmpty>
+															Không tìm thấy tỉnh/thành phố.
+														</CommandEmpty>
+														<CommandGroup>
+															{provinces.map((province) => (
+																<CommandItem
+																	key={province.ID}
+																	value={province.NAME}
+																	className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
+																	onSelect={() => {
+																		setFormData({
+																			...formData,
+																			provinceId: province.ID,
+																			wardId: '', // Reset ward when province changes
+																		});
+																		setProvinceOpen(false);
+																		setProvinceSearch('');
+																	}}
+																>
+																	{province.NAME}
+																</CommandItem>
+															))}
+														</CommandGroup>
+													</CommandList>
+												</Command>
+											</PopoverContent>
+										</Popover>
+									</div>
+
+									{/* Xã/Phường */}
+									<div className="space-y-2">
+										<Label>Xã/Phường *</Label>
+										<Popover open={wardOpen} onOpenChange={setWardOpen}>
+											<PopoverTrigger asChild>
+												<Button
+													variant="outline"
+													role="combobox"
+													aria-expanded={wardOpen}
+													disabled={!formData.provinceId}
+													className="w-full justify-between border-gray-300 focus:border-blue-500 disabled:opacity-50"
+												>
+													{formData.wardId && selectedProvince
+														? selectedProvince.WARDS?.find(
+																(w: any) => w.ID === formData.wardId,
+														  )?.TEN || 'Chọn xã/phường...'
+														: 'Chọn xã/phường...'}
 													<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 												</Button>
 											</PopoverTrigger>
@@ -940,9 +838,9 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 											>
 												<Command className="h-full flex flex-col overflow-hidden">
 													<CommandInput
-														placeholder="Tìm kiếm chuyên khoa..."
-														value={specialtySearch}
-														onValueChange={setSpecialtySearch}
+														placeholder="Tìm kiếm xã/phường..."
+														value={wardSearch}
+														onValueChange={setWardSearch}
 													/>
 													<CommandList
 														className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
@@ -955,25 +853,24 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 														}}
 													>
 														<CommandEmpty>
-															Không tìm thấy chuyên khoa.
+															Không tìm thấy xã/phường.
 														</CommandEmpty>
 														<CommandGroup>
-															{filteredSpecialties.map((specialty) => (
+															{wards.map((ward: any) => (
 																<CommandItem
-																	key={specialty}
-																	value={specialty}
+																	key={ward.ID}
+																	value={ward.TEN}
 																	className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
 																	onSelect={() => {
 																		setFormData({
 																			...formData,
-																			specialty: specialty,
-																			assignedDoctorId: '', // Reset doctor when specialty changes
+																			wardId: ward.ID,
 																		});
-																		setSpecialtyOpen(false);
-																		setSpecialtySearch('');
+																		setWardOpen(false);
+																		setWardSearch('');
 																	}}
 																>
-																	{specialty}
+																	{ward.TEN}
 																</CommandItem>
 															))}
 														</CommandGroup>
@@ -983,55 +880,360 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 										</Popover>
 									</div>
 
+									{/* Địa chỉ chi tiết */}
+									<div className="space-y-2">
+										<Label htmlFor="addressDetail">Địa chỉ chi tiết</Label>
+										<Input
+											id="addressDetail"
+											value={formData.addressDetail}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													addressDetail: e.target.value,
+												})
+											}
+											placeholder="Ví dụ: 123 Đường ABC"
+											className="border-gray-300 focus:border-blue-500"
+										/>
+									</div>
+								</div>
+
+								{/* Chọn loại khám */}
+								<div className="space-y-3">
+									<Label className="flex items-center gap-2">
+										Loại khám *
+										{formData.fullName &&
+											searchTerm &&
+											!formData.examinationType && (
+												<Badge variant="destructive" className="animate-pulse">
+													Chưa chọn
+												</Badge>
+											)}
+									</Label>
+									<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+										{/* Khám chuyên khoa */}
+										<button
+											type="button"
+											onClick={() => {
+												setFormData({
+													...formData,
+													examinationType: 'specialty',
+													selectedPackage: '',
+													assignedDoctorId: '',
+												});
+											}}
+											className={`p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
+												formData.examinationType === 'specialty'
+													? 'border-blue-500 bg-blue-50 text-blue-700'
+													: 'border-gray-200 hover:border-gray-300 bg-white'
+											}`}
+										>
+											<div className="flex items-center gap-3">
+												{formData.examinationType === 'specialty' ? (
+													<CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
+												) : (
+													<div className="h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-300" />
+												)}
+												<div>
+													<div className="font-medium">Khám chuyên khoa</div>
+													<div className="text-xs text-gray-600 mt-1">
+														Chọn chuyên khoa để khám
+													</div>
+												</div>
+											</div>
+										</button>
+
+										{/* Khám theo bác sĩ */}
+										<button
+											type="button"
+											onClick={() => {
+												setFormData({
+													...formData,
+													examinationType: 'doctor',
+													selectedPackage: '',
+													specialty: '',
+												});
+											}}
+											className={`p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
+												formData.examinationType === 'doctor'
+													? 'border-blue-500 bg-blue-50 text-blue-700'
+													: 'border-gray-200 hover:border-gray-300 bg-white'
+											}`}
+										>
+											<div className="flex items-center gap-3">
+												{formData.examinationType === 'doctor' ? (
+													<CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
+												) : (
+													<div className="h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-300" />
+												)}
+												<div>
+													<div className="font-medium">Khám theo bác sĩ</div>
+													<div className="text-xs text-gray-600 mt-1">
+														Chọn bác sĩ cụ thể
+													</div>
+												</div>
+											</div>
+										</button>
+
+										{/* Khám theo gói */}
+										<button
+											type="button"
+											onClick={() => {
+												setFormData({
+													...formData,
+													examinationType: 'package',
+													specialty: '',
+													assignedDoctorId: '',
+												});
+											}}
+											className={`p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
+												formData.examinationType === 'package'
+													? 'border-blue-500 bg-blue-50 text-blue-700'
+													: 'border-gray-200 hover:border-gray-300 bg-white'
+											}`}
+										>
+											<div className="flex items-center gap-3">
+												{formData.examinationType === 'package' ? (
+													<CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
+												) : (
+													<div className="h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-300" />
+												)}
+												<div>
+													<div className="font-medium">Khám theo gói</div>
+													<div className="text-xs text-gray-600 mt-1">
+														Chọn gói khám có sẵn
+													</div>
+												</div>
+											</div>
+										</button>
+									</div>
+								</div>
+
+								{/* Hiển thị form theo loại khám đã chọn */}
+								{formData.examinationType === 'package' && (
+									<div className="space-y-2">
+										<Label className="flex items-center gap-2">
+											Chọn gói khám *
+											{!formData.selectedPackage && (
+												<Badge variant="destructive" className="animate-pulse">
+													Chưa chọn
+												</Badge>
+											)}
+										</Label>
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+											{mockExaminationPackages.map((pkg) => {
+												const isSelected = formData.selectedPackage === pkg.id;
+												return (
+													<button
+														key={pkg.id}
+														type="button"
+														onClick={() => handleSelectPackage(pkg.id)}
+														className={`p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
+															isSelected
+																? 'border-blue-500 bg-blue-50 text-blue-700'
+																: 'border-gray-200 hover:border-gray-300 bg-white'
+														}`}
+													>
+														<div className="flex items-start gap-3">
+															{isSelected ? (
+																<CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+															) : (
+																<div className="h-5 w-5 mt-0.5 flex-shrink-0 rounded-full border-2 border-gray-300" />
+															)}
+															<div className="flex-1">
+																<div className="font-medium mb-1">
+																	{pkg.name}
+																</div>
+																{pkg.description && (
+																	<div className="text-xs text-gray-600 mb-2">
+																		{pkg.description}
+																	</div>
+																)}
+																<div className="flex flex-wrap gap-1 mt-2">
+																	{pkg.services.map((service, idx) => (
+																		<Badge
+																			key={idx}
+																			variant="outline"
+																			className="text-xs"
+																		>
+																			{service}
+																		</Badge>
+																	))}
+																</div>
+															</div>
+														</div>
+													</button>
+												);
+											})}
+										</div>
+									</div>
+								)}
+
+								{formData.examinationType === 'specialty' && (
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<div className="space-y-2">
+											<Label
+												htmlFor="specialty"
+												className="flex items-center gap-2"
+											>
+												Chọn chuyên khoa *
+												{!formData.specialty && (
+													<Badge
+														variant="destructive"
+														className="animate-pulse"
+													>
+														Chưa chọn
+													</Badge>
+												)}
+											</Label>
+											<Popover
+												open={specialtyOpen}
+												onOpenChange={setSpecialtyOpen}
+											>
+												<PopoverTrigger asChild>
+													<Button
+														variant="outline"
+														role="combobox"
+														aria-expanded={specialtyOpen}
+														className="w-full justify-between border-gray-300 focus:border-blue-500"
+													>
+														{formData.specialty || 'Chọn chuyên khoa...'}
+														<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+													</Button>
+												</PopoverTrigger>
+												<PopoverContent
+													className="w-[400px] p-0 !h-[80px] !max-h-[80px]"
+													style={{
+														height: '280px',
+														maxheight: '280px',
+														overflow: 'hidden',
+													}}
+													align="start"
+												>
+													<Command className="h-full flex flex-col overflow-hidden">
+														<CommandInput
+															placeholder="Tìm kiếm chuyên khoa..."
+															value={specialtySearch}
+															onValueChange={setSpecialtySearch}
+														/>
+														<CommandList
+															className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+															style={{
+																scrollbarWidth: 'thin',
+																scrollbarColor: '#cbd5e1 #f1f5f9',
+																maxHeight: '50px !important',
+																height: '50px',
+																overflowY: 'auto',
+															}}
+														>
+															<CommandEmpty>
+																Không tìm thấy chuyên khoa.
+															</CommandEmpty>
+															<CommandGroup>
+																{filteredSpecialties.map((specialty) => (
+																	<CommandItem
+																		key={specialty}
+																		value={specialty}
+																		className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
+																		onSelect={() => {
+																			setFormData({
+																				...formData,
+																				specialty: specialty,
+																				assignedDoctorId: '', // Reset doctor when specialty changes
+																			});
+																			setSpecialtyOpen(false);
+																			setSpecialtySearch('');
+																		}}
+																	>
+																		{specialty}
+																	</CommandItem>
+																))}
+															</CommandGroup>
+														</CommandList>
+													</Command>
+												</PopoverContent>
+											</Popover>
+										</div>
+
+										<div className="space-y-2">
+											<Label
+												htmlFor="assignedDoctorId"
+												className="flex items-center gap-2"
+											>
+												Bác sĩ phụ trách
+												<Badge variant="outline" className="text-gray-600">
+													Tùy chọn
+												</Badge>
+											</Label>
+											<Select
+												value={formData.assignedDoctorId}
+												onValueChange={(value) =>
+													setFormData({ ...formData, assignedDoctorId: value })
+												}
+												disabled={!formData.specialty}
+											>
+												<SelectTrigger className="border-gray-300">
+													<SelectValue
+														placeholder={
+															formData.specialty
+																? 'Chọn bác sĩ hoặc để hệ thống tự phân công'
+																: 'Vui lòng chọn chuyên khoa trước'
+														}
+													/>
+												</SelectTrigger>
+												<SelectContent>
+													{availableDoctors.length > 0 ? (
+														availableDoctors.map((doctor) => (
+															<SelectItem key={doctor.id} value={doctor.id}>
+																{doctor.name} - {doctor.specialty}
+															</SelectItem>
+														))
+													) : (
+														<SelectItem value="" disabled>
+															Không có bác sĩ nào cho chuyên khoa này
+														</SelectItem>
+													)}
+												</SelectContent>
+											</Select>
+										</div>
+									</div>
+								)}
+
+								{formData.examinationType === 'doctor' && (
 									<div className="space-y-2">
 										<Label
 											htmlFor="assignedDoctorId"
 											className="flex items-center gap-2"
 										>
-											Bác sĩ phụ trách
-											{formData.fullName &&
-												searchTerm &&
-												!formData.assignedDoctorId && (
-													<Badge variant="outline" className="text-gray-600">
-														Tùy chọn
-													</Badge>
-												)}
+											Chọn bác sĩ *
+											{!formData.assignedDoctorId && (
+												<Badge variant="destructive" className="animate-pulse">
+													Chưa chọn
+												</Badge>
+											)}
 										</Label>
 										<Select
 											value={formData.assignedDoctorId}
 											onValueChange={(value) =>
 												setFormData({ ...formData, assignedDoctorId: value })
 											}
-											disabled={!formData.specialty}
 										>
 											<SelectTrigger className="border-gray-300">
-												<SelectValue
-													placeholder={
-														formData.specialty
-															? 'Chọn bác sĩ hoặc để hệ thống tự phân công'
-															: 'Vui lòng chọn chuyên khoa trước'
-													}
-												/>
+												<SelectValue placeholder="Chọn bác sĩ..." />
 											</SelectTrigger>
 											<SelectContent>
-												{availableDoctors.length > 0 ? (
-													availableDoctors.map((doctor) => (
-														<SelectItem key={doctor.id} value={doctor.id}>
-															{doctor.name} - {doctor.specialty}
-														</SelectItem>
-													))
-												) : (
-													<SelectItem value="" disabled>
-														Không có bác sĩ nào cho chuyên khoa này
+												{mockDoctors.map((doctor) => (
+													<SelectItem key={doctor.id} value={doctor.id}>
+														{doctor.name} - {doctor.specialty}
 													</SelectItem>
-												)}
+												))}
 											</SelectContent>
 										</Select>
 									</div>
-								</div>
+								)}
 
 								<div className="space-y-2">
-									<Label htmlFor="reason">Lý do khám</Label>
+									<Label htmlFor="reason">Lý do khám *</Label>
 									<Textarea
 										id="reason"
 										value={formData.reason}
@@ -1154,8 +1356,8 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 
 										<div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
 											<p className="text-sm text-blue-700">
-												💡 <strong>Bước tiếp theo:</strong> Chọn dịch vụ khám và
-												bác sĩ phụ trách
+												💡 <strong>Bước tiếp theo:</strong> Chọn gói khám và bác
+												sĩ phụ trách
 											</p>
 										</div>
 
@@ -1176,7 +1378,8 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 														cccdNumber: '',
 														insurance: '',
 														reason: '',
-														selectedServices: [],
+														examinationType: 'specialty' as ExaminationType,
+														selectedPackage: '',
 														assignedDoctorId: '',
 														specialty: '',
 													});
@@ -1191,7 +1394,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 												onClick={() => setInputMethod('manual')}
 												className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
 											>
-												Chọn dịch vụ & Bác sĩ →
+												Chọn loại khám & Bác sĩ →
 											</Button>
 										</div>
 									</motion.div>
@@ -1345,7 +1548,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 
 										<div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
 											<p className="text-sm text-blue-700">
-												💡 <strong>Bước tiếp theo:</strong> Chọn dịch vụ khám và
+												💡 <strong>Bước tiếp theo:</strong> Chọn loại khám và
 												bác sĩ phụ trách
 											</p>
 										</div>
@@ -1367,7 +1570,8 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 														cccdNumber: '',
 														insurance: '',
 														reason: '',
-														selectedServices: [],
+														examinationType: 'specialty' as ExaminationType,
+														selectedPackage: '',
 														assignedDoctorId: '',
 														specialty: '',
 													});
@@ -1382,7 +1586,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 												onClick={() => setInputMethod('manual')}
 												className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
 											>
-												Chọn dịch vụ & Bác sĩ →
+												Chọn loại khám & Bác sĩ →
 											</Button>
 										</div>
 									</motion.div>
@@ -1486,7 +1690,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 
 										<div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
 											<p className="text-sm text-blue-700">
-												💡 <strong>Bước tiếp theo:</strong> Chọn dịch vụ khám và
+												💡 <strong>Bước tiếp theo:</strong> Chọn loại khám và
 												bác sĩ phụ trách
 											</p>
 										</div>
@@ -1508,7 +1712,8 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 														cccdNumber: '',
 														insurance: '',
 														reason: '',
-														selectedServices: [],
+														examinationType: 'specialty' as ExaminationType,
+														selectedPackage: '',
 														assignedDoctorId: '',
 														specialty: '',
 													});
@@ -1523,7 +1728,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 												onClick={() => setInputMethod('manual')}
 												className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
 											>
-												Chọn dịch vụ & Bác sĩ →
+												Chọn loại khám & Bác sĩ →
 											</Button>
 										</div>
 									</motion.div>

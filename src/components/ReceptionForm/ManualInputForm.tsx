@@ -241,9 +241,7 @@ export function ManualInputForm({
 				</div>
 
 				<div className="space-y-2">
-					<Label htmlFor="reason">
-						Lý do khám <span className="text-red-500">*</span>
-					</Label>
+					<Label htmlFor="reason">Lý do khám *</Label>
 					<Textarea
 						id="reason"
 						value={formData.reason}
