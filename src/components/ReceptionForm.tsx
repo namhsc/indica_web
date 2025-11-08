@@ -170,6 +170,16 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 		);
 	}, [specialtySearch]);
 
+	// Filter doctors by selected specialty
+	const availableDoctors = useMemo(() => {
+		if (!formData.specialty) {
+			return mockDoctors;
+		}
+		return mockDoctors.filter(
+			(doctor) => doctor.specialty === formData.specialty,
+		);
+	}, [formData.specialty]);
+
 	// Autocomplete states
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [suggestions, setSuggestions] = useState<typeof mockExistingPatients>(
@@ -710,14 +720,31 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 														<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 													</Button>
 												</PopoverTrigger>
-												<PopoverContent className="w-[400px] p-0" align="start">
-													<Command>
+												<PopoverContent
+													className="w-[400px] p-0 !h-[80px] !max-h-[80px] "
+													style={{
+														height: '280px',
+														maxheight: '280px',
+														overflow: 'hidden',
+													}}
+													align="start"
+												>
+													<Command className="h-full flex flex-col overflow-hidden">
 														<CommandInput
 															placeholder="Tìm kiếm tỉnh/thành phố..."
 															value={provinceSearch}
 															onValueChange={setProvinceSearch}
 														/>
-														<CommandList className="max-h-[200px] overflow-y-auto">
+														<CommandList
+															className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+															style={{
+																scrollbarWidth: 'thin',
+																scrollbarColor: '#cbd5e1 #f1f5f9',
+																maxHeight: '50px !important',
+																height: '50px',
+																overflowY: 'auto',
+															}}
+														>
 															<CommandEmpty>
 																Không tìm thấy tỉnh/thành phố.
 															</CommandEmpty>
@@ -767,14 +794,31 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 														<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 													</Button>
 												</PopoverTrigger>
-												<PopoverContent className="w-[400px] p-0" align="start">
-													<Command>
+												<PopoverContent
+													className="w-[400px] p-0 !h-[80px] !max-h-[80px]"
+													style={{
+														height: '280px',
+														maxheight: '280px',
+														overflow: 'hidden',
+													}}
+													align="start"
+												>
+													<Command className="h-full flex flex-col overflow-hidden">
 														<CommandInput
 															placeholder="Tìm kiếm xã/phường..."
 															value={wardSearch}
 															onValueChange={setWardSearch}
 														/>
-														<CommandList className="max-h-[200px] overflow-y-auto">
+														<CommandList
+															className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+															style={{
+																scrollbarWidth: 'thin',
+																scrollbarColor: '#cbd5e1 #f1f5f9',
+																maxHeight: '50px !important',
+																height: '50px',
+																overflowY: 'auto',
+															}}
+														>
 															<CommandEmpty>
 																Không tìm thấy xã/phường.
 															</CommandEmpty>
@@ -885,14 +929,31 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 													<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 												</Button>
 											</PopoverTrigger>
-											<PopoverContent className="w-[400px] p-0" align="start">
-												<Command>
+											<PopoverContent
+												className="w-[400px] p-0 !h-[80px] !max-h-[80px]"
+												style={{
+													height: '280px',
+													maxheight: '280px',
+													overflow: 'hidden',
+												}}
+												align="start"
+											>
+												<Command className="h-full flex flex-col overflow-hidden">
 													<CommandInput
 														placeholder="Tìm kiếm chuyên khoa..."
 														value={specialtySearch}
 														onValueChange={setSpecialtySearch}
 													/>
-													<CommandList className="max-h-[200px] overflow-y-auto">
+													<CommandList
+														className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+														style={{
+															scrollbarWidth: 'thin',
+															scrollbarColor: '#cbd5e1 #f1f5f9',
+															maxHeight: '50px !important',
+															height: '50px',
+															overflowY: 'auto',
+														}}
+													>
 														<CommandEmpty>
 															Không tìm thấy chuyên khoa.
 														</CommandEmpty>
@@ -906,6 +967,7 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 																		setFormData({
 																			...formData,
 																			specialty: specialty,
+																			assignedDoctorId: '', // Reset doctor when specialty changes
 																		});
 																		setSpecialtyOpen(false);
 																		setSpecialtySearch('');
@@ -940,16 +1002,29 @@ export function ReceptionForm({ onSubmit }: ReceptionFormProps) {
 											onValueChange={(value) =>
 												setFormData({ ...formData, assignedDoctorId: value })
 											}
+											disabled={!formData.specialty}
 										>
 											<SelectTrigger className="border-gray-300">
-												<SelectValue placeholder="Chọn bác sĩ hoặc để hệ thống tự phân công" />
+												<SelectValue
+													placeholder={
+														formData.specialty
+															? 'Chọn bác sĩ hoặc để hệ thống tự phân công'
+															: 'Vui lòng chọn chuyên khoa trước'
+													}
+												/>
 											</SelectTrigger>
 											<SelectContent>
-												{mockDoctors.map((doctor) => (
-													<SelectItem key={doctor.id} value={doctor.id}>
-														{doctor.name} - {doctor.specialty}
+												{availableDoctors.length > 0 ? (
+													availableDoctors.map((doctor) => (
+														<SelectItem key={doctor.id} value={doctor.id}>
+															{doctor.name} - {doctor.specialty}
+														</SelectItem>
+													))
+												) : (
+													<SelectItem value="" disabled>
+														Không có bác sĩ nào cho chuyên khoa này
 													</SelectItem>
-												))}
+												)}
 											</SelectContent>
 										</Select>
 									</div>

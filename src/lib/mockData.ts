@@ -3,10 +3,51 @@ import { mockAppointments } from './mockPatients';
 
 // Mock doctors
 export const mockDoctors = [
+  // Nội khoa
   { id: 'doc1', name: 'BS. Nguyễn Văn An', specialty: 'Nội khoa' },
+  { id: 'doc5', name: 'BS. Hoàng Thị Lan', specialty: 'Nội khoa' },
+  { id: 'doc6', name: 'BS. Phạm Văn Đức', specialty: 'Nội khoa' },
+  // Ngoại khoa
   { id: 'doc2', name: 'BS. Trần Thị Bình', specialty: 'Ngoại khoa' },
+  { id: 'doc7', name: 'BS. Lê Văn Hùng', specialty: 'Ngoại khoa' },
+  { id: 'doc8', name: 'BS. Nguyễn Thị Mai', specialty: 'Ngoại khoa' },
+  // Tim mạch
   { id: 'doc3', name: 'BS. Lê Hoàng Cường', specialty: 'Tim mạch' },
+  { id: 'doc9', name: 'BS. Trần Văn Nam', specialty: 'Tim mạch' },
+  { id: 'doc10', name: 'BS. Phạm Thị Hoa', specialty: 'Tim mạch' },
+  // Nhi khoa
   { id: 'doc4', name: 'BS. Phạm Thị Dung', specialty: 'Nhi khoa' },
+  { id: 'doc11', name: 'BS. Nguyễn Văn Tuấn', specialty: 'Nhi khoa' },
+  { id: 'doc12', name: 'BS. Lê Thị Hương', specialty: 'Nhi khoa' },
+  // Sản phụ khoa
+  { id: 'doc13', name: 'BS. Trần Thị Hồng', specialty: 'Sản phụ khoa' },
+  { id: 'doc14', name: 'BS. Nguyễn Thị Linh', specialty: 'Sản phụ khoa' },
+  // Tai mũi họng
+  { id: 'doc15', name: 'BS. Phạm Văn Sơn', specialty: 'Tai mũi họng' },
+  { id: 'doc16', name: 'BS. Lê Thị Lan', specialty: 'Tai mũi họng' },
+  // Mắt
+  { id: 'doc17', name: 'BS. Nguyễn Văn Minh', specialty: 'Mắt' },
+  { id: 'doc18', name: 'BS. Trần Thị Nga', specialty: 'Mắt' },
+  // Da liễu
+  { id: 'doc19', name: 'BS. Phạm Thị Hạnh', specialty: 'Da liễu' },
+  { id: 'doc20', name: 'BS. Lê Văn Thành', specialty: 'Da liễu' },
+  // Thần kinh
+  { id: 'doc21', name: 'BS. Nguyễn Thị Loan', specialty: 'Thần kinh' },
+  { id: 'doc22', name: 'BS. Trần Văn Bình', specialty: 'Thần kinh' },
+  // Chấn thương chỉnh hình
+  { id: 'doc23', name: 'BS. Phạm Văn Đông', specialty: 'Chấn thương chỉnh hình' },
+  { id: 'doc24', name: 'BS. Lê Thị Thu', specialty: 'Chấn thương chỉnh hình' },
+  // Ung bướu
+  { id: 'doc25', name: 'BS. Nguyễn Văn Hải', specialty: 'Ung bướu' },
+  { id: 'doc26', name: 'BS. Trần Thị Vân', specialty: 'Ung bướu' },
+  // Hồi sức cấp cứu
+  { id: 'doc27', name: 'BS. Phạm Văn Long', specialty: 'Hồi sức cấp cứu' },
+  { id: 'doc28', name: 'BS. Lê Thị Hoa', specialty: 'Hồi sức cấp cứu' },
+  // Xét nghiệm
+  { id: 'doc29', name: 'BS. Nguyễn Thị Phương', specialty: 'Xét nghiệm' },
+  // Chẩn đoán hình ảnh
+  { id: 'doc30', name: 'BS. Trần Văn Quang', specialty: 'Chẩn đoán hình ảnh' },
+  { id: 'doc31', name: 'BS. Phạm Thị Thảo', specialty: 'Chẩn đoán hình ảnh' },
 ];
 
 // Mock services
