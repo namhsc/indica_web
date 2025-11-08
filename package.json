@@ -43,12 +43,16 @@
 		"react-hook-form": "^7.55.0",
 		"react-resizable-panels": "^2.1.7",
 		"recharts": "^2.15.2",
+		"socket.io-client": "^4.8.1",
 		"sonner": "^2.0.3",
 		"tailwind-merge": "*",
+		"uuid": "^13.0.0",
 		"vaul": "^1.1.2"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^2.3.4",
 		"@types/node": "^20.10.0",
+		"@types/uuid": "^11.0.0",
 		"@vitejs/plugin-react-swc": "^3.10.2",
 		"vite": "6.3.5"
 	},

@@ -1,89 +1,146 @@
-import React, { useState } from 'react';
-import { Card, CardContent } from './ui/card';
-import { motion } from 'motion/react';
-import { DashboardStats } from '../types';
-import { UserRole } from '../types/auth';
-import { Message } from './AIAssistant/types';
-import { getAIConfig } from './AIAssistant/config';
-import { AIHeader } from './AIAssistant/AIHeader';
-import { MessageList } from './AIAssistant/MessageList';
-import { ChatInput } from './AIAssistant/ChatInput';
-import { handleAIResponse } from './AIAssistant/aiResponseHandler';
-import { mapSuggestionToFullMessage } from './AIAssistant/suggestionMapper';
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "./ui/card";
+import { motion } from "motion/react";
+import { DashboardStats } from "../types";
+import { UserRole } from "../types/auth";
+import { Message } from "./AIAssistant/types";
+import { getAIConfig } from "./AIAssistant/config";
+import { AIHeader } from "./AIAssistant/AIHeader";
+import { MessageList } from "./AIAssistant/MessageList";
+import { ChatInput } from "./AIAssistant/ChatInput";
+import { mapSuggestionToFullMessage } from "./AIAssistant/suggestionMapper";
+import { ChatMessageAI } from "../hook/useDualSocket";
 
 interface AIAssistantProps {
   stats: DashboardStats;
   onNewRecord: () => void;
   onViewRecords: () => void;
   userRole: UserRole;
+  handSendMessage: (text: string) => void;
+  messagesAI: ChatMessageAI[];
+  isTyping: boolean;
+  setIsTyping: (isDone: boolean) => void;
+  streamingMessage: string;
+  isStreaming: boolean;
+  onEndDemo?: () => void;
 }
 
-export function AIAssistant({ stats, onNewRecord, onViewRecords, userRole }: AIAssistantProps) {
+export function AIAssistant({
+  stats,
+  onNewRecord,
+  onViewRecords,
+  userRole,
+  messagesAI,
+  handSendMessage,
+  isTyping,
+  setIsTyping,
+  streamingMessage,
+  isStreaming,
+  onEndDemo,
+}: AIAssistantProps) {
   const aiConfig = getAIConfig(userRole);
-  
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: 'ai',
-      content: aiConfig.greeting,
-      timestamp: new Date(),
-      suggestions: aiConfig.suggestions
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  // const [isTyping, setIsTyping] = useState(false);
+
+  useEffect(() => {
+    if (!messagesAI.length) {
+      setMessages([
+        {
+          id: "1",
+          type: "ai",
+          content: aiConfig.greeting,
+          timestamp: new Date(),
+          suggestions: aiConfig.suggestions,
+        },
+      ]);
+    } else {
+      setMessages([
+        {
+          id: "1",
+          type: "ai",
+          content: aiConfig.greeting,
+          timestamp: new Date(),
+          suggestions: aiConfig.suggestions,
+        },
+        ...messagesAI.map((itemMess: ChatMessageAI) => {
+          const { content } = itemMess;
+          const inforCretor = JSON.parse(content.author);
+          const isUser = inforCretor.type === "user";
+          const rawText = content.content;
+
+          // Chỉ trích xuất gợi ý và loại bỏ dấu ngoặc khi là tin nhắn từ AI
+          // const matches = isUser ? [] : rawText.match(/\(([^)]+)\)/g) || [];
+          // const suggestionIds = matches.map((m) => m.slice(1, -1));
+          // const suggestions = suggestionIds
+          //   .map((id) => menuData.find((item) => item.id === id))
+          //   .filter(Boolean) as MenuItem[];
+          const displayText = isUser
+            ? rawText
+            : rawText.replace(/\s*\([^)]*\)/g, "");
+
+          return {
+            id: content.id,
+            content: displayText,
+            type: (isUser ? "user" : "ai") as "user" | "ai",
+            timestamp: new Date(content.created_at),
+            suggestions: aiConfig.suggestions,
+          };
+        }),
+        // Thêm streaming message nếu đang streaming
+        ...(isStreaming && streamingMessage
+          ? [
+              {
+                id: "streaming",
+                text: streamingMessage,
+                sender: "ai" as const,
+                timestamp: new Date(),
+              },
+            ]
+          : []),
+      ]);
     }
-  ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  }, [messagesAI, streamingMessage, isStreaming]);
 
-  const addUserMessage = (content: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content,
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, newMessage]);
-  };
+  // const addUserMessage = (content: string) => {
+  //   const newMessage: Message = {
+  //     id: Date.now().toString(),
+  //     type: "user",
+  //     content,
+  //     timestamp: new Date(),
+  //   };
+  //   setMessages((prev) => [...prev, newMessage]);
+  // };
 
-  const addAIMessage = (content: string, suggestions?: string[]) => {
-    setIsTyping(false);
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      type: 'ai',
-      content,
-      timestamp: new Date(),
-      suggestions,
-    };
-    setMessages(prev => [...prev, newMessage]);
-  };
+  // const addAIMessage = (content: string, suggestions?: string[]) => {
+  //   setIsTyping(false);
+  //   const newMessage: Message = {
+  //     id: Date.now().toString(),
+  //     type: "ai",
+  //     content,
+  //     timestamp: new Date(),
+  //     suggestions,
+  //   };
+  //   setMessages((prev) => [...prev, newMessage]);
+  // };
 
   const sendMessage = (message: string) => {
     if (!message.trim()) return;
 
     const userInput = message.trim();
-    addUserMessage(userInput);
+    handSendMessage(userInput);
     setIsTyping(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const response = handleAIResponse({
-        userInput,
-        userRole,
-        stats,
-        onNewRecord,
-        onViewRecords,
-      });
-      addAIMessage(response.content, response.suggestions);
-    }, 1000);
   };
 
   const handleSend = () => {
     if (!input.trim()) return;
     const userInput = input.trim();
-    setInput('');
+    setInput("");
     sendMessage(userInput);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    // Map suggestion to full message and send directly
     const fullMessage = mapSuggestionToFullMessage(suggestion);
     sendMessage(fullMessage);
   };
@@ -93,13 +150,13 @@ export function AIAssistant({ stats, onNewRecord, onViewRecords, userRole }: AIA
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20 }}
         className="h-full flex flex-col"
       >
         <Card className="border-none shadow-none bg-white/95 backdrop-blur-sm h-full flex flex-col">
           <CardContent className="p-6 flex flex-col h-full">
             <AIHeader config={aiConfig} />
-            
+
             <MessageList
               messages={messages}
               isTyping={isTyping}
