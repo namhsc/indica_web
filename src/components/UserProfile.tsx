@@ -33,10 +33,10 @@ const roleLabels = {
 
 const roleGradients = {
 	admin: 'from-red-500 to-orange-500',
-	receptionist: 'from-blue-500 to-cyan-500',
-	doctor: 'from-emerald-500 to-teal-500',
-	nurse: 'from-violet-500 to-purple-500',
-	patient: 'from-cyan-500 to-blue-500',
+	receptionist: 'from-red-500 to-orange-500',
+	doctor: 'from-red-500 to-orange-500',
+	nurse: 'from-red-500 to-orange-500',
+	patient: 'from-red-500 to-orange-500',
 };
 
 const roleIcons = {
