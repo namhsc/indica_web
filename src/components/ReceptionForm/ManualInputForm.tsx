@@ -22,6 +22,7 @@ import {
 import { motion } from 'motion/react';
 import { Gender } from '../../types';
 import { mockDoctors, mockServices } from '../../lib/mockData';
+import { DatePicker } from '../ui/date-picker';
 
 interface ManualInputFormProps {
 	formData: {
@@ -101,13 +102,12 @@ export function ManualInputForm({
 
 					<div className="space-y-2">
 						<Label htmlFor="dateOfBirth">Ngày sinh</Label>
-						<Input
-							id="dateOfBirth"
-							type="date"
-							value={formData.dateOfBirth}
-							onChange={(e) =>
-								onFormDataChange({ dateOfBirth: e.target.value })
+						<DatePicker
+							date={formData.dateOfBirth}
+							onStringChange={(date) =>
+								onFormDataChange({ dateOfBirth: date })
 							}
+							placeholder="Chọn ngày sinh"
 							className="border-gray-300 focus:border-blue-500"
 						/>
 					</div>

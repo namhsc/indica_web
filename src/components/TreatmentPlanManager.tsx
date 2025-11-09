@@ -28,6 +28,7 @@ import { Badge } from './ui/badge';
 import { toast } from 'sonner@2.0.3';
 import { TreatmentPlan, Medication, TreatmentReminder } from '../types';
 import { Pill, Plus, X, Calendar, FileText, Bell, AlertCircle } from 'lucide-react';
+import { DatePicker } from './ui/date-picker';
 
 interface TreatmentPlanManagerProps {
 	recordId: string;
@@ -486,10 +487,10 @@ export function TreatmentPlanManager({
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div className="space-y-2">
 						<Label>Ngày tái khám</Label>
-						<Input
-							type="date"
-							value={followUpDate}
-							onChange={(e) => setFollowUpDate(e.target.value)}
+						<DatePicker
+							date={followUpDate}
+							onStringChange={(date) => setFollowUpDate(date)}
+							placeholder="Chọn ngày tái khám"
 						/>
 					</div>
 					<div className="space-y-2">
@@ -1017,10 +1018,10 @@ export function TreatmentPlanManager({
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div className="space-y-2">
 								<Label>Ngày tái khám</Label>
-								<Input
-									type="date"
-									value={followUpDate}
-									onChange={(e) => setFollowUpDate(e.target.value)}
+								<DatePicker
+									date={followUpDate}
+									onStringChange={(date) => setFollowUpDate(date)}
+									placeholder="Chọn ngày tái khám"
 								/>
 							</div>
 							<div className="space-y-2">

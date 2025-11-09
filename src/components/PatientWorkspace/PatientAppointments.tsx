@@ -28,6 +28,7 @@ import { PaginationControls } from '../PaginationControls';
 import { useAuth } from '../../contexts/AuthContext';
 import { mockDoctors, mockExaminationPackages } from '../../lib/mockData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { DatePicker } from '../ui/date-picker';
 
 interface PatientAppointmentsProps {
 	appointments: Appointment[];
@@ -295,18 +296,17 @@ export function PatientAppointments({
 								</Badge>
 							)}
 						</Label>
-						<Input
-							id="appointmentDate"
-							type="date"
-							value={formData.appointmentDate}
-							onChange={(e) => {
-								setFormData({ ...formData, appointmentDate: e.target.value });
+						<DatePicker
+							date={formData.appointmentDate}
+							onStringChange={(date) => {
+								setFormData({ ...formData, appointmentDate: date });
 								if (errors.appointmentDate) {
 									setErrors({ ...errors, appointmentDate: false });
 								}
 							}}
-							min={new Date().toISOString().split('T')[0]}
-							className={`border-gray-300 focus:border-blue-500 ${
+							placeholder="Chọn ngày khám"
+							minDate={new Date()}
+							className={`${
 								errors.appointmentDate ? 'border-red-500 bg-red-50' : ''
 							}`}
 						/>

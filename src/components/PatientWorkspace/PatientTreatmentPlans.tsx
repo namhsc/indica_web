@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { TreatmentPlanManager } from '../TreatmentPlanManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { DatePicker } from '../ui/date-picker';
 
 interface PatientTreatmentPlansProps {
 	treatmentPlans: TreatmentPlan[];
@@ -1260,10 +1261,10 @@ export function PatientTreatmentPlans({
 						<div className="space-y-6">
 							<div className="space-y-2">
 								<Label>Ngày *</Label>
-								<Input
-									type="date"
-									value={progressDate}
-									onChange={(e) => setProgressDate(e.target.value)}
+								<DatePicker
+									date={progressDate}
+									onStringChange={(date) => setProgressDate(date)}
+									placeholder="Chọn ngày"
 								/>
 							</div>
 
@@ -1518,10 +1519,10 @@ export function PatientTreatmentPlans({
 							</div>
 							<div className="space-y-2">
 								<Label>Ngày *</Label>
-								<Input
-									type="date"
-									value={progressDate}
-									onChange={(e) => setProgressDate(e.target.value)}
+								<DatePicker
+									date={progressDate}
+									onStringChange={(date) => setProgressDate(date)}
+									placeholder="Chọn ngày"
 								/>
 							</div>
 							<div className="space-y-2">

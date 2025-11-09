@@ -59,6 +59,7 @@ import {
 	Copy,
 	Check,
 } from 'lucide-react';
+import { DatePicker } from './ui/date-picker';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ReceptionFormProps {
@@ -1018,20 +1019,19 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 
 					<div className="space-y-2">
 						<Label htmlFor="dateOfBirth">Ngày sinh *</Label>
-						<Input
-							id="dateOfBirth"
-							type="date"
-							value={formData.dateOfBirth}
-							onChange={(e) => {
+						<DatePicker
+							date={formData.dateOfBirth}
+							onStringChange={(date) => {
 								setFormData({
 									...formData,
-									dateOfBirth: e.target.value,
+									dateOfBirth: date,
 								});
 								if (errors.dateOfBirth) {
 									setErrors({ ...errors, dateOfBirth: false });
 								}
 							}}
-							className={`border-gray-300 focus:border-blue-500 ${
+							placeholder="Chọn ngày sinh"
+							className={`${
 								errors.dateOfBirth ? 'border-red-500 bg-red-50' : ''
 							}`}
 						/>
