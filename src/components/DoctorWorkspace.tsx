@@ -7,7 +7,6 @@ import {
 	CardTitle,
 } from './ui/card';
 import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import {
 	Table,
@@ -24,7 +23,6 @@ import {
 	DialogTitle,
 	DialogDescription,
 } from './ui/dialog';
-import { Label } from './ui/label';
 import {
 	Select,
 	SelectContent,
@@ -32,9 +30,21 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from './ui/select';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Checkbox } from './ui/checkbox';
 import { toast } from 'sonner@2.0.3';
-import { MedicalRecord, TestType, TreatmentPlan } from '../types';
-import { Stethoscope, ClipboardList, Plus, Pill } from 'lucide-react';
+import { MedicalRecord, TreatmentPlan, TestType } from '../types';
+import {
+	Stethoscope,
+	ClipboardList,
+	Pill,
+	FlaskConical,
+	Plus,
+	Trash2,
+	ChevronDown,
+} from 'lucide-react';
 import { usePagination } from '../hooks/usePagination';
 import { PaginationControls } from './PaginationControls';
 import { TreatmentPlanManager } from './TreatmentPlanManager';
@@ -43,61 +53,96 @@ interface DoctorWorkspaceProps {
 	records: MedicalRecord[];
 	treatmentPlans: TreatmentPlan[];
 	onUpdateRecord: (recordId: string, updates: Partial<MedicalRecord>) => void;
+	onCreateTreatmentPlan: (
+		plan: Omit<TreatmentPlan, 'id' | 'createdAt' | 'createdBy'>,
+	) => void;
+	onUpdateTreatmentPlan: (plan: TreatmentPlan) => void;
 	onCreateTestOrder: (
 		recordId: string,
 		testType: TestType,
 		testName: string,
 	) => void;
-	onCreateTreatmentPlan: (
-		plan: Omit<TreatmentPlan, 'id' | 'createdAt' | 'createdBy'>,
-	) => void;
-	onUpdateTreatmentPlan: (plan: TreatmentPlan) => void;
 }
 
-const testTypes: { value: TestType; label: string; examples: string[] }[] = [
-	{
-		value: 'blood',
-		label: 'Xét nghiệm máu',
-		examples: ['Công thức máu', 'Sinh hóa máu', 'Đông máu'],
-	},
-	{
-		value: 'urine',
-		label: 'Xét nghiệm nước tiểu',
-		examples: ['Tổng phân tích nước tiểu', 'Vi sinh nước tiểu'],
-	},
-	{
-		value: 'xray',
-		label: 'Chụp X-quang',
-		examples: ['X-quang phổi', 'X-quang xương khớp'],
-	},
-	{
-		value: 'ultrasound',
-		label: 'Siêu âm',
-		examples: ['Siêu âm bụng', 'Siêu âm tim'],
-	},
-	{ value: 'ct', label: 'Chụp CT', examples: ['CT não', 'CT ngực'] },
-	{ value: 'mri', label: 'Chụp MRI', examples: ['MRI não', 'MRI cột sống'] },
-];
+const testTypeLabels: Record<TestType, string> = {
+	blood: 'Xét nghiệm máu',
+	urine: 'Xét nghiệm nước tiểu',
+	xray: 'Chụp X-quang',
+	ultrasound: 'Siêu âm',
+	ct: 'Chụp CT',
+	mri: 'Chụp MRI',
+};
+
+const testNamesByType: Record<TestType, string[]> = {
+	blood: [
+		'Xét nghiệm máu tổng quát',
+		'Xét nghiệm sinh hóa máu',
+		'Xét nghiệm công thức máu',
+		'Xét nghiệm đường huyết',
+		'Xét nghiệm chức năng gan',
+		'Xét nghiệm chức năng thận',
+		'Xét nghiệm lipid máu',
+		'Xét nghiệm đông máu',
+		'Xét nghiệm miễn dịch',
+		'Xét nghiệm viêm gan',
+	],
+	urine: [
+		'Xét nghiệm nước tiểu tổng quát',
+		'Xét nghiệm tế bào nước tiểu',
+		'Xét nghiệm vi khuẩn nước tiểu',
+		'Xét nghiệm protein nước tiểu',
+		'Xét nghiệm đường nước tiểu',
+	],
+	xray: [
+		'Chụp X-quang ngực',
+		'Chụp X-quang xương khớp',
+		'Chụp X-quang cột sống',
+		'Chụp X-quang sọ não',
+		'Chụp X-quang bụng',
+		'Chụp X-quang răng',
+	],
+	ultrasound: [
+		'Siêu âm bụng',
+		'Siêu âm tim',
+		'Siêu âm tuyến giáp',
+		'Siêu âm vú',
+		'Siêu âm phụ khoa',
+		'Siêu âm sản khoa',
+		'Siêu âm tuyến tiền liệt',
+		'Siêu âm mạch máu',
+	],
+	ct: [
+		'Chụp CT đầu',
+		'Chụp CT ngực',
+		'Chụp CT bụng',
+		'Chụp CT xương khớp',
+		'Chụp CT mạch máu',
+		'Chụp CT toàn thân',
+	],
+	mri: [
+		'Chụp MRI não',
+		'Chụp MRI cột sống',
+		'Chụp MRI khớp',
+		'Chụp MRI bụng',
+		'Chụp MRI tim',
+		'Chụp MRI toàn thân',
+	],
+};
 
 export function DoctorWorkspace({
 	records,
 	treatmentPlans,
 	onUpdateRecord,
-	onCreateTestOrder,
 	onCreateTreatmentPlan,
 	onUpdateTreatmentPlan,
+	onCreateTestOrder,
 }: DoctorWorkspaceProps) {
-	const [showExaminationDialog, setShowExaminationDialog] = useState(false);
-	const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(
-		null,
-	);
-	const [diagnosis, setDiagnosis] = useState('');
-	const [showTestDialog, setShowTestDialog] = useState(false);
-	const [selectedTestType, setSelectedTestType] = useState<TestType>('blood');
-	const [selectedTestName, setSelectedTestName] = useState('');
 	const [showTreatmentPlanDialog, setShowTreatmentPlanDialog] = useState(false);
 	const [selectedRecordForTreatment, setSelectedRecordForTreatment] =
 		useState<MedicalRecord | null>(null);
+	const [testOrders, setTestOrders] = useState<
+		Array<{ id: string; testType: TestType | ''; testNames: string[] }>
+	>([{ id: '1', testType: '', testNames: [] }]);
 
 	const pendingRecords = records.filter(
 		(r) =>
@@ -120,63 +165,84 @@ export function DoctorWorkspace({
 		itemsPerPage,
 	});
 
-	const handleStartExamination = (record: MedicalRecord) => {
-		setSelectedRecord(record);
-		setDiagnosis(record.diagnosis || '');
-		onUpdateRecord(record.id, { status: 'IN_EXAMINATION' });
-		setShowExaminationDialog(true);
-		toast.info('Bắt đầu khám bệnh');
+	const handleOpenTreatmentDialog = (record: MedicalRecord) => {
+		setSelectedRecordForTreatment(record);
+		setTestOrders([{ id: '1', testType: '', testNames: [] }]);
+		setShowTreatmentPlanDialog(true);
 	};
 
-	const handleSaveDiagnosis = () => {
-		if (!selectedRecord) return;
+	const handleAddTestOrderRow = () => {
+		const newId = String(Date.now());
+		setTestOrders([...testOrders, { id: newId, testType: '', testNames: [] }]);
+	};
 
-		onUpdateRecord(selectedRecord.id, {
-			diagnosis,
-			updatedAt: new Date().toISOString(),
+	const handleRemoveTestOrderRow = (id: string) => {
+		if (testOrders.length > 1) {
+			setTestOrders(testOrders.filter((order) => order.id !== id));
+		}
+	};
+
+	const handleUpdateTestOrder = (
+		id: string,
+		field: 'testType',
+		value: string,
+	) => {
+		setTestOrders(
+			testOrders.map((order) => {
+				if (order.id === id) {
+					// Khi thay đổi loại xét nghiệm, reset tên xét nghiệm
+					return { ...order, testType: value as TestType, testNames: [] };
+				}
+				return order;
+			}),
+		);
+	};
+
+	const handleToggleTestName = (orderId: string, testName: string) => {
+		setTestOrders(
+			testOrders.map((order) => {
+				if (order.id === orderId) {
+					const isSelected = order.testNames.includes(testName);
+					if (isSelected) {
+						return {
+							...order,
+							testNames: order.testNames.filter((name) => name !== testName),
+						};
+					}
+					return {
+						...order,
+						testNames: [...order.testNames, testName],
+					};
+				}
+				return order;
+			}),
+		);
+	};
+
+	const handleCreateAllTestOrders = () => {
+		if (!selectedRecordForTreatment) return;
+
+		let totalOrders = 0;
+		testOrders.forEach((order) => {
+			if (order.testType && order.testNames.length > 0) {
+				order.testNames.forEach((testName) => {
+					onCreateTestOrder(
+						selectedRecordForTreatment.id,
+						order.testType as TestType,
+						testName.trim(),
+					);
+					totalOrders++;
+				});
+			}
 		});
 
-		toast.success('Đã lưu chẩn đoán');
-	};
-
-	const handleAddTest = () => {
-		if (!selectedRecord || !selectedTestName) {
-			toast.error('Vui lòng chọn loại xét nghiệm');
+		if (totalOrders === 0) {
+			toast.error('Vui lòng chọn ít nhất một tên chỉ định');
 			return;
 		}
 
-		onCreateTestOrder(selectedRecord.id, selectedTestType, selectedTestName);
-		onUpdateRecord(selectedRecord.id, { status: 'WAITING_TESTS' });
-
-		setShowTestDialog(false);
-		setSelectedTestName('');
-
-		toast.success('Đã tạo chỉ định xét nghiệm');
-	};
-
-	const handleCompleteExamination = () => {
-		if (!selectedRecord) return;
-
-		if (!diagnosis.trim()) {
-			toast.error('Vui lòng nhập chẩn đoán');
-			return;
-		}
-
-		onUpdateRecord(selectedRecord.id, {
-			diagnosis,
-			status: 'COMPLETED_EXAMINATION',
-			updatedAt: new Date().toISOString(),
-		});
-
-		setSelectedRecord(null);
-		setDiagnosis('');
-		setShowExaminationDialog(false);
-
-		toast.success('Hoàn thành khám bệnh');
-	};
-
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleString('vi-VN');
+		toast.success(`Đã thêm ${totalOrders} chỉ định xét nghiệm`);
+		setTestOrders([{ id: '1', testType: '', testNames: [] }]);
 	};
 
 	// Render List View
@@ -231,11 +297,7 @@ export function DoctorWorkspace({
 											{paginatedRecords.map((record) => (
 												<TableRow
 													key={record.id}
-													className={`transition-colors ${
-														selectedRecord?.id === record.id
-															? 'bg-blue-50 hover:bg-blue-50'
-															: 'hover:bg-gray-50/80'
-													}`}
+													className="transition-colors hover:bg-gray-50/80"
 												>
 													<TableCell>
 														<span className="font-mono text-sm bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
@@ -268,24 +330,12 @@ export function DoctorWorkspace({
 															<Button
 																size="sm"
 																variant="outline"
-																onClick={() => {
-																	setSelectedRecordForTreatment(record);
-																	setShowTreatmentPlanDialog(true);
-																}}
-																className="flex items-center gap-1"
+																onClick={() =>
+																	handleOpenTreatmentDialog(record)
+																}
+																className="flex items-center gap-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
 															>
-																<Pill className="h-3 w-3" />
-																Phác đồ
-															</Button>
-															<Button
-																size="sm"
-																onClick={() => handleStartExamination(record)}
-																disabled={selectedRecord?.id === record.id}
-																className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-															>
-																{selectedRecord?.id === record.id
-																	? 'Đang khám'
-																	: 'Bắt đầu khám'}
+																Bắt đầu khám
 															</Button>
 														</div>
 													</TableCell>
@@ -310,223 +360,6 @@ export function DoctorWorkspace({
 				</CardContent>
 			</Card>
 
-			{/* Test Dialog */}
-			<Dialog open={showTestDialog} onOpenChange={setShowTestDialog}>
-				<DialogContent className="!max-w-[99vw] !w-[99vw] max-h-[98vh] overflow-y-auto p-6">
-					<DialogHeader>
-						<DialogTitle>Chỉ định xét nghiệm / hình ảnh</DialogTitle>
-						<DialogDescription>
-							Chọn loại và tên xét nghiệm cần thực hiện cho bệnh nhân
-						</DialogDescription>
-					</DialogHeader>
-					<div className="space-y-4">
-						<div className="space-y-2">
-							<Label>Loại xét nghiệm</Label>
-							<Select
-								value={selectedTestType}
-								onValueChange={(value: TestType) => {
-									setSelectedTestType(value);
-									setSelectedTestName('');
-								}}
-							>
-								<SelectTrigger>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{testTypes.map((type) => (
-										<SelectItem key={type.value} value={type.value}>
-											{type.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-
-						<div className="space-y-2">
-							<Label>Tên xét nghiệm</Label>
-							<Select
-								value={selectedTestName}
-								onValueChange={setSelectedTestName}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder="Chọn xét nghiệm" />
-								</SelectTrigger>
-								<SelectContent>
-									{testTypes
-										.find((t) => t.value === selectedTestType)
-										?.examples.map((example) => (
-											<SelectItem key={example} value={example}>
-												{example}
-											</SelectItem>
-										))}
-								</SelectContent>
-							</Select>
-						</div>
-
-						<div className="flex gap-3">
-							<Button onClick={handleAddTest} className="flex-1">
-								Tạo chỉ định
-							</Button>
-							<Button
-								variant="outline"
-								onClick={() => setShowTestDialog(false)}
-							>
-								Hủy
-							</Button>
-						</div>
-					</div>
-				</DialogContent>
-			</Dialog>
-
-			{/* Examination Dialog */}
-			<Dialog
-				open={showExaminationDialog}
-				onOpenChange={setShowExaminationDialog}
-			>
-				<DialogContent className="max-w-[95vw] lg:max-w-[90vw] xl:max-w-7xl max-h-[95vh] overflow-hidden p-0 gap-0 bg-gradient-to-br from-gray-50 to-white border-0 shadow-none">
-					<div className="overflow-y-auto max-h-[95vh]">
-						<div className="p-6">
-							{selectedRecord && (
-								<div className="space-y-6">
-									{/* Header */}
-									<DialogHeader>
-										<DialogTitle className="flex items-center gap-2 text-2xl">
-											<ClipboardList className="h-6 w-6 text-blue-600" />
-											Khám bệnh - {selectedRecord.patient.fullName}
-										</DialogTitle>
-										<DialogDescription className="mt-2">
-											Mã hồ sơ: <strong>{selectedRecord.receiveCode}</strong> -
-											Bác sĩ:{' '}
-											<strong>
-												{selectedRecord.assignedDoctor?.name || 'Chưa gán'}
-											</strong>
-										</DialogDescription>
-									</DialogHeader>
-
-									{/* Patient Info */}
-									<Card>
-										<CardHeader>
-											<CardTitle className="text-base">
-												Thông tin bệnh nhân
-											</CardTitle>
-										</CardHeader>
-										<CardContent>
-											<div className="grid grid-cols-2 gap-4">
-												<div>
-													<div className="text-sm text-gray-600">Họ và tên</div>
-													<div className="font-medium">
-														{selectedRecord.patient.fullName}
-													</div>
-												</div>
-												<div>
-													<div className="text-sm text-gray-600">
-														Số điện thoại
-													</div>
-													<div>{selectedRecord.patient.phoneNumber}</div>
-												</div>
-												<div>
-													<div className="text-sm text-gray-600">Ngày sinh</div>
-													<div>
-														{new Date(
-															selectedRecord.patient.dateOfBirth,
-														).toLocaleDateString('vi-VN')}
-													</div>
-												</div>
-												<div>
-													<div className="text-sm text-gray-600">Giới tính</div>
-													<div>
-														{selectedRecord.patient.gender === 'male'
-															? 'Nam'
-															: selectedRecord.patient.gender === 'female'
-															? 'Nữ'
-															: 'Khác'}
-													</div>
-												</div>
-												<div>
-													<div className="text-sm text-gray-600">
-														Lý do khám
-													</div>
-													<div>{selectedRecord.reason || 'Không có'}</div>
-												</div>
-												<div>
-													<div className="text-sm text-gray-600">
-														Dịch vụ yêu cầu
-													</div>
-													<div className="flex flex-wrap gap-1 mt-1">
-														{selectedRecord.requestedServices.map(
-															(service, index) => (
-																<Badge
-																	key={index}
-																	variant="outline"
-																	className="text-xs"
-																>
-																	{service}
-																</Badge>
-															),
-														)}
-													</div>
-												</div>
-											</div>
-										</CardContent>
-									</Card>
-
-									{/* Diagnosis */}
-									<Card>
-										<CardContent>
-											<div className="space-y-2 mt-4">
-												<Label>Chẩn đoán</Label>
-												<Textarea
-													value={diagnosis}
-													onChange={(e) => setDiagnosis(e.target.value)}
-													placeholder="Nhập chẩn đoán của bác sĩ..."
-													rows={4}
-												/>
-											</div>
-										</CardContent>
-									</Card>
-
-									{/* Treatment Plan Manager */}
-									<TreatmentPlanManager
-										recordId={selectedRecord.id}
-										doctorName={selectedRecord.assignedDoctor?.name || 'Bác sĩ'}
-										treatmentPlan={treatmentPlans.find(
-											(tp) => tp.recordId === selectedRecord.id,
-										)}
-										onSave={onCreateTreatmentPlan}
-										onUpdate={onUpdateTreatmentPlan}
-										hideCard={true}
-									/>
-
-									{/* Actions */}
-									<Card>
-										<CardContent className="pt-6">
-											<div className="flex gap-3 justify-end">
-												<Button onClick={handleSaveDiagnosis} variant="outline">
-													Lưu chẩn đoán
-												</Button>
-												<Button
-													onClick={() => setShowTestDialog(true)}
-													variant="outline"
-												>
-													<Plus className="h-4 w-4 mr-2" />
-													Chỉ định xét nghiệm
-												</Button>
-												<Button
-													onClick={handleCompleteExamination}
-													className="hover:from-green-600 hover:to-emerald-700"
-												>
-													Hoàn thành khám
-												</Button>
-											</div>
-										</CardContent>
-									</Card>
-								</div>
-							)}
-						</div>
-					</div>
-				</DialogContent>
-			</Dialog>
-
 			{/* Treatment Plan Dialog */}
 			<Dialog
 				open={showTreatmentPlanDialog}
@@ -540,8 +373,8 @@ export function DoctorWorkspace({
 									{/* Header */}
 									<DialogHeader>
 										<DialogTitle className="flex items-center gap-2 text-2xl">
-											<Pill className="h-6 w-6 text-blue-600" />
-											Phác đồ điều trị
+											<Stethoscope className="h-5 w-5" />
+											Khám bệnh
 										</DialogTitle>
 										<DialogDescription className="mt-2">
 											Bệnh nhân:{' '}
@@ -552,6 +385,157 @@ export function DoctorWorkspace({
 											<strong>{selectedRecordForTreatment.receiveCode}</strong>
 										</DialogDescription>
 									</DialogHeader>
+
+									{/* Thêm chỉ định xét nghiệm */}
+									<Card className="border border-gray-200">
+										<CardHeader>
+											<CardTitle className="flex items-center gap-2 text-lg">
+												<FlaskConical className="h-5 w-5 text-blue-600" />
+												Chỉ định
+											</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<div className="space-y-4">
+												<div className="space-y-3">
+													{testOrders.map((order, index) => (
+														<div
+															key={order.id}
+															className="flex flex-col md:flex-row gap-3 items-end"
+														>
+															<div className="flex-1 min-w-0 space-y-2">
+																<Label htmlFor={`testType-${order.id}`}>
+																	Loại xét nghiệm
+																</Label>
+																<Select
+																	value={order.testType}
+																	onValueChange={(value) =>
+																		handleUpdateTestOrder(
+																			order.id,
+																			'testType',
+																			value,
+																		)
+																	}
+																>
+																	<SelectTrigger id={`testType-${order.id}`}>
+																		<SelectValue placeholder="Chọn loại xét nghiệm" />
+																	</SelectTrigger>
+																	<SelectContent>
+																		{Object.entries(testTypeLabels).map(
+																			([value, label]) => (
+																				<SelectItem key={value} value={value}>
+																					{label}
+																				</SelectItem>
+																			),
+																		)}
+																	</SelectContent>
+																</Select>
+															</div>
+
+															<div className="flex-1 min-w-0 space-y-2">
+																<Label htmlFor={`testName-${order.id}`}>
+																	Tên chỉ định
+																</Label>
+																<Popover>
+																	<PopoverTrigger asChild>
+																		<Button
+																			variant="outline"
+																			className="w-full justify-between text-left font-normal"
+																			disabled={!order.testType}
+																		>
+																			<span className="truncate">
+																				{order.testNames.length === 0
+																					? order.testType
+																						? 'Chọn tên chỉ định'
+																						: 'Chọn loại xét nghiệm trước'
+																					: order.testNames.length === 1
+																					? order.testNames[0]
+																					: `Đã chọn ${order.testNames.length} chỉ định`}
+																			</span>
+																			<ChevronDown className="h-4 w-4 opacity-50 ml-2 flex-shrink-0" />
+																		</Button>
+																	</PopoverTrigger>
+																	<PopoverContent
+																		className="w-[400px] p-0"
+																		align="start"
+																	>
+																		<div className="max-h-[300px] overflow-y-auto p-2">
+																			{order.testType ? (
+																				<div className="space-y-1">
+																					{testNamesByType[
+																						order.testType as TestType
+																					]?.map((name) => {
+																						const isSelected =
+																							order.testNames.includes(name);
+																						return (
+																							<label
+																								key={name}
+																								className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+																									isSelected
+																										? 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
+																										: 'hover:bg-gray-50 border border-transparent'
+																								}`}
+																							>
+																								<Checkbox
+																									checked={isSelected}
+																									onCheckedChange={() =>
+																										handleToggleTestName(
+																											order.id,
+																											name,
+																										)
+																									}
+																									className="mr-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+																								/>
+																								<span
+																									className={`text-sm flex-1 transition-colors ${
+																										isSelected
+																											? 'text-blue-900 font-medium'
+																											: 'text-gray-700'
+																									}`}
+																								>
+																									{name}
+																								</span>
+																							</label>
+																						);
+																					})}
+																				</div>
+																			) : (
+																				<div className="p-4 text-center text-gray-500 text-sm">
+																					Vui lòng chọn loại xét nghiệm trước
+																				</div>
+																			)}
+																		</div>
+																	</PopoverContent>
+																</Popover>
+															</div>
+
+															<Button
+																type="button"
+																variant="outline"
+																size="icon"
+																onClick={() =>
+																	handleRemoveTestOrderRow(order.id)
+																}
+																disabled={testOrders.length === 1}
+																className="h-10 w-10 flex-shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
+																title="Xóa dòng"
+															>
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
+													))}
+												</div>
+
+												<button
+													type="button"
+													onClick={handleAddTestOrderRow}
+													className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1 mt-2 transition-colors"
+												>
+													<Plus className="h-4 w-4" />
+													Thêm chỉ định
+												</button>
+											</div>
+										</CardContent>
+									</Card>
 
 									{/* Treatment Plan Manager */}
 									<TreatmentPlanManager
@@ -567,11 +551,13 @@ export function DoctorWorkspace({
 											onCreateTreatmentPlan(plan);
 											setShowTreatmentPlanDialog(false);
 											setSelectedRecordForTreatment(null);
+											setTestOrders([{ id: '1', testType: '', testNames: [] }]);
 										}}
 										onUpdate={(plan) => {
 											onUpdateTreatmentPlan(plan);
 											setShowTreatmentPlanDialog(false);
 											setSelectedRecordForTreatment(null);
+											setTestOrders([{ id: '1', testType: '', testNames: [] }]);
 										}}
 										hideCard={true}
 									/>
