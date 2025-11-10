@@ -14,6 +14,9 @@ import {
 	Pill,
 	FileText,
 	Bell,
+	Package,
+	Users,
+	Settings,
 } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import logo from '@/assets/images/logo.svg';
@@ -68,6 +71,24 @@ const navigationItems: NavigationItem[] = [
 		label: 'Trả khách hàng',
 		icon: FolderCheck,
 		roles: ['admin', 'receptionist'],
+	},
+	{
+		id: 'services',
+		label: 'Quản lý Dịch vụ',
+		icon: Settings,
+		roles: ['admin'],
+	},
+	{
+		id: 'service-packages',
+		label: 'Quản lý Gói dịch vụ',
+		icon: Package,
+		roles: ['admin'],
+	},
+	{
+		id: 'staff',
+		label: 'Quản lý Nhân viên',
+		icon: Users,
+		roles: ['admin'],
 	},
 	// Patient menu items - displayed directly without parent menu
 	{

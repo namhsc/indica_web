@@ -11,6 +11,9 @@ import { RecordDetail } from './components/RecordDetail';
 import { LoginPage } from './components/LoginPage';
 import { RoleGuard } from './components/RoleGuard';
 import { AppSidebar } from './components/layout/AppSidebar';
+import { ServiceManagement } from './components/ServiceManagement';
+import { ServicePackageManagement } from './components/ServicePackageManagement';
+import { StaffManagement } from './components/StaffManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Button } from './components/ui/button';
 import { Menu } from 'lucide-react';
@@ -21,6 +24,9 @@ import {
 	TreatmentPlan,
 	Appointment,
 	Notification,
+	Service,
+	ServicePackage,
+	Staff,
 } from './types';
 import {
 	generateMockRecords,
@@ -31,6 +37,9 @@ import {
 	generateMockAppointments,
 	generateMockAppointmentsForPatient,
 	generateMockNotifications,
+	mockServicesData,
+	mockServicePackagesData,
+	mockStaffData,
 } from './lib/mockData';
 import { motion } from 'motion/react';
 import useDualSocket from './hook/useDualSocket';
@@ -45,6 +54,9 @@ function MainApp() {
 	const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(
 		null,
 	);
+	const [services, setServices] = useState<Service[]>([]);
+	const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
+	const [staff, setStaff] = useState<Staff[]>([]);
 	const [activeTab, setActiveTab] = useState('ai');
 	const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -64,6 +76,9 @@ function MainApp() {
 			const mockRecords = generateMockRecords();
 			setRecords(mockRecords);
 			setTestOrders(generateMockTestOrders());
+			setServices(mockServicesData);
+			setServicePackages(mockServicePackagesData);
+			setStaff(mockStaffData);
 
 			// Generate appointments - if patient, generate specific appointments for them
 			if (user?.role === 'patient' && user?.fullName) {
@@ -399,6 +414,90 @@ function MainApp() {
 		);
 	};
 
+	// Service handlers
+	const handleCreateService = (
+		serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>,
+	) => {
+		const newService: Service = {
+			...serviceData,
+			id: `svc_${Date.now()}`,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		};
+		setServices([...services, newService]);
+	};
+
+	const handleUpdateService = (id: string, updates: Partial<Service>) => {
+		setServices(
+			services.map((s) =>
+				s.id === id
+					? { ...s, ...updates, updatedAt: new Date().toISOString() }
+					: s,
+			),
+		);
+	};
+
+	const handleDeleteService = (id: string) => {
+		setServices(services.filter((s) => s.id !== id));
+	};
+
+	// Service Package handlers
+	const handleCreateServicePackage = (
+		packageData: Omit<ServicePackage, 'id' | 'createdAt' | 'updatedAt'>,
+	) => {
+		const newPackage: ServicePackage = {
+			...packageData,
+			id: `pkg_${Date.now()}`,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		};
+		setServicePackages([...servicePackages, newPackage]);
+	};
+
+	const handleUpdateServicePackage = (
+		id: string,
+		updates: Partial<ServicePackage>,
+	) => {
+		setServicePackages(
+			servicePackages.map((p) =>
+				p.id === id
+					? { ...p, ...updates, updatedAt: new Date().toISOString() }
+					: p,
+			),
+		);
+	};
+
+	const handleDeleteServicePackage = (id: string) => {
+		setServicePackages(servicePackages.filter((p) => p.id !== id));
+	};
+
+	// Staff handlers
+	const handleCreateStaff = (
+		staffData: Omit<Staff, 'id' | 'createdAt' | 'updatedAt'>,
+	) => {
+		const newStaff: Staff = {
+			...staffData,
+			id: `staff_${Date.now()}`,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		};
+		setStaff([...staff, newStaff]);
+	};
+
+	const handleUpdateStaff = (id: string, updates: Partial<Staff>) => {
+		setStaff(
+			staff.map((s) =>
+				s.id === id
+					? { ...s, ...updates, updatedAt: new Date().toISOString() }
+					: s,
+			),
+		);
+	};
+
+	const handleDeleteStaff = (id: string) => {
+		setStaff(staff.filter((s) => s.id !== id));
+	};
+
 	if (!isAuthenticated) {
 		return <LoginPage />;
 	}
@@ -533,6 +632,40 @@ function MainApp() {
 									treatmentProgress={treatmentProgress}
 									onUpdateTreatmentPlan={handleUpdateTreatmentPlanForPatient}
 									onAddTreatmentProgress={handleAddTreatmentProgress}
+								/>
+							</RoleGuard>
+						)}
+
+						{activeTab === 'services' && (
+							<RoleGuard allowedRoles={['admin']}>
+								<ServiceManagement
+									services={services}
+									onCreate={handleCreateService}
+									onUpdate={handleUpdateService}
+									onDelete={handleDeleteService}
+								/>
+							</RoleGuard>
+						)}
+
+						{activeTab === 'service-packages' && (
+							<RoleGuard allowedRoles={['admin']}>
+								<ServicePackageManagement
+									packages={servicePackages}
+									services={services}
+									onCreate={handleCreateServicePackage}
+									onUpdate={handleUpdateServicePackage}
+									onDelete={handleDeleteServicePackage}
+								/>
+							</RoleGuard>
+						)}
+
+						{activeTab === 'staff' && (
+							<RoleGuard allowedRoles={['admin']}>
+								<StaffManagement
+									staff={staff}
+									onCreate={handleCreateStaff}
+									onUpdate={handleUpdateStaff}
+									onDelete={handleDeleteStaff}
 								/>
 							</RoleGuard>
 						)}

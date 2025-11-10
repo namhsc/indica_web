@@ -192,3 +192,51 @@ export interface TreatmentProgress {
     painLevel?: number; // Mức độ đau (1-10)
   };
 }
+
+// Quản lý Dịch vụ
+export interface Service {
+  id: string;
+  name: string;
+  code?: string;
+  description?: string;
+  category: 'examination' | 'test' | 'imaging' | 'procedure' | 'other';
+  price: number;
+  unit?: string; // Đơn vị tính (lần, gói, v.v.)
+  duration?: number; // Thời gian thực hiện (phút)
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Quản lý Gói dịch vụ
+export interface ServicePackage {
+  id: string;
+  name: string;
+  code?: string;
+  description?: string;
+  services: string[]; // Danh sách ID dịch vụ
+  price: number; // Giá gói (có thể khác tổng giá các dịch vụ)
+  discount?: number; // Phần trăm giảm giá
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Quản lý Nhân viên
+export interface Staff {
+  id: string;
+  fullName: string;
+  code?: string;
+  email?: string;
+  phoneNumber: string;
+  dateOfBirth?: string;
+  gender: Gender;
+  role: UserRole;
+  specialty?: string; // Chuyên khoa (cho bác sĩ)
+  position?: string; // Chức vụ
+  department?: string; // Phòng ban
+  address?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

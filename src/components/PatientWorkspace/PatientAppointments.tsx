@@ -36,7 +36,7 @@ interface PatientAppointmentsProps {
 	onUpdateAppointment: (appointmentId: string, updates: Partial<Appointment>) => void;
 }
 
-type ExaminationType = 'specialty' | 'doctor' | 'package';
+type ExaminationType = 'specialty' | 'package';
 
 const appointmentStatusLabels = {
 	pending: 'Chờ xác nhận',
@@ -164,9 +164,6 @@ export function PatientAppointments({
 		if (formData.examinationType === 'specialty' && !formData.specialty) {
 			newErrors.specialty = true;
 		}
-		if (formData.examinationType === 'doctor' && !formData.assignedDoctorId) {
-			newErrors.assignedDoctorId = true;
-		}
 		if (formData.examinationType === 'package' && !formData.selectedPackage) {
 			newErrors.selectedPackage = true;
 		}
@@ -195,13 +192,6 @@ export function PatientAppointments({
 					doctor = selectedDoctor.name;
 					doctorId = selectedDoctor.id;
 				}
-			}
-		} else if (formData.examinationType === 'doctor') {
-			const selectedDoctor = mockDoctors.find((d) => d.id === formData.assignedDoctorId);
-			if (selectedDoctor) {
-				doctor = selectedDoctor.name;
-				doctorId = selectedDoctor.id;
-				services = [`Khám ${selectedDoctor.specialty}`];
 			}
 		}
 
@@ -358,7 +348,7 @@ export function PatientAppointments({
 							</Badge>
 						)}
 					</Label>
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 						{/* Khám chuyên khoa */}
 						<button
 							type="button"
@@ -391,43 +381,6 @@ export function PatientAppointments({
 									<div className="font-medium">Khám chuyên khoa</div>
 									<div className="text-xs text-gray-600 mt-1">
 										Chọn chuyên khoa để khám
-									</div>
-								</div>
-							</div>
-						</button>
-
-						{/* Khám theo bác sĩ */}
-						<button
-							type="button"
-							onClick={() => {
-								setFormData({
-									...formData,
-									examinationType: 'doctor',
-									selectedPackage: '',
-									specialty: '',
-								});
-								if (errors.examinationType) {
-									setErrors({ ...errors, examinationType: false });
-								}
-							}}
-							className={`p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
-								formData.examinationType === 'doctor'
-									? 'border-blue-500 bg-blue-50 text-blue-700'
-									: errors.examinationType
-									? 'border-red-500 bg-red-50'
-									: 'border-gray-200 hover:border-gray-300 bg-white'
-							}`}
-						>
-							<div className="flex items-center gap-3">
-								{formData.examinationType === 'doctor' ? (
-									<CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
-								) : (
-									<div className="h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-300" />
-								)}
-								<div>
-									<div className="font-medium">Khám theo bác sĩ</div>
-									<div className="text-xs text-gray-600 mt-1">
-										Chọn bác sĩ cụ thể
 									</div>
 								</div>
 							</div>
@@ -656,46 +609,6 @@ export function PatientAppointments({
 								</SelectContent>
 							</Select>
 						</div>
-					</div>
-				)}
-
-				{formData.examinationType === 'doctor' && (
-					<div className="space-y-2">
-						<Label
-							htmlFor="assignedDoctorId"
-							className="flex items-center gap-2"
-						>
-							Chọn bác sĩ *
-							{!formData.assignedDoctorId && (
-								<Badge variant="destructive" className="animate-pulse">
-									Chưa chọn
-								</Badge>
-							)}
-						</Label>
-						<Select
-							value={formData.assignedDoctorId}
-							onValueChange={(value) => {
-								setFormData({ ...formData, assignedDoctorId: value });
-								if (errors.assignedDoctorId) {
-									setErrors({ ...errors, assignedDoctorId: false });
-								}
-							}}
-						>
-							<SelectTrigger
-								className={`border-gray-300 ${
-									errors.assignedDoctorId ? 'border-red-500 bg-red-50' : ''
-								}`}
-							>
-								<SelectValue placeholder="Chọn bác sĩ..." />
-							</SelectTrigger>
-							<SelectContent>
-								{mockDoctors.map((doctor) => (
-									<SelectItem key={doctor.id} value={doctor.id}>
-										{doctor.name} - {doctor.specialty}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
 					</div>
 				)}
 
