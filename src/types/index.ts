@@ -240,3 +240,26 @@ export interface Staff {
   createdAt: string;
   updatedAt: string;
 }
+
+// Quản lý Danh mục Thuốc
+export interface MedicationCatalog {
+  id: string;
+  name: string;
+  code?: string;
+  activeIngredient?: string; // Hoạt chất
+  dosageForm: 'tablet' | 'capsule' | 'syrup' | 'injection' | 'cream' | 'drops' | 'other'; // Dạng bào chế
+  strength?: string; // Hàm lượng (vd: "500mg", "1%")
+  unit: string; // Đơn vị (viên, chai, tuýp, v.v.)
+  category: 'antibiotic' | 'analgesic' | 'anti_inflammatory' | 'gastrointestinal' | 'respiratory' | 'cardiovascular' | 'vitamin' | 'dermatological' | 'ophthalmic' | 'other'; // Phân loại
+  manufacturer?: string; // Nhà sản xuất
+  price?: number; // Giá bán
+  stock?: number; // Tồn kho
+  minStock?: number; // Tồn kho tối thiểu
+  description?: string; // Mô tả
+  indications?: string; // Chỉ định
+  contraindications?: string; // Chống chỉ định
+  sideEffects?: string; // Tác dụng phụ
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -14,6 +14,7 @@ import { AppSidebar } from './components/layout/AppSidebar';
 import { ServiceManagement } from './components/ServiceManagement';
 import { ServicePackageManagement } from './components/ServicePackageManagement';
 import { StaffManagement } from './components/StaffManagement';
+import { MedicationManagement } from './components/MedicationManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Button } from './components/ui/button';
 import { Menu } from 'lucide-react';
@@ -27,6 +28,7 @@ import {
 	Service,
 	ServicePackage,
 	Staff,
+	MedicationCatalog,
 } from './types';
 import {
 	generateMockRecords,
@@ -40,6 +42,7 @@ import {
 	mockServicesData,
 	mockServicePackagesData,
 	mockStaffData,
+	mockMedicationCatalogData,
 } from './lib/mockData';
 import { motion } from 'motion/react';
 import useDualSocket from './hook/useDualSocket';
@@ -57,6 +60,7 @@ function MainApp() {
 	const [services, setServices] = useState<Service[]>([]);
 	const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
 	const [staff, setStaff] = useState<Staff[]>([]);
+	const [medications, setMedications] = useState<MedicationCatalog[]>([]);
 	const [activeTab, setActiveTab] = useState('ai');
 	const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -79,6 +83,7 @@ function MainApp() {
 			setServices(mockServicesData);
 			setServicePackages(mockServicePackagesData);
 			setStaff(mockStaffData);
+			setMedications(mockMedicationCatalogData);
 
 			// Generate appointments - if patient, generate specific appointments for them
 			if (user?.role === 'patient' && user?.fullName) {
@@ -498,6 +503,33 @@ function MainApp() {
 		setStaff(staff.filter((s) => s.id !== id));
 	};
 
+	// Medication handlers
+	const handleCreateMedication = (
+		medicationData: Omit<MedicationCatalog, 'id' | 'createdAt' | 'updatedAt'>,
+	) => {
+		const newMedication: MedicationCatalog = {
+			...medicationData,
+			id: `med_${Date.now()}`,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		};
+		setMedications([...medications, newMedication]);
+	};
+
+	const handleUpdateMedication = (id: string, updates: Partial<MedicationCatalog>) => {
+		setMedications(
+			medications.map((m) =>
+				m.id === id
+					? { ...m, ...updates, updatedAt: new Date().toISOString() }
+					: m,
+			),
+		);
+	};
+
+	const handleDeleteMedication = (id: string) => {
+		setMedications(medications.filter((m) => m.id !== id));
+	};
+
 	if (!isAuthenticated) {
 		return <LoginPage />;
 	}
@@ -666,6 +698,17 @@ function MainApp() {
 									onCreate={handleCreateStaff}
 									onUpdate={handleUpdateStaff}
 									onDelete={handleDeleteStaff}
+								/>
+							</RoleGuard>
+						)}
+
+						{activeTab === 'medications' && (
+							<RoleGuard allowedRoles={['admin']}>
+								<MedicationManagement
+									medications={medications}
+									onCreate={handleCreateMedication}
+									onUpdate={handleUpdateMedication}
+									onDelete={handleDeleteMedication}
 								/>
 							</RoleGuard>
 						)}

@@ -90,6 +90,12 @@ const navigationItems: NavigationItem[] = [
 		icon: Users,
 		roles: ['admin'],
 	},
+	{
+		id: 'medications',
+		label: 'Danh mục Thuốc',
+		icon: Pill,
+		roles: ['admin'],
+	},
 	// Patient menu items - displayed directly without parent menu
 	{
 		id: 'ai',
@@ -113,7 +119,9 @@ export function AppSidebar({
 	userRole,
 	unreadNotificationsCount = 0,
 }: AppSidebarProps) {
-	const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set());
+	const [expandedItems, setExpandedItems] = React.useState<Set<string>>(
+		new Set(),
+	);
 
 	const canAccessItem = (item: NavigationItem): boolean => {
 		if (!userRole) return false;
@@ -193,7 +201,9 @@ export function AppSidebar({
 							const isExpanded = expandedItems.has(item.id);
 							const hasChildren = item.children && item.children.length > 0;
 							// Show badge for notifications
-							const showBadge = item.id === 'patient-notifications' && unreadNotificationsCount > 0;
+							const showBadge =
+								item.id === 'patient-notifications' &&
+								unreadNotificationsCount > 0;
 
 							return (
 								<div key={item.id} className="space-y-1">
@@ -254,7 +264,9 @@ export function AppSidebar({
 												.map((child) => {
 													const ChildIcon = child.icon;
 													const childIsActive = isChildActive(child);
-													const childShowBadge = child.id === 'patient-notifications' && unreadNotificationsCount > 0;
+													const childShowBadge =
+														child.id === 'patient-notifications' &&
+														unreadNotificationsCount > 0;
 
 													return (
 														<motion.button
@@ -277,10 +289,15 @@ export function AppSidebar({
                               `}
 														>
 															<ChildIcon className="h-4 w-4 flex-shrink-0" />
-															<span className="flex-1 text-left">{child.label}</span>
-															{(child.badge && child.badge > 0) || childShowBadge ? (
+															<span className="flex-1 text-left">
+																{child.label}
+															</span>
+															{(child.badge && child.badge > 0) ||
+															childShowBadge ? (
 																<span className="h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-																	{childShowBadge ? unreadNotificationsCount : child.badge}
+																	{childShowBadge
+																		? unreadNotificationsCount
+																		: child.badge}
 																</span>
 															) : null}
 														</motion.button>
