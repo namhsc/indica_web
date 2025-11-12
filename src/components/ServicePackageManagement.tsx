@@ -607,7 +607,7 @@ export function ServicePackageManagement({
 												initial={{ opacity: 0, y: 20 }}
 												animate={{ opacity: 1, y: 0 }}
 												transition={{ delay: index * 0.05 }}
-												className="hover:bg-gray-50/80 transition-colors"
+												className="hover:bg-gray-50/80 transition-colors border-b border-gray-200"
 											>
 												<TableCell>
 													{pkg.code ? (
