@@ -44,8 +44,12 @@ import {
 	XCircle,
 	Package,
 	X,
+	Filter,
+	Download,
+	Upload,
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import { usePagination } from '../hooks/usePagination';
 import { PaginationControls } from './PaginationControls';
 import { motion } from 'motion/react';
@@ -165,7 +169,10 @@ export function ServicePackageManagement({
 		const discount = formData.discount
 			? parseFloat(formData.discount)
 			: undefined;
-		if (discount !== undefined && (isNaN(discount) || discount < 0 || discount > 100)) {
+		if (
+			discount !== undefined &&
+			(isNaN(discount) || discount < 0 || discount > 100)
+		) {
 			toast.error('Phần trăm giảm giá không hợp lệ (0-100)');
 			return;
 		}
@@ -220,6 +227,242 @@ export function ServicePackageManagement({
 		}).format(price);
 	};
 
+	// Export to Excel
+	const handleExport = () => {
+		try {
+			const exportData = filteredPackages.map((pkg) => ({
+				Mã: pkg.code || '',
+				Tên: pkg.name,
+				Giá: pkg.price,
+				'Giảm giá (%)': pkg.discount || '',
+				'Dịch vụ': pkg.services
+					.map((serviceId) => {
+						const service = services.find((s) => s.id === serviceId);
+						return service ? service.name : '';
+					})
+					.filter(Boolean)
+					.join(', '),
+				'Mô tả': pkg.description || '',
+				'Trạng thái': pkg.isActive ? 'Hoạt động' : 'Ngừng hoạt động',
+			}));
+
+			const ws = XLSX.utils.json_to_sheet(exportData);
+			const wb = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(wb, ws, 'Gói dịch vụ');
+
+			const colWidths = [
+				{ wch: 15 }, // Mã
+				{ wch: 30 }, // Tên
+				{ wch: 15 }, // Giá
+				{ wch: 12 }, // Giảm giá
+				{ wch: 50 }, // Dịch vụ
+				{ wch: 50 }, // Mô tả
+				{ wch: 15 }, // Trạng thái
+			];
+			ws['!cols'] = colWidths;
+
+			const fileName = `Danh_sach_goi_dich_vu_${
+				new Date().toISOString().split('T')[0]
+			}.xlsx`;
+			XLSX.writeFile(wb, fileName);
+			toast.success(`Đã xuất ${exportData.length} gói dịch vụ ra file Excel`);
+		} catch (error) {
+			console.error('Lỗi khi xuất file Excel:', error);
+			toast.error('Có lỗi xảy ra khi xuất file Excel');
+		}
+	};
+
+	// Import from Excel
+	const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		const validExtensions = [
+			'.xlsx',
+			'.xls',
+			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			'application/vnd.ms-excel',
+		];
+		const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+		const isValidFile =
+			validExtensions.includes(fileExtension) ||
+			validExtensions.includes(file.type);
+
+		if (!isValidFile) {
+			toast.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			try {
+				const data = new Uint8Array(e.target?.result as ArrayBuffer);
+				const workbook = XLSX.read(data, { type: 'array' });
+				const firstSheetName = workbook.SheetNames[0];
+				const worksheet = workbook.Sheets[firstSheetName];
+				const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+					header: 1,
+					defval: '',
+				}) as any[][];
+
+				if (jsonData.length < 2) {
+					toast.error('File Excel không có dữ liệu hoặc thiếu header');
+					return;
+				}
+
+				const headers = jsonData[0].map((h: any) =>
+					String(h).toLowerCase().trim(),
+				);
+
+				const headerMap: Record<string, string> = {
+					mã: 'code',
+					tên: 'name',
+					giá: 'price',
+					'giảm giá (%)': 'discount',
+					'dịch vụ': 'services',
+					'mô tả': 'description',
+					'trạng thái': 'isActive',
+				};
+
+				const fieldIndexes: Record<string, number> = {};
+				headers.forEach((header, index) => {
+					const field = headerMap[header];
+					if (field) {
+						fieldIndexes[field] = index;
+					}
+				});
+
+				if (!fieldIndexes['name'] || !fieldIndexes['price']) {
+					toast.error('File Excel thiếu các cột bắt buộc: Tên và Giá');
+					return;
+				}
+
+				let successCount = 0;
+				let errorCount = 0;
+				const errors: string[] = [];
+
+				for (let i = 1; i < jsonData.length; i++) {
+					const row = jsonData[i];
+					if (!row || row.every((cell) => !cell)) continue;
+
+					try {
+						const name = row[fieldIndexes['name']]?.toString().trim() || '';
+						const priceValue = row[fieldIndexes['price']];
+						const price =
+							typeof priceValue === 'number'
+								? priceValue
+								: parseFloat(String(priceValue).replace(/[^\d.-]/g, ''));
+
+						if (!name || isNaN(price) || price < 0) {
+							errorCount++;
+							errors.push(`Dòng ${i + 1}: Thiếu tên hoặc giá không hợp lệ`);
+							continue;
+						}
+
+						const servicesText =
+							row[fieldIndexes['services']]?.toString().trim() || '';
+						const selectedServiceIds: string[] = [];
+						if (servicesText) {
+							const serviceNames = servicesText.split(',').map((s) => s.trim());
+							serviceNames.forEach((serviceName) => {
+								const service = services.find(
+									(s) =>
+										s.name.toLowerCase() === serviceName.toLowerCase() ||
+										s.code?.toLowerCase() === serviceName.toLowerCase(),
+								);
+								if (service) {
+									selectedServiceIds.push(service.id);
+								}
+							});
+						}
+
+						const discountValue = row[fieldIndexes['discount']];
+						const discount = discountValue
+							? typeof discountValue === 'number'
+								? discountValue
+								: parseFloat(String(discountValue).replace(/[^\d.-]/g, ''))
+							: undefined;
+
+						if (
+							discount !== undefined &&
+							(isNaN(discount) || discount < 0 || discount > 100)
+						) {
+							errorCount++;
+							errors.push(
+								`Dòng ${i + 1}: Phần trăm giảm giá không hợp lệ (0-100)`,
+							);
+							continue;
+						}
+
+						const statusText =
+							row[fieldIndexes['isActive']]?.toString().trim() || '';
+						let isActive = true;
+						if (statusText) {
+							const statusLower = statusText.toLowerCase();
+							isActive =
+								statusLower.includes('hoạt động') ||
+								statusLower.includes('active') ||
+								statusLower === '1' ||
+								statusLower === 'true';
+						}
+
+						const packageData: Omit<
+							ServicePackage,
+							'id' | 'createdAt' | 'updatedAt'
+						> = {
+							name,
+							code: row[fieldIndexes['code']]?.toString().trim() || undefined,
+							price,
+							discount,
+							services: selectedServiceIds,
+							description:
+								row[fieldIndexes['description']]?.toString().trim() ||
+								undefined,
+							isActive,
+						};
+
+						onCreate(packageData);
+						successCount++;
+					} catch (error) {
+						errorCount++;
+						errors.push(
+							`Dòng ${i + 1}: ${
+								error instanceof Error ? error.message : 'Lỗi không xác định'
+							}`,
+						);
+					}
+				}
+
+				event.target.value = '';
+
+				if (successCount > 0) {
+					toast.success(
+						`Đã import thành công ${successCount} gói dịch vụ${
+							errorCount > 0 ? `, ${errorCount} lỗi` : ''
+						}`,
+					);
+				}
+
+				if (errorCount > 0 && errors.length > 0) {
+					console.error('Các lỗi khi import:', errors);
+					if (errors.length <= 10) {
+						toast.error(`Lỗi: ${errors.join('; ')}`);
+					} else {
+						toast.error(
+							`Có ${errors.length} lỗi. Vui lòng kiểm tra console để xem chi tiết.`,
+						);
+					}
+				}
+			} catch (error) {
+				console.error('Lỗi khi đọc file Excel:', error);
+				toast.error('Có lỗi xảy ra khi đọc file Excel');
+				event.target.value = '';
+			}
+		};
+
+		reader.readAsArrayBuffer(file);
+	};
+
 	const calculateTotalPrice = () => {
 		return formData.services.reduce((total, serviceId) => {
 			const service = services.find((s) => s.id === serviceId);
@@ -240,9 +483,7 @@ export function ServicePackageManagement({
 							<Package className="h-5 w-5" />
 							Quản lý Gói dịch vụ
 						</div>
-						<p className="text-gray-600 mt-1">
-							Quản lý các gói dịch vụ y tế
-						</p>
+						<p className="text-gray-600 mt-1">Quản lý các gói dịch vụ y tế</p>
 					</h2>
 				</div>
 				<div className="flex items-center gap-3">
@@ -250,6 +491,32 @@ export function ServicePackageManagement({
 						<span className="text-sm text-gray-600">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
+					<Button
+						onClick={handleExport}
+						variant="outline"
+						className="border-gray-300 hover:bg-gray-50"
+					>
+						<Download className="h-4 w-4 mr-2" />
+						Xuất Excel
+					</Button>
+					<label>
+						<input
+							type="file"
+							accept=".xlsx,.xls"
+							onChange={handleImport}
+							className="hidden"
+						/>
+						<Button
+							asChild
+							variant="outline"
+							className="border-gray-300 hover:bg-gray-50"
+						>
+							<span>
+								<Upload className="h-4 w-4 mr-2" />
+								Nhập Excel
+							</span>
+						</Button>
+					</label>
 					<motion.div>
 						<Button
 							onClick={() => handleOpenDialog()}
@@ -274,16 +541,21 @@ export function ServicePackageManagement({
 								className="pl-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
 							/>
 						</div>
-						<Select value={statusFilter} onValueChange={setStatusFilter}>
-							<SelectTrigger className="w-full md:w-64 border-gray-200">
-								<SelectValue placeholder="Trạng thái" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Tất cả</SelectItem>
-								<SelectItem value="active">Đang hoạt động</SelectItem>
-								<SelectItem value="inactive">Ngừng hoạt động</SelectItem>
-							</SelectContent>
-						</Select>
+						<div className="w-full md:w-64 relative">
+							<Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+							<Select value={statusFilter} onValueChange={setStatusFilter}>
+								<SelectTrigger className="pl-10 border-gray-200">
+									<SelectValue placeholder="Lọc theo trạng thái" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">Tất cả trạng thái</SelectItem>
+									<SelectItem value="active">Đang hoạt động</SelectItem>
+									<SelectItem value="inactive">
+										Ngừng hoạt động hoạt động
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent>
@@ -304,10 +576,7 @@ export function ServicePackageManagement({
 							<TableBody>
 								{paginatedData.length === 0 ? (
 									<TableRow>
-										<TableCell
-											colSpan={7}
-											className="text-center py-12"
-										>
+										<TableCell colSpan={7} className="text-center py-12">
 											<div className="flex flex-col items-center gap-3 text-gray-500">
 												<Package className="h-12 w-12 text-gray-300" />
 												<p>Không tìm thấy gói dịch vụ nào</p>
@@ -338,7 +607,7 @@ export function ServicePackageManagement({
 												initial={{ opacity: 0, y: 20 }}
 												animate={{ opacity: 1, y: 0 }}
 												transition={{ delay: index * 0.05 }}
-												className="border-b border-gray-200 hover:bg-gray-50/80 transition-colors"
+												className="hover:bg-gray-50/80 transition-colors"
 											>
 												<TableCell>
 													{pkg.code ? (
@@ -359,7 +628,9 @@ export function ServicePackageManagement({
 												</TableCell>
 												<TableCell>
 													<div className="flex flex-col">
-														<span className="font-medium">{formatPrice(pkg.price)}</span>
+														<span className="font-medium">
+															{formatPrice(pkg.price)}
+														</span>
 														{pkg.discount && (
 															<span className="text-xs text-gray-500">
 																Giá gốc: {formatPrice(totalServicePrice)}
@@ -385,7 +656,7 @@ export function ServicePackageManagement({
 													) : (
 														<Badge className="bg-red-100 text-red-800 border-0">
 															<XCircle className="h-3 w-3 mr-1" />
-															Ngừng
+															Ngừng hoạt động
 														</Badge>
 													)}
 												</TableCell>
@@ -517,7 +788,9 @@ export function ServicePackageManagement({
 															className="flex-1 cursor-pointer"
 														>
 															<div className="flex items-center justify-between">
-																<span className="font-medium">{service.name}</span>
+																<span className="font-medium">
+																	{service.name}
+																</span>
 																<span className="text-sm text-gray-500">
 																	{formatPrice(service.price)}
 																</span>
@@ -570,7 +843,7 @@ export function ServicePackageManagement({
 										/>
 									</div>
 								</div>
-								<div className="flex items-center space-x-2">
+								<div className="flex items-center space-x-2 gap-2">
 									<input
 										type="checkbox"
 										id="isActive"
@@ -601,4 +874,3 @@ export function ServicePackageManagement({
 		</div>
 	);
 }
-

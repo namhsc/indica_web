@@ -15,6 +15,8 @@ import { ServiceManagement } from './components/ServiceManagement';
 import { ServicePackageManagement } from './components/ServicePackageManagement';
 import { StaffManagement } from './components/StaffManagement';
 import { MedicationManagement } from './components/MedicationManagement';
+import { SpecialtyManagement } from './components/SpecialtyManagement';
+import { MedicationGroupManagement } from './components/MedicationGroupManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Button } from './components/ui/button';
 import { Menu } from 'lucide-react';
@@ -29,6 +31,8 @@ import {
 	ServicePackage,
 	Staff,
 	MedicationCatalog,
+	Specialty,
+	MedicationGroup,
 } from './types';
 import {
 	generateMockRecords,
@@ -43,6 +47,8 @@ import {
 	mockServicePackagesData,
 	mockStaffData,
 	mockMedicationCatalogData,
+	mockSpecialtiesData,
+	mockMedicationGroupsData,
 } from './lib/mockData';
 import { motion } from 'motion/react';
 import useDualSocket from './hook/useDualSocket';
@@ -61,6 +67,8 @@ function MainApp() {
 	const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
 	const [staff, setStaff] = useState<Staff[]>([]);
 	const [medications, setMedications] = useState<MedicationCatalog[]>([]);
+	const [specialties, setSpecialties] = useState<Specialty[]>([]);
+	const [medicationGroups, setMedicationGroups] = useState<MedicationGroup[]>([]);
 	const [activeTab, setActiveTab] = useState('ai');
 	const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -84,6 +92,8 @@ function MainApp() {
 			setServicePackages(mockServicePackagesData);
 			setStaff(mockStaffData);
 			setMedications(mockMedicationCatalogData);
+			setSpecialties(mockSpecialtiesData);
+			setMedicationGroups(mockMedicationGroupsData);
 
 			// Generate appointments - if patient, generate specific appointments for them
 			if (user?.role === 'patient' && user?.fullName) {
@@ -530,6 +540,63 @@ function MainApp() {
 		setMedications(medications.filter((m) => m.id !== id));
 	};
 
+	// Specialty handlers
+	const handleCreateSpecialty = (
+		specialtyData: Omit<Specialty, 'id' | 'createdAt' | 'updatedAt'>,
+	) => {
+		const newSpecialty: Specialty = {
+			...specialtyData,
+			id: `spec_${Date.now()}`,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		};
+		setSpecialties([...specialties, newSpecialty]);
+	};
+
+	const handleUpdateSpecialty = (id: string, updates: Partial<Specialty>) => {
+		setSpecialties(
+			specialties.map((s) =>
+				s.id === id
+					? { ...s, ...updates, updatedAt: new Date().toISOString() }
+					: s,
+			),
+		);
+	};
+
+	const handleDeleteSpecialty = (id: string) => {
+		setSpecialties(specialties.filter((s) => s.id !== id));
+	};
+
+	// MedicationGroup handlers
+	const handleCreateMedicationGroup = (
+		medicationGroupData: Omit<MedicationGroup, 'id' | 'createdAt' | 'updatedAt'>,
+	) => {
+		const newMedicationGroup: MedicationGroup = {
+			...medicationGroupData,
+			id: `mg_${Date.now()}`,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		};
+		setMedicationGroups([...medicationGroups, newMedicationGroup]);
+	};
+
+	const handleUpdateMedicationGroup = (
+		id: string,
+		updates: Partial<MedicationGroup>,
+	) => {
+		setMedicationGroups(
+			medicationGroups.map((mg) =>
+				mg.id === id
+					? { ...mg, ...updates, updatedAt: new Date().toISOString() }
+					: mg,
+			),
+		);
+	};
+
+	const handleDeleteMedicationGroup = (id: string) => {
+		setMedicationGroups(medicationGroups.filter((mg) => mg.id !== id));
+	};
+
 	if (!isAuthenticated) {
 		return <LoginPage />;
 	}
@@ -695,6 +762,7 @@ function MainApp() {
 							<RoleGuard allowedRoles={['admin']}>
 								<StaffManagement
 									staff={staff}
+									specialties={specialties}
 									onCreate={handleCreateStaff}
 									onUpdate={handleUpdateStaff}
 									onDelete={handleDeleteStaff}
@@ -709,6 +777,28 @@ function MainApp() {
 									onCreate={handleCreateMedication}
 									onUpdate={handleUpdateMedication}
 									onDelete={handleDeleteMedication}
+								/>
+							</RoleGuard>
+						)}
+
+						{activeTab === 'specialties' && (
+							<RoleGuard allowedRoles={['admin']}>
+								<SpecialtyManagement
+									specialties={specialties}
+									onCreate={handleCreateSpecialty}
+									onUpdate={handleUpdateSpecialty}
+									onDelete={handleDeleteSpecialty}
+								/>
+							</RoleGuard>
+						)}
+
+						{activeTab === 'medication-groups' && (
+							<RoleGuard allowedRoles={['admin']}>
+								<MedicationGroupManagement
+									medicationGroups={medicationGroups}
+									onCreate={handleCreateMedicationGroup}
+									onUpdate={handleUpdateMedicationGroup}
+									onDelete={handleDeleteMedicationGroup}
 								/>
 							</RoleGuard>
 						)}

@@ -27,9 +27,9 @@ function Calendar({
 					'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
 				),
 				nav_button_previous:
-					'absolute left-1 bg-blue-600 text-white hover:bg-blue-700',
+					'absolute left-0 bg-blue-600 text-gray-700 border border-gray-300 hover:bg-gray-50 cursor-pointer',
 				nav_button_next:
-					'absolute right-1 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
+					'absolute bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 custom-right cursor-pointer',
 				table: 'w-full border-collapse',
 				head_row: 'flex mb-1',
 				head_cell:
@@ -43,17 +43,15 @@ function Calendar({
 				),
 				day: cn(
 					'h-9 w-9 p-0 font-normal rounded-full flex items-center justify-center transition-colors',
-					'hover:bg-gray-100',
+					'hover:bg-gray-100 cursor-pointer',
 					'aria-selected:opacity-100',
-					'text-gray-800',
 				),
 				day_range_start:
 					'day-range-start aria-selected:bg-blue-600 aria-selected:text-white',
 				day_range_end:
 					'day-range-end aria-selected:bg-blue-600 aria-selected:text-white',
-				day_selected:
-					'bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white rounded-full',
-				day_today: 'text-gray-800 font-medium',
+				day_selected: 'text-day-selected font-medium bg-day-selected',
+				day_today: 'text-gray-800 font-medium bg-blue-100',
 				day_outside:
 					'text-gray-400 aria-selected:text-gray-400 aria-selected:bg-transparent',
 				day_disabled: 'text-gray-300 opacity-50 cursor-not-allowed',

@@ -11,6 +11,11 @@ import {
 	ServicePackage,
 	Staff,
 	MedicationCatalog,
+	Department,
+	Position,
+	Specialty,
+	MedicationGroup,
+	UserRole,
 } from '../types';
 import { mockAppointments } from './mockPatients';
 
@@ -2036,3 +2041,308 @@ export const generateMockAppointmentsForPatient = (
 		return dateB.getTime() - dateA.getTime();
 	});
 };
+
+// Mock data cho các danh mục
+export const mockDepartmentsData: Department[] = [
+	{
+		id: 'dept1',
+		name: 'Khoa Nội',
+		code: 'INT',
+		description: 'Khoa Nội tổng quát',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'dept2',
+		name: 'Khoa Ngoại',
+		code: 'SUR',
+		description: 'Khoa Ngoại tổng quát',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'dept3',
+		name: 'Khoa Tim mạch',
+		code: 'CAR',
+		description: 'Khoa Tim mạch',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'dept4',
+		name: 'Khoa Nhi',
+		code: 'PED',
+		description: 'Khoa Nhi',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'dept5',
+		name: 'Khoa Sản phụ khoa',
+		code: 'OBG',
+		description: 'Khoa Sản phụ khoa',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+];
+
+export const mockPositionsData: Position[] = [
+	{
+		id: 'pos1',
+		name: 'Bác sĩ',
+		code: 'DOC',
+		description: 'Chức vụ bác sĩ',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'pos2',
+		name: 'Bác sĩ trưởng khoa',
+		code: 'HOD',
+		description: 'Bác sĩ trưởng khoa',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'pos3',
+		name: 'Điều dưỡng',
+		code: 'NUR',
+		description: 'Chức vụ điều dưỡng',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'pos4',
+		name: 'Điều dưỡng trưởng',
+		code: 'CN',
+		description: 'Điều dưỡng trưởng',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'pos5',
+		name: 'Lễ tân',
+		code: 'REC',
+		description: 'Chức vụ lễ tân',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+];
+
+export const mockSpecialtiesData: Specialty[] = [
+	{
+		id: 'spec1',
+		name: 'Nội khoa',
+		code: 'INT',
+		description: 'Chuyên khoa Nội',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'spec2',
+		name: 'Ngoại khoa',
+		code: 'SUR',
+		description: 'Chuyên khoa Ngoại',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'spec3',
+		name: 'Tim mạch',
+		code: 'CAR',
+		description: 'Chuyên khoa Tim mạch',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'spec4',
+		name: 'Nhi khoa',
+		code: 'PED',
+		description: 'Chuyên khoa Nhi',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'spec5',
+		name: 'Sản phụ khoa',
+		code: 'OBG',
+		description: 'Chuyên khoa Sản phụ khoa',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'spec6',
+		name: 'Tai mũi họng',
+		code: 'ENT',
+		description: 'Chuyên khoa Tai mũi họng',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'spec7',
+		name: 'Mắt',
+		code: 'EYE',
+		description: 'Chuyên khoa Mắt',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'spec8',
+		name: 'Da liễu',
+		code: 'DER',
+		description: 'Chuyên khoa Da liễu',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+];
+
+export const mockMedicationGroupsData: MedicationGroup[] = [
+	{
+		id: 'mg1',
+		name: 'Kháng sinh',
+		description: 'Nhóm thuốc kháng sinh',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'mg2',
+		name: 'Giảm đau, hạ sốt',
+		description: 'Nhóm thuốc giảm đau và hạ sốt',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'mg3',
+		name: 'Chống viêm',
+		description: 'Nhóm thuốc chống viêm',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'mg4',
+		name: 'Tiêu hóa',
+		description: 'Nhóm thuốc điều trị tiêu hóa',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'mg5',
+		name: 'Hô hấp',
+		description: 'Nhóm thuốc điều trị hô hấp',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'mg6',
+		name: 'Tim mạch',
+		description: 'Nhóm thuốc điều trị tim mạch',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'mg7',
+		name: 'Vitamin',
+		description: 'Nhóm thuốc bổ sung vitamin',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'mg8',
+		name: 'Da liễu',
+		description: 'Nhóm thuốc điều trị da liễu',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'mg9',
+		name: 'Mắt',
+		description: 'Nhóm thuốc điều trị mắt',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+];
+
+interface Role {
+	id: string;
+	name: string;
+	code: UserRole;
+	description?: string;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export const mockRolesData: Role[] = [
+	{
+		id: 'role1',
+		name: 'Quản trị viên',
+		code: 'admin',
+		description: 'Vai trò quản trị hệ thống',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'role2',
+		name: 'Bác sĩ',
+		code: 'doctor',
+		description: 'Vai trò bác sĩ',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'role3',
+		name: 'Điều dưỡng',
+		code: 'nurse',
+		description: 'Vai trò điều dưỡng',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'role4',
+		name: 'Lễ tân',
+		code: 'receptionist',
+		description: 'Vai trò lễ tân',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+	{
+		id: 'role5',
+		name: 'Bệnh nhân',
+		code: 'patient',
+		description: 'Vai trò bệnh nhân',
+		isActive: true,
+		createdAt: new Date('2023-01-01').toISOString(),
+		updatedAt: new Date('2024-01-01').toISOString(),
+	},
+];

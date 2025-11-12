@@ -42,8 +42,12 @@ import {
 	CheckCircle2,
 	XCircle,
 	Package,
+	Filter,
+	Download,
+	Upload,
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import { usePagination } from '../hooks/usePagination';
 import { PaginationControls } from './PaginationControls';
 import { motion } from 'motion/react';
@@ -111,7 +115,17 @@ export function ServiceManagement({
 		return matchesSearch && matchesCategory && matchesStatus;
 	});
 
-	const { itemsPerPage, setItemsPerPage, currentPage, totalPages, paginatedData, totalItems, startIndex, endIndex, goToPage } = usePagination({
+	const {
+		itemsPerPage,
+		setItemsPerPage,
+		currentPage,
+		totalPages,
+		paginatedData,
+		totalItems,
+		startIndex,
+		endIndex,
+		goToPage,
+	} = usePagination({
 		data: filteredServices,
 		itemsPerPage: 10,
 	});
@@ -198,6 +212,223 @@ export function ServiceManagement({
 		}).format(price);
 	};
 
+	// Export to Excel
+	const handleExport = () => {
+		try {
+			const exportData = filteredServices.map((s) => ({
+				Mã: s.code || '',
+				Tên: s.name,
+				Loại: categoryLabels[s.category],
+				Giá: s.price,
+				'Mô tả': s.description || '',
+				'Trạng thái': s.isActive ? 'Hoạt động' : 'Ngừng hoạt động',
+			}));
+
+			const ws = XLSX.utils.json_to_sheet(exportData);
+			const wb = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(wb, ws, 'Dịch vụ');
+
+			const colWidths = [
+				{ wch: 15 }, // Mã
+				{ wch: 30 }, // Tên
+				{ wch: 20 }, // Loại
+				{ wch: 15 }, // Giá
+				{ wch: 50 }, // Mô tả
+				{ wch: 15 }, // Trạng thái
+			];
+			ws['!cols'] = colWidths;
+
+			const fileName = `Danh_sach_dich_vu_${
+				new Date().toISOString().split('T')[0]
+			}.xlsx`;
+			XLSX.writeFile(wb, fileName);
+			toast.success(`Đã xuất ${exportData.length} dịch vụ ra file Excel`);
+		} catch (error) {
+			console.error('Lỗi khi xuất file Excel:', error);
+			toast.error('Có lỗi xảy ra khi xuất file Excel');
+		}
+	};
+
+	// Import from Excel
+	const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		const validExtensions = [
+			'.xlsx',
+			'.xls',
+			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			'application/vnd.ms-excel',
+		];
+		const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+		const isValidFile =
+			validExtensions.includes(fileExtension) ||
+			validExtensions.includes(file.type);
+
+		if (!isValidFile) {
+			toast.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			try {
+				const data = new Uint8Array(e.target?.result as ArrayBuffer);
+				const workbook = XLSX.read(data, { type: 'array' });
+				const firstSheetName = workbook.SheetNames[0];
+				const worksheet = workbook.Sheets[firstSheetName];
+				const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+					header: 1,
+					defval: '',
+				}) as any[][];
+
+				if (jsonData.length < 2) {
+					toast.error('File Excel không có dữ liệu hoặc thiếu header');
+					return;
+				}
+
+				const headers = jsonData[0].map((h: any) =>
+					String(h).toLowerCase().trim(),
+				);
+
+				const headerMap: Record<string, keyof Service> = {
+					mã: 'code',
+					tên: 'name',
+					loại: 'category',
+					giá: 'price',
+					'mô tả': 'description',
+					'trạng thái': 'isActive',
+				};
+
+				const fieldIndexes: Record<string, number> = {};
+				headers.forEach((header, index) => {
+					const field = headerMap[header];
+					if (field) {
+						fieldIndexes[field] = index;
+					}
+				});
+
+				if (!fieldIndexes['name'] || !fieldIndexes['price']) {
+					toast.error('File Excel thiếu các cột bắt buộc: Tên và Giá');
+					return;
+				}
+
+				let successCount = 0;
+				let errorCount = 0;
+				const errors: string[] = [];
+
+				for (let i = 1; i < jsonData.length; i++) {
+					const row = jsonData[i];
+					if (!row || row.every((cell) => !cell)) continue;
+
+					try {
+						const name = row[fieldIndexes['name']]?.toString().trim() || '';
+						const priceValue = row[fieldIndexes['price']];
+						const price =
+							typeof priceValue === 'number'
+								? priceValue
+								: parseFloat(String(priceValue).replace(/[^\d.-]/g, ''));
+
+						if (!name || isNaN(price) || price < 0) {
+							errorCount++;
+							errors.push(`Dòng ${i + 1}: Thiếu tên hoặc giá không hợp lệ`);
+							continue;
+						}
+
+						const categoryText =
+							row[fieldIndexes['category']]?.toString().trim() || '';
+						let category: Service['category'] = 'other';
+						if (categoryText) {
+							const categoryLower = categoryText.toLowerCase();
+							if (
+								categoryLower.includes('khám') ||
+								categoryLower.includes('examination')
+							) {
+								category = 'examination';
+							} else if (
+								categoryLower.includes('xét nghiệm') ||
+								categoryLower.includes('test')
+							) {
+								category = 'test';
+							} else if (
+								categoryLower.includes('chẩn đoán') ||
+								categoryLower.includes('imaging')
+							) {
+								category = 'imaging';
+							} else if (
+								categoryLower.includes('thủ thuật') ||
+								categoryLower.includes('procedure')
+							) {
+								category = 'procedure';
+							}
+						}
+
+						const statusText =
+							row[fieldIndexes['isActive']]?.toString().trim() || '';
+						let isActive = true;
+						if (statusText) {
+							const statusLower = statusText.toLowerCase();
+							isActive =
+								statusLower.includes('hoạt động') ||
+								statusLower.includes('active') ||
+								statusLower === '1' ||
+								statusLower === 'true';
+						}
+
+						const serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> =
+							{
+								name,
+								code: row[fieldIndexes['code']]?.toString().trim() || undefined,
+								category,
+								price,
+								description:
+									row[fieldIndexes['description']]?.toString().trim() ||
+									undefined,
+								isActive,
+							};
+
+						onCreate(serviceData);
+						successCount++;
+					} catch (error) {
+						errorCount++;
+						errors.push(
+							`Dòng ${i + 1}: ${
+								error instanceof Error ? error.message : 'Lỗi không xác định'
+							}`,
+						);
+					}
+				}
+
+				event.target.value = '';
+
+				if (successCount > 0) {
+					toast.success(
+						`Đã import thành công ${successCount} dịch vụ${
+							errorCount > 0 ? `, ${errorCount} lỗi` : ''
+						}`,
+					);
+				}
+
+				if (errorCount > 0 && errors.length > 0) {
+					console.error('Các lỗi khi import:', errors);
+					if (errors.length <= 10) {
+						toast.error(`Lỗi: ${errors.join('; ')}`);
+					} else {
+						toast.error(
+							`Có ${errors.length} lỗi. Vui lòng kiểm tra console để xem chi tiết.`,
+						);
+					}
+				}
+			} catch (error) {
+				console.error('Lỗi khi đọc file Excel:', error);
+				toast.error('Có lỗi xảy ra khi đọc file Excel');
+				event.target.value = '';
+			}
+		};
+
+		reader.readAsArrayBuffer(file);
+	};
+
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
@@ -217,6 +448,32 @@ export function ServiceManagement({
 						<span className="text-sm text-gray-600">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
+					<Button
+						onClick={handleExport}
+						variant="outline"
+						className="border-gray-300 hover:bg-gray-50"
+					>
+						<Download className="h-4 w-4 mr-2" />
+						Xuất Excel
+					</Button>
+					<label>
+						<input
+							type="file"
+							accept=".xlsx,.xls"
+							onChange={handleImport}
+							className="hidden"
+						/>
+						<Button
+							asChild
+							variant="outline"
+							className="border-gray-300 hover:bg-gray-50"
+						>
+							<span>
+								<Upload className="h-4 w-4 mr-2" />
+								Nhập Excel
+							</span>
+						</Button>
+					</label>
 					<motion.div>
 						<Button
 							onClick={() => handleOpenDialog()}
@@ -241,29 +498,37 @@ export function ServiceManagement({
 								className="pl-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
 							/>
 						</div>
-						<Select value={categoryFilter} onValueChange={setCategoryFilter}>
-							<SelectTrigger className="w-full md:w-64 border-gray-200">
-								<SelectValue placeholder="Loại dịch vụ" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Tất cả loại</SelectItem>
-								<SelectItem value="examination">Khám</SelectItem>
-								<SelectItem value="test">Xét nghiệm</SelectItem>
-								<SelectItem value="imaging">Chẩn đoán hình ảnh</SelectItem>
-								<SelectItem value="procedure">Thủ thuật</SelectItem>
-								<SelectItem value="other">Khác</SelectItem>
-							</SelectContent>
-						</Select>
-						<Select value={statusFilter} onValueChange={setStatusFilter}>
-							<SelectTrigger className="w-full md:w-64 border-gray-200">
-								<SelectValue placeholder="Trạng thái" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Tất cả</SelectItem>
-								<SelectItem value="active">Đang hoạt động</SelectItem>
-								<SelectItem value="inactive">Ngừng hoạt động</SelectItem>
-							</SelectContent>
-						</Select>
+						<div className="w-full md:w-64 relative">
+							<Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+							<Select value={categoryFilter} onValueChange={setCategoryFilter}>
+								<SelectTrigger className="pl-10 border-gray-200">
+									<SelectValue placeholder="Loại dịch vụ" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">Tất cả loại</SelectItem>
+									<SelectItem value="examination">Khám</SelectItem>
+									<SelectItem value="test">Xét nghiệm</SelectItem>
+									<SelectItem value="imaging">Chẩn đoán hình ảnh</SelectItem>
+									<SelectItem value="procedure">Thủ thuật</SelectItem>
+									<SelectItem value="other">Khác</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="w-full md:w-64 relative">
+							<Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+							<Select value={statusFilter} onValueChange={setStatusFilter}>
+								<SelectTrigger className="pl-10 border-gray-200">
+									<SelectValue placeholder="Lọc theo trạng thái" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">Tất cả trạng thái</SelectItem>
+									<SelectItem value="active">Đang hoạt động</SelectItem>
+									<SelectItem value="inactive">
+										Ngừng hoạt động hoạt động
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent>
@@ -302,13 +567,13 @@ export function ServiceManagement({
 									</TableRow>
 								) : (
 									paginatedData.map((service, index) => (
-									<motion.tr
-										key={service.id}
-										initial={{ opacity: 0, y: 20 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ delay: index * 0.05 }}
-										className="border-b border-gray-200 hover:bg-gray-50/80 transition-colors"
-									>
+										<motion.tr
+											key={service.id}
+											initial={{ opacity: 0, y: 20 }}
+											animate={{ opacity: 1, y: 0 }}
+											transition={{ delay: index * 0.05 }}
+											className="hover:bg-gray-50/80 transition-colors"
+										>
 											<TableCell>
 												{service.code ? (
 													<span className="font-mono text-sm bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
@@ -344,7 +609,7 @@ export function ServiceManagement({
 												) : (
 													<Badge className="bg-red-100 text-red-800 border-0">
 														<XCircle className="h-3 w-3 mr-1" />
-														Ngừng
+														Ngừng hoạt động
 													</Badge>
 												)}
 											</TableCell>
@@ -462,7 +727,9 @@ export function ServiceManagement({
 											<SelectContent>
 												<SelectItem value="examination">Khám</SelectItem>
 												<SelectItem value="test">Xét nghiệm</SelectItem>
-												<SelectItem value="imaging">Chẩn đoán hình ảnh</SelectItem>
+												<SelectItem value="imaging">
+													Chẩn đoán hình ảnh
+												</SelectItem>
 												<SelectItem value="procedure">Thủ thuật</SelectItem>
 												<SelectItem value="other">Khác</SelectItem>
 											</SelectContent>
@@ -510,7 +777,7 @@ export function ServiceManagement({
 										/>
 									</div>
 								</div>
-								<div className="flex items-center space-x-2">
+								<div className="flex items-center space-x-2 gap-2">
 									<input
 										type="checkbox"
 										id="isActive"
@@ -541,4 +808,3 @@ export function ServiceManagement({
 		</div>
 	);
 }
-

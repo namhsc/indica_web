@@ -28,6 +28,8 @@ export function DatePicker({
 	className,
 	minDate,
 }: DatePickerProps) {
+	const [open, setOpen] = React.useState(false);
+
 	// Convert string to Date if needed
 	const dateValue = React.useMemo(() => {
 		if (!date) return undefined;
@@ -46,10 +48,24 @@ export function DatePicker({
 		if (onStringChange) {
 			onStringChange(selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '');
 		}
+		// Đóng datepicker sau khi chọn ngày
+		if (selectedDate) {
+			setOpen(false);
+		}
 	};
 
+	// Mặc định disable các ngày quá khứ (trước hôm nay)
+	// Nếu có minDate thì dùng minDate, nếu không thì dùng ngày hôm nay
+	const minDateToUse = React.useMemo(() => {
+		if (minDate) return minDate;
+		// Tạo ngày hôm nay với thời gian 00:00:00
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		return today;
+	}, [minDate]);
+
 	return (
-		<Popover>
+		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<Button
 					variant="outline"
@@ -75,7 +91,12 @@ export function DatePicker({
 					onSelect={handleDateChange}
 					locale={vi}
 					initialFocus
-					disabled={minDate ? (date) => date < minDate : undefined}
+					disabled={(date) => {
+						// Disable các ngày trước minDateToUse
+						const dateToCompare = new Date(date);
+						dateToCompare.setHours(0, 0, 0, 0);
+						return dateToCompare < minDateToUse;
+					}}
 				/>
 			</PopoverContent>
 		</Popover>

@@ -42,8 +42,12 @@ import {
 	CheckCircle2,
 	XCircle,
 	Pill,
+	Filter,
+	Download,
+	Upload,
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import { usePagination } from '../hooks/usePagination';
 import { PaginationControls } from './PaginationControls';
 import { motion } from 'motion/react';
@@ -271,6 +275,352 @@ export function MedicationManagement({
 		return { label: 'Còn hàng', color: 'bg-green-100 text-green-800' };
 	};
 
+	// Export to Excel
+	const handleExport = () => {
+		try {
+			const exportData = filteredMedications.map((m) => ({
+				Mã: m.code || '',
+				Tên: m.name,
+				'Hoạt chất': m.activeIngredient || '',
+				'Dạng bào chế': dosageFormLabels[m.dosageForm],
+				'Hàm lượng': m.strength || '',
+				'Đơn vị': m.unit,
+				'Phân loại': categoryLabels[m.category],
+				'Nhà sản xuất': m.manufacturer || '',
+				'Giá bán': m.price || '',
+				'Số lượng': m.stock || '',
+				'Tồn tối thiểu': m.minStock || '',
+				'Chỉ định': m.indications || '',
+				'Chống chỉ định': m.contraindications || '',
+				'Tác dụng phụ': m.sideEffects || '',
+				'Trạng thái': m.isActive ? 'Hoạt động' : 'Ngừng hoạt động',
+			}));
+
+			const ws = XLSX.utils.json_to_sheet(exportData);
+			const wb = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(wb, ws, 'Thuốc');
+
+			const colWidths = [
+				{ wch: 15 }, // Mã
+				{ wch: 30 }, // Tên
+				{ wch: 20 }, // Hoạt chất
+				{ wch: 15 }, // Dạng bào chế
+				{ wch: 15 }, // Hàm lượng
+				{ wch: 10 }, // Đơn vị
+				{ wch: 20 }, // Phân loại
+				{ wch: 25 }, // Nhà sản xuất
+				{ wch: 15 }, // Giá bán
+				{ wch: 12 }, // Số lượng
+				{ wch: 15 }, // Tồn tối thiểu
+				{ wch: 50 }, // Chỉ định
+				{ wch: 50 }, // Chống chỉ định
+				{ wch: 50 }, // Tác dụng phụ
+				{ wch: 15 }, // Trạng thái
+			];
+			ws['!cols'] = colWidths;
+
+			const fileName = `Danh_sach_thuoc_${
+				new Date().toISOString().split('T')[0]
+			}.xlsx`;
+			XLSX.writeFile(wb, fileName);
+			toast.success(`Đã xuất ${exportData.length} thuốc ra file Excel`);
+		} catch (error) {
+			console.error('Lỗi khi xuất file Excel:', error);
+			toast.error('Có lỗi xảy ra khi xuất file Excel');
+		}
+	};
+
+	// Import from Excel
+	const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		const validExtensions = [
+			'.xlsx',
+			'.xls',
+			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			'application/vnd.ms-excel',
+		];
+		const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+		const isValidFile =
+			validExtensions.includes(fileExtension) ||
+			validExtensions.includes(file.type);
+
+		if (!isValidFile) {
+			toast.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			try {
+				const data = new Uint8Array(e.target?.result as ArrayBuffer);
+				const workbook = XLSX.read(data, { type: 'array' });
+				const firstSheetName = workbook.SheetNames[0];
+				const worksheet = workbook.Sheets[firstSheetName];
+				const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+					header: 1,
+					defval: '',
+				}) as any[][];
+
+				if (jsonData.length < 2) {
+					toast.error('File Excel không có dữ liệu hoặc thiếu header');
+					return;
+				}
+
+				const headers = jsonData[0].map((h: any) =>
+					String(h).toLowerCase().trim(),
+				);
+
+				const headerMap: Record<string, keyof MedicationCatalog> = {
+					mã: 'code',
+					tên: 'name',
+					'hoạt chất': 'activeIngredient',
+					'dạng bào chế': 'dosageForm',
+					'hàm lượng': 'strength',
+					'đơn vị': 'unit',
+					'phân loại': 'category',
+					'nhà sản xuất': 'manufacturer',
+					'giá bán': 'price',
+					'số lượng': 'stock',
+					'tồn tối thiểu': 'minStock',
+					'chỉ định': 'indications',
+					'chống chỉ định': 'contraindications',
+					'tác dụng phụ': 'sideEffects',
+					'trạng thái': 'isActive',
+				};
+
+				const fieldIndexes: Record<string, number> = {};
+				headers.forEach((header, index) => {
+					const field = headerMap[header];
+					if (field) {
+						fieldIndexes[field] = index;
+					}
+				});
+
+				if (!fieldIndexes['name'] || !fieldIndexes['unit']) {
+					toast.error('File Excel thiếu các cột bắt buộc: Tên và Đơn vị');
+					return;
+				}
+
+				let successCount = 0;
+				let errorCount = 0;
+				const errors: string[] = [];
+
+				for (let i = 1; i < jsonData.length; i++) {
+					const row = jsonData[i];
+					if (!row || row.every((cell) => !cell)) continue;
+
+					try {
+						const name = row[fieldIndexes['name']]?.toString().trim() || '';
+						const unit = row[fieldIndexes['unit']]?.toString().trim() || '';
+
+						if (!name || !unit) {
+							errorCount++;
+							errors.push(`Dòng ${i + 1}: Thiếu tên hoặc đơn vị`);
+							continue;
+						}
+
+						const dosageFormText =
+							row[fieldIndexes['dosageForm']]?.toString().trim() || '';
+						let dosageForm: MedicationCatalog['dosageForm'] = 'tablet';
+						if (dosageFormText) {
+							const formLower = dosageFormText.toLowerCase();
+							if (
+								formLower.includes('viên nén') ||
+								formLower.includes('tablet')
+							) {
+								dosageForm = 'tablet';
+							} else if (
+								formLower.includes('viên nang') ||
+								formLower.includes('capsule')
+							) {
+								dosageForm = 'capsule';
+							} else if (
+								formLower.includes('sirô') ||
+								formLower.includes('syrup')
+							) {
+								dosageForm = 'syrup';
+							} else if (
+								formLower.includes('tiêm') ||
+								formLower.includes('injection')
+							) {
+								dosageForm = 'injection';
+							} else if (
+								formLower.includes('kem') ||
+								formLower.includes('cream')
+							) {
+								dosageForm = 'cream';
+							} else if (
+								formLower.includes('nhỏ giọt') ||
+								formLower.includes('drops')
+							) {
+								dosageForm = 'drops';
+							}
+						}
+
+						const categoryText =
+							row[fieldIndexes['category']]?.toString().trim() || '';
+						let category: MedicationCatalog['category'] = 'other';
+						if (categoryText) {
+							const catLower = categoryText.toLowerCase();
+							if (
+								catLower.includes('kháng sinh') ||
+								catLower.includes('antibiotic')
+							) {
+								category = 'antibiotic';
+							} else if (
+								catLower.includes('giảm đau') ||
+								catLower.includes('analgesic')
+							) {
+								category = 'analgesic';
+							} else if (
+								catLower.includes('chống viêm') ||
+								catLower.includes('anti_inflammatory')
+							) {
+								category = 'anti_inflammatory';
+							} else if (
+								catLower.includes('tiêu hóa') ||
+								catLower.includes('gastrointestinal')
+							) {
+								category = 'gastrointestinal';
+							} else if (
+								catLower.includes('hô hấp') ||
+								catLower.includes('respiratory')
+							) {
+								category = 'respiratory';
+							} else if (
+								catLower.includes('tim mạch') ||
+								catLower.includes('cardiovascular')
+							) {
+								category = 'cardiovascular';
+							} else if (catLower.includes('vitamin')) {
+								category = 'vitamin';
+							} else if (
+								catLower.includes('da liễu') ||
+								catLower.includes('dermatological')
+							) {
+								category = 'dermatological';
+							} else if (
+								catLower.includes('mắt') ||
+								catLower.includes('ophthalmic')
+							) {
+								category = 'ophthalmic';
+							}
+						}
+
+						const priceValue = row[fieldIndexes['price']];
+						const price = priceValue
+							? typeof priceValue === 'number'
+								? priceValue
+								: parseFloat(String(priceValue).replace(/[^\d.-]/g, ''))
+							: undefined;
+
+						const stockValue = row[fieldIndexes['stock']];
+						const stock =
+							stockValue !== undefined && stockValue !== ''
+								? typeof stockValue === 'number'
+									? stockValue
+									: parseInt(String(stockValue).replace(/[^\d.-]/g, ''), 10)
+								: undefined;
+
+						const minStockValue = row[fieldIndexes['minStock']];
+						const minStock =
+							minStockValue !== undefined && minStockValue !== ''
+								? typeof minStockValue === 'number'
+									? minStockValue
+									: parseInt(String(minStockValue).replace(/[^\d.-]/g, ''), 10)
+								: undefined;
+
+						const statusText =
+							row[fieldIndexes['isActive']]?.toString().trim() || '';
+						let isActive = true;
+						if (statusText) {
+							const statusLower = statusText.toLowerCase();
+							isActive =
+								statusLower.includes('hoạt động') ||
+								statusLower.includes('active') ||
+								statusLower === '1' ||
+								statusLower === 'true';
+						}
+
+						const medicationData: Omit<
+							MedicationCatalog,
+							'id' | 'createdAt' | 'updatedAt'
+						> = {
+							name,
+							code: row[fieldIndexes['code']]?.toString().trim() || undefined,
+							activeIngredient:
+								row[fieldIndexes['activeIngredient']]?.toString().trim() ||
+								undefined,
+							dosageForm,
+							strength:
+								row[fieldIndexes['strength']]?.toString().trim() || undefined,
+							unit,
+							category,
+							manufacturer:
+								row[fieldIndexes['manufacturer']]?.toString().trim() ||
+								undefined,
+							price: price && !isNaN(price) ? price : undefined,
+							stock: stock !== undefined && !isNaN(stock) ? stock : undefined,
+							minStock:
+								minStock !== undefined && !isNaN(minStock)
+									? minStock
+									: undefined,
+							indications:
+								row[fieldIndexes['indications']]?.toString().trim() ||
+								undefined,
+							contraindications:
+								row[fieldIndexes['contraindications']]?.toString().trim() ||
+								undefined,
+							sideEffects:
+								row[fieldIndexes['sideEffects']]?.toString().trim() ||
+								undefined,
+							isActive,
+						};
+
+						onCreate(medicationData);
+						successCount++;
+					} catch (error) {
+						errorCount++;
+						errors.push(
+							`Dòng ${i + 1}: ${
+								error instanceof Error ? error.message : 'Lỗi không xác định'
+							}`,
+						);
+					}
+				}
+
+				event.target.value = '';
+
+				if (successCount > 0) {
+					toast.success(
+						`Đã import thành công ${successCount} thuốc${
+							errorCount > 0 ? `, ${errorCount} lỗi` : ''
+						}`,
+					);
+				}
+
+				if (errorCount > 0 && errors.length > 0) {
+					console.error('Các lỗi khi import:', errors);
+					if (errors.length <= 10) {
+						toast.error(`Lỗi: ${errors.join('; ')}`);
+					} else {
+						toast.error(
+							`Có ${errors.length} lỗi. Vui lòng kiểm tra console để xem chi tiết.`,
+						);
+					}
+				}
+			} catch (error) {
+				console.error('Lỗi khi đọc file Excel:', error);
+				toast.error('Có lỗi xảy ra khi đọc file Excel');
+				event.target.value = '';
+			}
+		};
+
+		reader.readAsArrayBuffer(file);
+	};
+
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
@@ -290,6 +640,32 @@ export function MedicationManagement({
 						<span className="text-sm text-gray-600">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
+					<Button
+						onClick={handleExport}
+						variant="outline"
+						className="border-gray-300 hover:bg-gray-50"
+					>
+						<Download className="h-4 w-4 mr-2" />
+						Xuất Excel
+					</Button>
+					<label>
+						<input
+							type="file"
+							accept=".xlsx,.xls"
+							onChange={handleImport}
+							className="hidden"
+						/>
+						<Button
+							asChild
+							variant="outline"
+							className="border-gray-300 hover:bg-gray-50"
+						>
+							<span>
+								<Upload className="h-4 w-4 mr-2" />
+								Nhập Excel
+							</span>
+						</Button>
+					</label>
 					<motion.div>
 						<Button
 							onClick={() => handleOpenDialog()}
@@ -314,34 +690,42 @@ export function MedicationManagement({
 								className="pl-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
 							/>
 						</div>
-						<Select value={categoryFilter} onValueChange={setCategoryFilter}>
-							<SelectTrigger className="w-full md:w-64 border-gray-200">
-								<SelectValue placeholder="Phân loại" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Tất cả phân loại</SelectItem>
-								<SelectItem value="antibiotic">Kháng sinh</SelectItem>
-								<SelectItem value="analgesic">Giảm đau, hạ sốt</SelectItem>
-								<SelectItem value="anti_inflammatory">Chống viêm</SelectItem>
-								<SelectItem value="gastrointestinal">Tiêu hóa</SelectItem>
-								<SelectItem value="respiratory">Hô hấp</SelectItem>
-								<SelectItem value="cardiovascular">Tim mạch</SelectItem>
-								<SelectItem value="vitamin">Vitamin</SelectItem>
-								<SelectItem value="dermatological">Da liễu</SelectItem>
-								<SelectItem value="ophthalmic">Mắt</SelectItem>
-								<SelectItem value="other">Khác</SelectItem>
-							</SelectContent>
-						</Select>
-						<Select value={statusFilter} onValueChange={setStatusFilter}>
-							<SelectTrigger className="w-full md:w-64 border-gray-200">
-								<SelectValue placeholder="Trạng thái" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Tất cả</SelectItem>
-								<SelectItem value="active">Đang hoạt động</SelectItem>
-								<SelectItem value="inactive">Ngừng hoạt động</SelectItem>
-							</SelectContent>
-						</Select>
+						<div className="w-full md:w-64 relative">
+							<Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+							<Select value={categoryFilter} onValueChange={setCategoryFilter}>
+								<SelectTrigger className="pl-10 border-gray-200">
+									<SelectValue placeholder="Phân loại" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">Tất cả phân loại</SelectItem>
+									<SelectItem value="antibiotic">Kháng sinh</SelectItem>
+									<SelectItem value="analgesic">Giảm đau, hạ sốt</SelectItem>
+									<SelectItem value="anti_inflammatory">Chống viêm</SelectItem>
+									<SelectItem value="gastrointestinal">Tiêu hóa</SelectItem>
+									<SelectItem value="respiratory">Hô hấp</SelectItem>
+									<SelectItem value="cardiovascular">Tim mạch</SelectItem>
+									<SelectItem value="vitamin">Vitamin</SelectItem>
+									<SelectItem value="dermatological">Da liễu</SelectItem>
+									<SelectItem value="ophthalmic">Mắt</SelectItem>
+									<SelectItem value="other">Khác</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="w-full md:w-64 relative">
+							<Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+							<Select value={statusFilter} onValueChange={setStatusFilter}>
+								<SelectTrigger className="pl-10 border-gray-200">
+									<SelectValue placeholder="Lọc theo trạng thái" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">Tất cả trạng thái</SelectItem>
+									<SelectItem value="active">Đang hoạt động</SelectItem>
+									<SelectItem value="inactive">
+										Ngừng hoạt động hoạt động
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent>
@@ -392,7 +776,7 @@ export function MedicationManagement({
 												initial={{ opacity: 0, y: 20 }}
 												animate={{ opacity: 1, y: 0 }}
 												transition={{ delay: index * 0.05 }}
-												className="border-b border-gray-200 hover:bg-gray-50/80 transition-colors"
+												className="hover:bg-gray-50/80 transition-colors"
 											>
 												<TableCell>
 													{medication.code ? (
@@ -452,7 +836,7 @@ export function MedicationManagement({
 													) : (
 														<Badge className="bg-red-100 text-red-800 border-0">
 															<XCircle className="h-3 w-3 mr-1" />
-															Ngừng
+															Ngừng hoạt động
 														</Badge>
 													)}
 												</TableCell>
@@ -755,7 +1139,7 @@ export function MedicationManagement({
 										/>
 									</div>
 								</div>
-								<div className="flex items-center space-x-2">
+								<div className="flex items-center space-x-2 gap-2">
 									<input
 										type="checkbox"
 										id="isActive"

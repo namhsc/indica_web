@@ -33,7 +33,7 @@ import {
 	DialogTitle,
 	DialogDescription,
 } from './ui/dialog';
-import { Staff, UserRole, Gender } from '../types';
+import { Staff, UserRole, Gender, Specialty } from '../types';
 import {
 	Search,
 	Plus,
@@ -42,20 +42,27 @@ import {
 	CheckCircle2,
 	XCircle,
 	Users,
+	Download,
+	Upload,
+	Filter,
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import * as XLSX from 'xlsx';
+import { toast } from 'sonner';
 import { usePagination } from '../hooks/usePagination';
 import { PaginationControls } from './PaginationControls';
 import { motion } from 'motion/react';
+import { DatePicker } from './ui/date-picker';
 
 interface StaffManagementProps {
 	staff: Staff[];
+	specialties: Specialty[];
 	onCreate: (staff: Omit<Staff, 'id' | 'createdAt' | 'updatedAt'>) => void;
 	onUpdate: (id: string, staff: Partial<Staff>) => void;
 	onDelete: (id: string) => void;
 }
 
 const roleLabels: Record<UserRole, string> = {
+	super_admin: 'Super Admin',
 	admin: 'Quản trị viên',
 	doctor: 'Bác sĩ',
 	nurse: 'Điều dưỡng',
@@ -64,6 +71,7 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 const roleColors: Record<UserRole, string> = {
+	super_admin: 'bg-red-100 text-red-800',
 	admin: 'bg-purple-100 text-purple-800',
 	doctor: 'bg-blue-100 text-blue-800',
 	nurse: 'bg-green-100 text-green-800',
@@ -74,11 +82,11 @@ const roleColors: Record<UserRole, string> = {
 const genderLabels: Record<Gender, string> = {
 	male: 'Nam',
 	female: 'Nữ',
-	other: 'Khác',
 };
 
 export function StaffManagement({
 	staff,
+	specialties = [],
 	onCreate,
 	onUpdate,
 	onDelete,
@@ -95,11 +103,9 @@ export function StaffManagement({
 		email: '',
 		phoneNumber: '',
 		dateOfBirth: '',
-		gender: 'male' as Gender,
-		role: 'receptionist' as UserRole,
+		gender: '' as Gender,
+		role: '' as UserRole,
 		specialty: '',
-		position: '',
-		department: '',
 		address: '',
 		isActive: true,
 	});
@@ -123,7 +129,6 @@ export function StaffManagement({
 
 	const {
 		itemsPerPage,
-		setItemsPerPage,
 		currentPage,
 		totalPages,
 		paginatedData,
@@ -145,11 +150,9 @@ export function StaffManagement({
 				email: staffMember.email || '',
 				phoneNumber: staffMember.phoneNumber,
 				dateOfBirth: staffMember.dateOfBirth || '',
-				gender: staffMember.gender,
-				role: staffMember.role,
+				gender: staffMember.gender || '',
+				role: staffMember.role || '',
 				specialty: staffMember.specialty || '',
-				position: staffMember.position || '',
-				department: staffMember.department || '',
 				address: staffMember.address || '',
 				isActive: staffMember.isActive,
 			});
@@ -161,11 +164,9 @@ export function StaffManagement({
 				email: '',
 				phoneNumber: '',
 				dateOfBirth: '',
-				gender: 'male',
-				role: 'receptionist',
+				gender: '',
+				role: '',
 				specialty: '',
-				position: '',
-				department: '',
 				address: '',
 				isActive: true,
 			});
@@ -184,6 +185,16 @@ export function StaffManagement({
 			return;
 		}
 
+		if (!formData.gender) {
+			toast.error('Vui lòng chọn giới tính');
+			return;
+		}
+
+		if (!formData.role) {
+			toast.error('Vui lòng chọn vai trò');
+			return;
+		}
+
 		const staffData = {
 			fullName: formData.fullName,
 			code: formData.code || undefined,
@@ -192,9 +203,7 @@ export function StaffManagement({
 			dateOfBirth: formData.dateOfBirth || undefined,
 			gender: formData.gender,
 			role: formData.role,
-			specialty: formData.specialty || undefined,
-			position: formData.position || undefined,
-			department: formData.department || undefined,
+			specialty: formData.specialty?.trim() || undefined,
 			address: formData.address || undefined,
 			isActive: formData.isActive,
 		};
@@ -217,6 +226,290 @@ export function StaffManagement({
 		}
 	};
 
+	// Export to Excel
+	const handleExport = () => {
+		try {
+			// Chuẩn bị dữ liệu để export
+			const exportData = filteredStaff.map((s) => ({
+				'Mã nhân viên': s.code || '',
+				'Họ tên': s.fullName,
+				'Vai trò': roleLabels[s.role],
+				'Chuyên khoa': s.specialty || '',
+				'Điện thoại': s.phoneNumber,
+				Email: s.email || '',
+				'Ngày sinh': s.dateOfBirth || '',
+				'Giới tính': genderLabels[s.gender],
+				'Địa chỉ': s.address || '',
+				'Trạng thái': s.isActive ? 'Hoạt động' : 'Ngừng hoạt động hoạt động',
+			}));
+
+			// Tạo workbook và worksheet
+			const ws = XLSX.utils.json_to_sheet(exportData);
+			const wb = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(wb, ws, 'Nhân viên');
+
+			// Đặt độ rộng cột
+			const colWidths = [
+				{ wch: 15 }, // Mã nhân viên
+				{ wch: 25 }, // Họ tên
+				{ wch: 15 }, // Vai trò
+				{ wch: 20 }, // Chuyên khoa
+				{ wch: 15 }, // Điện thoại
+				{ wch: 25 }, // Email
+				{ wch: 12 }, // Ngày sinh
+				{ wch: 10 }, // Giới tính
+				{ wch: 30 }, // Địa chỉ
+				{ wch: 15 }, // Trạng thái
+			];
+			ws['!cols'] = colWidths;
+
+			// Xuất file
+			const fileName = `Danh_sach_nhan_vien_${
+				new Date().toISOString().split('T')[0]
+			}.xlsx`;
+			XLSX.writeFile(wb, fileName);
+			toast.success(`Đã xuất ${exportData.length} nhân viên ra file Excel`);
+		} catch (error) {
+			console.error('Lỗi khi xuất file Excel:', error);
+			toast.error('Có lỗi xảy ra khi xuất file Excel');
+		}
+	};
+
+	// Import from Excel
+	const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		// Kiểm tra định dạng file
+		const validExtensions = [
+			'.xlsx',
+			'.xls',
+			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			'application/vnd.ms-excel',
+		];
+		const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+		const isValidFile =
+			validExtensions.includes(fileExtension) ||
+			validExtensions.includes(file.type);
+
+		if (!isValidFile) {
+			toast.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			try {
+				const data = new Uint8Array(e.target?.result as ArrayBuffer);
+				const workbook = XLSX.read(data, { type: 'array' });
+				const firstSheetName = workbook.SheetNames[0];
+				const worksheet = workbook.Sheets[firstSheetName];
+				const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+					header: 1,
+					defval: '',
+				}) as any[][];
+
+				if (jsonData.length < 2) {
+					toast.error('File Excel không có dữ liệu hoặc thiếu header');
+					return;
+				}
+
+				// Lấy header (dòng đầu tiên)
+				const headers = jsonData[0].map((h: any) =>
+					String(h).toLowerCase().trim(),
+				);
+
+				// Mapping header tiếng Việt sang field name
+				const headerMap: Record<string, keyof Staff> = {
+					'mã nhân viên': 'code',
+					'họ tên': 'fullName',
+					'vai trò': 'role',
+					'chuyên khoa': 'specialty',
+					'điện thoại': 'phoneNumber',
+					email: 'email',
+					'ngày sinh': 'dateOfBirth',
+					'giới tính': 'gender',
+					'địa chỉ': 'address',
+					'trạng thái': 'isActive',
+				};
+
+				// Tìm index của các cột cần thiết
+				const fieldIndexes: Record<string, number> = {};
+				headers.forEach((header, index) => {
+					const field = headerMap[header];
+					if (field) {
+						fieldIndexes[field] = index;
+					}
+				});
+
+				// Kiểm tra các trường bắt buộc
+				if (!fieldIndexes['fullName'] || !fieldIndexes['phoneNumber']) {
+					toast.error(
+						'File Excel thiếu các cột bắt buộc: Họ tên và Điện thoại',
+					);
+					return;
+				}
+
+				// Xử lý dữ liệu từ dòng 2 trở đi
+				let successCount = 0;
+				let errorCount = 0;
+				const errors: string[] = [];
+
+				for (let i = 1; i < jsonData.length; i++) {
+					const row = jsonData[i];
+					if (!row || row.every((cell) => !cell)) continue; // Bỏ qua dòng trống
+
+					try {
+						// Lấy giá trị từ các cột
+						const fullName =
+							row[fieldIndexes['fullName']]?.toString().trim() || '';
+						const phoneNumber =
+							row[fieldIndexes['phoneNumber']]?.toString().trim() || '';
+
+						if (!fullName || !phoneNumber) {
+							errorCount++;
+							errors.push(`Dòng ${i + 1}: Thiếu Họ tên hoặc Điện thoại`);
+							continue;
+						}
+
+						// Xử lý vai trò
+						const roleText = row[fieldIndexes['role']]?.toString().trim() || '';
+						let role: UserRole = 'receptionist';
+						if (roleText) {
+							const roleLower = roleText.toLowerCase();
+							if (
+								roleLower.includes('quản trị') ||
+								roleLower.includes('admin')
+							) {
+								role = 'admin';
+							} else if (
+								roleLower.includes('bác sĩ') ||
+								roleLower.includes('doctor')
+							) {
+								role = 'doctor';
+							} else if (
+								roleLower.includes('điều dưỡng') ||
+								roleLower.includes('nurse')
+							) {
+								role = 'nurse';
+							} else if (
+								roleLower.includes('lễ tân') ||
+								roleLower.includes('receptionist')
+							) {
+								role = 'receptionist';
+							}
+						}
+
+						// Xử lý giới tính
+						const genderText =
+							row[fieldIndexes['gender']]?.toString().trim() || '';
+						let gender: Gender = 'male';
+						if (genderText) {
+							const genderLower = genderText.toLowerCase();
+							if (
+								genderLower.includes('nữ') ||
+								genderLower.includes('female')
+							) {
+								gender = 'female';
+							}
+						}
+
+						// Xử lý trạng thái
+						const statusText =
+							row[fieldIndexes['isActive']]?.toString().trim() || '';
+						let isActive = true;
+						if (statusText) {
+							const statusLower = statusText.toLowerCase();
+							isActive =
+								statusLower.includes('hoạt động') ||
+								statusLower.includes('active') ||
+								statusLower === '1' ||
+								statusLower === 'true';
+						}
+
+						// Xử lý ngày sinh
+						let dateOfBirth = '';
+						const dobValue = row[fieldIndexes['dateOfBirth']];
+						if (dobValue) {
+							if (typeof dobValue === 'number') {
+								// Excel date serial number
+								try {
+									const excelDate = XLSX.SSF.parse_date_code(dobValue);
+									if (excelDate) {
+										dateOfBirth = `${excelDate.y}-${String(
+											excelDate.m,
+										).padStart(2, '0')}-${String(excelDate.d).padStart(
+											2,
+											'0',
+										)}`;
+									}
+								} catch {
+									// Nếu không parse được, giữ nguyên giá trị
+									dateOfBirth = dobValue.toString().trim();
+								}
+							} else {
+								dateOfBirth = dobValue.toString().trim();
+							}
+						}
+
+						const staffData: Omit<Staff, 'id' | 'createdAt' | 'updatedAt'> = {
+							fullName,
+							phoneNumber,
+							code: row[fieldIndexes['code']]?.toString().trim() || undefined,
+							email: row[fieldIndexes['email']]?.toString().trim() || undefined,
+							dateOfBirth: dateOfBirth || undefined,
+							gender,
+							role,
+							specialty:
+								row[fieldIndexes['specialty']]?.toString().trim() || undefined,
+							address:
+								row[fieldIndexes['address']]?.toString().trim() || undefined,
+							isActive,
+						};
+
+						onCreate(staffData);
+						successCount++;
+					} catch (error) {
+						errorCount++;
+						errors.push(
+							`Dòng ${i + 1}: ${
+								error instanceof Error ? error.message : 'Lỗi không xác định'
+							}`,
+						);
+					}
+				}
+
+				// Reset input file
+				event.target.value = '';
+
+				if (successCount > 0) {
+					toast.success(
+						`Đã import thành công ${successCount} nhân viên${
+							errorCount > 0 ? `, ${errorCount} lỗi` : ''
+						}`,
+					);
+				}
+
+				if (errorCount > 0 && errors.length > 0) {
+					console.error('Các lỗi khi import:', errors);
+					if (errors.length <= 10) {
+						toast.error(`Lỗi: ${errors.join('; ')}`);
+					} else {
+						toast.error(
+							`Có ${errors.length} lỗi. Vui lòng kiểm tra console để xem chi tiết.`,
+						);
+					}
+				}
+			} catch (error) {
+				console.error('Lỗi khi đọc file Excel:', error);
+				toast.error('Có lỗi xảy ra khi đọc file Excel');
+				event.target.value = '';
+			}
+		};
+
+		reader.readAsArrayBuffer(file);
+	};
+
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
@@ -236,7 +529,33 @@ export function StaffManagement({
 						<span className="text-sm text-gray-600">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
-					<motion.div>
+					<motion.div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							onClick={handleExport}
+							className="border-gray-200 hover:bg-gray-50"
+						>
+							<Download className="h-4 w-4 mr-2" />
+							Xuất Excel
+						</Button>
+						<label>
+							<input
+								type="file"
+								accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+								onChange={handleImport}
+								className="hidden"
+							/>
+							<Button
+								variant="outline"
+								asChild
+								className="border-gray-200 hover:bg-gray-50 cursor-pointer"
+							>
+								<span>
+									<Upload className="h-4 w-4 mr-2" />
+									Nhập Excel
+								</span>
+							</Button>
+						</label>
 						<Button
 							onClick={() => handleOpenDialog()}
 							className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/30"
@@ -260,28 +579,36 @@ export function StaffManagement({
 								className="pl-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
 							/>
 						</div>
-						<Select value={roleFilter} onValueChange={setRoleFilter}>
-							<SelectTrigger className="w-full md:w-64 border-gray-200">
-								<SelectValue placeholder="Vai trò" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Tất cả vai trò</SelectItem>
-								<SelectItem value="admin">Quản trị viên</SelectItem>
-								<SelectItem value="doctor">Bác sĩ</SelectItem>
-								<SelectItem value="nurse">Điều dưỡng</SelectItem>
-								<SelectItem value="receptionist">Lễ tân</SelectItem>
-							</SelectContent>
-						</Select>
-						<Select value={statusFilter} onValueChange={setStatusFilter}>
-							<SelectTrigger className="w-full md:w-64 border-gray-200">
-								<SelectValue placeholder="Trạng thái" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Tất cả</SelectItem>
-								<SelectItem value="active">Đang hoạt động</SelectItem>
-								<SelectItem value="inactive">Ngừng hoạt động</SelectItem>
-							</SelectContent>
-						</Select>
+						<div className="w-full md:w-64 relative">
+							<Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+							<Select value={roleFilter} onValueChange={setRoleFilter}>
+								<SelectTrigger className="pl-10 border-gray-200">
+									<SelectValue placeholder="Vai trò" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">Tất cả vai trò</SelectItem>
+									<SelectItem value="admin">Quản trị viên</SelectItem>
+									<SelectItem value="doctor">Bác sĩ</SelectItem>
+									<SelectItem value="nurse">Điều dưỡng</SelectItem>
+									<SelectItem value="receptionist">Lễ tân</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="w-full md:w-64 relative">
+							<Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+							<Select value={statusFilter} onValueChange={setStatusFilter}>
+								<SelectTrigger className="pl-10 border-gray-200">
+									<SelectValue placeholder="Lọc theo trạng thái" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">Tất cả trạng thái</SelectItem>
+									<SelectItem value="active">Đang hoạt động</SelectItem>
+									<SelectItem value="inactive">
+										Ngừng hoạt động hoạt động
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent>
@@ -290,6 +617,7 @@ export function StaffManagement({
 						<Table>
 							<TableHeader>
 								<TableRow className="bg-gray-50/80 hover:bg-gray-50">
+									<TableHead className="w-16 text-center">STT</TableHead>
 									<TableHead>Mã</TableHead>
 									<TableHead>Họ tên</TableHead>
 									<TableHead>Vai trò</TableHead>
@@ -303,10 +631,7 @@ export function StaffManagement({
 							<TableBody>
 								{paginatedData.length === 0 ? (
 									<TableRow>
-										<TableCell
-											colSpan={8}
-											className="text-center py-12"
-										>
+										<TableCell colSpan={9} className="text-center py-12">
 											<div className="flex flex-col items-center gap-3 text-gray-500">
 												<Users className="h-12 w-12 text-gray-300" />
 												<p>Không tìm thấy nhân viên nào</p>
@@ -323,13 +648,16 @@ export function StaffManagement({
 									</TableRow>
 								) : (
 									paginatedData.map((staffMember, index) => (
-									<motion.tr
-										key={staffMember.id}
-										initial={{ opacity: 0, y: 20 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ delay: index * 0.05 }}
-										className="border-b border-gray-200 hover:bg-gray-50/80 transition-colors"
-									>
+										<motion.tr
+											key={staffMember.id}
+											initial={{ opacity: 0, y: 20 }}
+											animate={{ opacity: 1, y: 0 }}
+											transition={{ delay: index * 0.05 }}
+											className="hover:bg-gray-50/80 transition-colors"
+										>
+											<TableCell className="text-center text-gray-500">
+												{startIndex + index}
+											</TableCell>
 											<TableCell>
 												{staffMember.code ? (
 													<span className="font-mono text-sm bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
@@ -350,8 +678,12 @@ export function StaffManagement({
 											<TableCell className="text-gray-600">
 												{staffMember.specialty || '-'}
 											</TableCell>
-											<TableCell className="text-gray-600">{staffMember.phoneNumber}</TableCell>
-											<TableCell className="text-gray-600">{staffMember.email || '-'}</TableCell>
+											<TableCell className="text-gray-600">
+												{staffMember.phoneNumber}
+											</TableCell>
+											<TableCell className="text-gray-600">
+												{staffMember.email || '-'}
+											</TableCell>
 											<TableCell>
 												{staffMember.isActive ? (
 													<Badge className="bg-green-100 text-green-800 border-0">
@@ -361,7 +693,7 @@ export function StaffManagement({
 												) : (
 													<Badge className="bg-red-100 text-red-800 border-0">
 														<XCircle className="h-3 w-3 mr-1" />
-														Ngừng
+														Ngừng hoạt động
 													</Badge>
 												)}
 											</TableCell>
@@ -402,7 +734,6 @@ export function StaffManagement({
 						startIndex={startIndex}
 						endIndex={endIndex}
 						onPageChange={goToPage}
-						onItemsPerPageChange={setItemsPerPage}
 					/>
 				</CardContent>
 			</Card>
@@ -458,7 +789,10 @@ export function StaffManagement({
 											id="phoneNumber"
 											value={formData.phoneNumber}
 											onChange={(e) =>
-												setFormData({ ...formData, phoneNumber: e.target.value })
+												setFormData({
+													...formData,
+													phoneNumber: e.target.value,
+												})
 											}
 											placeholder="Nhập số điện thoại"
 										/>
@@ -479,43 +813,45 @@ export function StaffManagement({
 								<div className="grid grid-cols-3 gap-4">
 									<div className="space-y-2">
 										<Label htmlFor="dateOfBirth">Ngày sinh</Label>
-										<Input
-											id="dateOfBirth"
-											type="date"
-											value={formData.dateOfBirth}
-											onChange={(e) =>
-												setFormData({ ...formData, dateOfBirth: e.target.value })
+										<DatePicker
+											date={formData.dateOfBirth}
+											onStringChange={(date) =>
+												setFormData({
+													...formData,
+													dateOfBirth: date,
+												})
 											}
+											placeholder="dd/mm/yyyy"
+											minDate={new Date('1900-01-01')}
 										/>
 									</div>
 									<div className="space-y-2">
 										<Label htmlFor="gender">Giới tính</Label>
 										<Select
-											value={formData.gender}
+											value={formData.gender || undefined}
 											onValueChange={(value) =>
 												setFormData({ ...formData, gender: value as Gender })
 											}
 										>
 											<SelectTrigger>
-												<SelectValue />
+												<SelectValue placeholder="Chọn giới tính" />
 											</SelectTrigger>
 											<SelectContent>
 												<SelectItem value="male">Nam</SelectItem>
 												<SelectItem value="female">Nữ</SelectItem>
-												<SelectItem value="other">Khác</SelectItem>
 											</SelectContent>
 										</Select>
 									</div>
 									<div className="space-y-2">
 										<Label htmlFor="role">Vai trò</Label>
 										<Select
-											value={formData.role}
+											value={formData.role || undefined}
 											onValueChange={(value) =>
 												setFormData({ ...formData, role: value as UserRole })
 											}
 										>
 											<SelectTrigger>
-												<SelectValue />
+												<SelectValue placeholder="Chọn vai trò" />
 											</SelectTrigger>
 											<SelectContent>
 												<SelectItem value="admin">Quản trị viên</SelectItem>
@@ -529,40 +865,30 @@ export function StaffManagement({
 								{formData.role === 'doctor' && (
 									<div className="space-y-2">
 										<Label htmlFor="specialty">Chuyên khoa</Label>
-										<Input
-											id="specialty"
-											value={formData.specialty}
-											onChange={(e) =>
-												setFormData({ ...formData, specialty: e.target.value })
+										<Select
+											value={formData.specialty || undefined}
+											onValueChange={(value) =>
+												setFormData({ ...formData, specialty: value || '' })
 											}
-											placeholder="Nhập chuyên khoa"
-										/>
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="Chọn chuyên khoa" />
+											</SelectTrigger>
+											<SelectContent>
+												{specialties
+													.filter((s) => s.isActive)
+													.map((specialty) => (
+														<SelectItem
+															key={specialty.id}
+															value={specialty.name}
+														>
+															{specialty.name}
+														</SelectItem>
+													))}
+											</SelectContent>
+										</Select>
 									</div>
 								)}
-								<div className="grid grid-cols-2 gap-4">
-									<div className="space-y-2">
-										<Label htmlFor="position">Chức vụ</Label>
-										<Input
-											id="position"
-											value={formData.position}
-											onChange={(e) =>
-												setFormData({ ...formData, position: e.target.value })
-											}
-											placeholder="Nhập chức vụ"
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label htmlFor="department">Phòng ban</Label>
-										<Input
-											id="department"
-											value={formData.department}
-											onChange={(e) =>
-												setFormData({ ...formData, department: e.target.value })
-											}
-											placeholder="Nhập phòng ban"
-										/>
-									</div>
-								</div>
 								<div className="space-y-2">
 									<Label htmlFor="address">Địa chỉ</Label>
 									<Textarea
@@ -575,7 +901,7 @@ export function StaffManagement({
 										rows={2}
 									/>
 								</div>
-								<div className="flex items-center space-x-2">
+								<div className="flex items-center space-x-2 gap-2">
 									<input
 										type="checkbox"
 										id="isActive"
@@ -606,4 +932,3 @@ export function StaffManagement({
 		</div>
 	);
 }
-

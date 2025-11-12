@@ -17,6 +17,8 @@ import {
 	Package,
 	Users,
 	Settings,
+	Building2,
+	Briefcase,
 } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import logo from '@/assets/images/logo.svg';
@@ -93,6 +95,18 @@ const navigationItems: NavigationItem[] = [
 	{
 		id: 'medications',
 		label: 'Danh mục Thuốc',
+		icon: Pill,
+		roles: ['admin'],
+	},
+	{
+		id: 'specialties',
+		label: 'Quản lý Chuyên khoa',
+		icon: Stethoscope,
+		roles: ['admin'],
+	},
+	{
+		id: 'medication-groups',
+		label: 'Quản lý Nhóm thuốc',
 		icon: Pill,
 		roles: ['admin'],
 	},
