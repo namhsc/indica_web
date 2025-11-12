@@ -77,6 +77,7 @@ export function ServicePackageManagement({
 	const [editingPackage, setEditingPackage] = useState<ServicePackage | null>(
 		null,
 	);
+	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
 	const [formData, setFormData] = useState({
 		name: '',
@@ -204,6 +205,49 @@ export function ServicePackageManagement({
 			toast.success('Xóa gói dịch vụ thành công');
 		}
 	};
+
+	const handleToggleSelect = (id: string) => {
+		const newSelected = new Set(selectedItems);
+		if (newSelected.has(id)) {
+			newSelected.delete(id);
+		} else {
+			newSelected.add(id);
+		}
+		setSelectedItems(newSelected);
+	};
+
+	const handleSelectAll = (checked: boolean) => {
+		if (checked) {
+			setSelectedItems(new Set(paginatedData.map((item) => item.id)));
+		} else {
+			setSelectedItems(new Set());
+		}
+	};
+
+	const handleDeleteSelected = () => {
+		if (selectedItems.size === 0) {
+			toast.error('Vui lòng chọn ít nhất một mục để xóa');
+			return;
+		}
+
+		if (
+			confirm(
+				`Bạn có chắc chắn muốn xóa ${selectedItems.size} gói dịch vụ đã chọn?`,
+			)
+		) {
+			selectedItems.forEach((id) => {
+				onDelete(id);
+			});
+			setSelectedItems(new Set());
+			toast.success(`Đã xóa ${selectedItems.size} gói dịch vụ thành công`);
+		}
+	};
+
+	const isAllSelected =
+		paginatedData.length > 0 &&
+		paginatedData.every((item) => selectedItems.has(item.id));
+	const isIndeterminate =
+		selectedItems.size > 0 && selectedItems.size < paginatedData.length;
 
 	const handleToggleService = (serviceId: string) => {
 		const isSelected = formData.services.includes(serviceId);
@@ -491,6 +535,16 @@ export function ServicePackageManagement({
 						<span className="text-sm text-gray-600">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
+					{selectedItems.size > 0 && (
+						<Button
+							onClick={handleDeleteSelected}
+							variant="destructive"
+							className="bg-delete-btn hover:bg-red-700 text-white border-red-600"
+						>
+							<Trash2 className="h-4 w-4 mr-2" />
+							Xóa ({selectedItems.size})
+						</Button>
+					)}
 					<Button
 						onClick={handleExport}
 						variant="outline"
@@ -550,9 +604,7 @@ export function ServicePackageManagement({
 								<SelectContent>
 									<SelectItem value="all">Tất cả trạng thái</SelectItem>
 									<SelectItem value="active">Đang hoạt động</SelectItem>
-									<SelectItem value="inactive">
-										Ngừng hoạt động hoạt động
-									</SelectItem>
+									<SelectItem value="inactive">Ngừng hoạt động</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -564,6 +616,18 @@ export function ServicePackageManagement({
 						<Table>
 							<TableHeader>
 								<TableRow className="bg-gray-50/80 hover:bg-gray-50">
+									<TableHead className="w-12">
+										<Checkbox
+											checked={isAllSelected}
+											onCheckedChange={handleSelectAll}
+											ref={(el) => {
+												if (el) {
+													el.indeterminate = isIndeterminate;
+												}
+											}}
+										/>
+									</TableHead>
+									<TableHead className="w-16 text-center">STT</TableHead>
 									<TableHead>Mã</TableHead>
 									<TableHead>Tên gói</TableHead>
 									<TableHead>Số dịch vụ</TableHead>
@@ -576,7 +640,7 @@ export function ServicePackageManagement({
 							<TableBody>
 								{paginatedData.length === 0 ? (
 									<TableRow>
-										<TableCell colSpan={7} className="text-center py-12">
+										<TableCell colSpan={9} className="text-center py-12">
 											<div className="flex flex-col items-center gap-3 text-gray-500">
 												<Package className="h-12 w-12 text-gray-300" />
 												<p>Không tìm thấy gói dịch vụ nào</p>
@@ -609,6 +673,15 @@ export function ServicePackageManagement({
 												transition={{ delay: index * 0.05 }}
 												className="hover:bg-gray-50/80 transition-colors border-b border-gray-200"
 											>
+												<TableCell>
+													<Checkbox
+														checked={selectedItems.has(pkg.id)}
+														onCheckedChange={() => handleToggleSelect(pkg.id)}
+													/>
+												</TableCell>
+												<TableCell className="text-center text-gray-500">
+													{startIndex + index}
+												</TableCell>
 												<TableCell>
 													{pkg.code ? (
 														<span className="font-mono text-sm bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">

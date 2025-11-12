@@ -28,7 +28,7 @@ const roleLabels = {
 	receptionist: 'Lễ tân',
 	doctor: 'Bác sĩ',
 	nurse: 'Điều dưỡng',
-	patient: 'Bệnh nhân',
+	patient: 'Khách hàng',
 };
 
 const roleGradients = {
@@ -129,7 +129,7 @@ export function UserProfile() {
 								{user.role === 'patient' && (
 									<div className="space-y-1">
 										<div className="text-xs text-gray-600">
-											<span className="font-medium">Mã bệnh nhân:</span>{' '}
+											<span className="font-medium">Mã Khách hàng:</span>{' '}
 											<span className="text-gray-900">
 												BN-{user.id.slice(-4).toUpperCase()}
 											</span>
@@ -143,7 +143,9 @@ export function UserProfile() {
 					<DropdownMenuSeparator />
 					<DropdownMenuItem className="cursor-pointer hover:bg-gray-50">
 						<User className="h-4 w-4 mr-2 text-gray-600" />
-						{user.role === 'patient' ? 'Hồ sơ bệnh nhân' : 'Thông tin cá nhân'}
+						{user.role === 'patient'
+							? 'khách hàng Khách hàng'
+							: 'Thông tin cá nhân'}
 					</DropdownMenuItem>
 					{user.role === 'admin' && (
 						<DropdownMenuItem className="cursor-pointer hover:bg-gray-50">

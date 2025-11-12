@@ -165,49 +165,49 @@ export function TechnicianWorkspace({
 							<>
 								<div className="space-y-3">
 									{paginatedOrders.map((order) => (
-									<div
-										key={order.id}
-										className="p-4 border rounded-lg border-gray-200"
-									>
-										<div className="flex justify-between items-start">
-											<div className="space-y-2 flex-1">
-												<div className="flex items-center gap-3">
-													<span>{order.receiveCode}</span>
-													<Badge className="bg-purple-100 text-purple-800">
-														{order.patientName}
-													</Badge>
-													<Badge className={statusColors[order.status]}>
-														{statusLabels[order.status]}
-													</Badge>
-												</div>
-												<div className="text-sm text-gray-600">
-													<div>
-														{testTypeLabels[order.testType]}: {order.testName}
+										<div
+											key={order.id}
+											className="p-4 border rounded-lg border-gray-200"
+										>
+											<div className="flex justify-between items-start">
+												<div className="space-y-2 flex-1">
+													<div className="flex items-center gap-3">
+														<span>{order.receiveCode}</span>
+														<Badge className="bg-purple-100 text-purple-800">
+															{order.patientName}
+														</Badge>
+														<Badge className={statusColors[order.status]}>
+															{statusLabels[order.status]}
+														</Badge>
 													</div>
-													<div>Bác sĩ chỉ định: {order.orderedBy}</div>
-													<div>Thời gian: {formatDate(order.orderedAt)}</div>
+													<div className="text-sm text-gray-600">
+														<div>
+															{testTypeLabels[order.testType]}: {order.testName}
+														</div>
+														<div>Bác sĩ chỉ định: {order.orderedBy}</div>
+														<div>Thời gian: {formatDate(order.orderedAt)}</div>
+													</div>
 												</div>
-											</div>
-											<div className="flex gap-2">
-												{order.status === 'pending' && (
-													<Button
-														size="sm"
-														onClick={() => handleStartTest(order)}
-													>
-														Bắt đầu
-													</Button>
-												)}
-												{order.status === 'in_progress' && (
-													<Button
-														size="sm"
-														onClick={() => handleOpenResultDialog(order)}
-													>
-														Nhập kết quả
-													</Button>
-												)}
+												<div className="flex gap-2">
+													{order.status === 'pending' && (
+														<Button
+															size="sm"
+															onClick={() => handleStartTest(order)}
+														>
+															Bắt đầu
+														</Button>
+													)}
+													{order.status === 'in_progress' && (
+														<Button
+															size="sm"
+															onClick={() => handleOpenResultDialog(order)}
+														>
+															Nhập kết quả
+														</Button>
+													)}
+												</div>
 											</div>
 										</div>
-									</div>
 									))}
 								</div>
 								<PaginationControls
@@ -240,11 +240,11 @@ export function TechnicianWorkspace({
 							<div className="p-4 bg-gray-50 rounded-lg">
 								<div className="grid grid-cols-2 gap-2 text-sm">
 									<div>
-										<span className="text-gray-600">Mã hồ sơ:</span>{' '}
+										<span className="text-gray-600">Mã khách hàng:</span>{' '}
 										{selectedOrder.receiveCode}
 									</div>
 									<div>
-										<span className="text-gray-600">Bệnh nhân:</span>{' '}
+										<span className="text-gray-600">Khách hàng:</span>{' '}
 										{selectedOrder.patientName}
 									</div>
 									<div className="col-span-2">

@@ -7,12 +7,7 @@ import {
 	CardTitle,
 } from '../ui/card';
 import { Badge } from '../ui/badge';
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { MedicalRecord } from '../../types';
 import { FileText, Calendar, User, Stethoscope, Eye } from 'lucide-react';
 import { usePagination } from '../../hooks/usePagination';
@@ -26,24 +21,20 @@ const statusLabels = {
 	PENDING_CHECKIN: 'Chờ check-in',
 	PENDING_EXAMINATION: 'Chờ khám',
 	IN_EXAMINATION: 'Đang khám',
-	WAITING_TESTS: 'Chờ xét nghiệm',
-	WAITING_DOCTOR_REVIEW: 'Chờ bác sĩ xem xét',
 	COMPLETED_EXAMINATION: 'Hoàn thành khám',
-	RETURNED: 'Đã trả',
 };
 
 const statusColors = {
 	PENDING_CHECKIN: 'bg-yellow-100 text-yellow-800',
 	PENDING_EXAMINATION: 'bg-blue-100 text-blue-800',
 	IN_EXAMINATION: 'bg-purple-100 text-purple-800',
-	WAITING_TESTS: 'bg-orange-100 text-orange-800',
-	WAITING_DOCTOR_REVIEW: 'bg-indigo-100 text-indigo-800',
 	COMPLETED_EXAMINATION: 'bg-green-100 text-green-800',
-	RETURNED: 'bg-gray-100 text-gray-800',
 };
 
 export function PatientMedicalRecords({ records }: PatientMedicalRecordsProps) {
-	const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
+	const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(
+		null,
+	);
 	const [showDetailDialog, setShowDetailDialog] = useState(false);
 
 	const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -77,7 +68,7 @@ export function PatientMedicalRecords({ records }: PatientMedicalRecordsProps) {
 				<CardContent className="pt-6">
 					<div className="text-center py-12 text-gray-500">
 						<FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-						<p>Bạn chưa có hồ sơ y tế nào</p>
+						<p>Bạn chưa có khách hàng y tế nào</p>
 					</div>
 				</CardContent>
 			</Card>
@@ -87,8 +78,10 @@ export function PatientMedicalRecords({ records }: PatientMedicalRecordsProps) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h3 className="text-xl font-semibold">Hồ sơ y tế của tôi</h3>
-				<p className="text-sm text-gray-600">Xem lịch sử khám bệnh và hồ sơ y tế</p>
+				<h3 className="text-xl font-semibold">khách hàng y tế của tôi</h3>
+				<p className="text-sm text-gray-600">
+					Xem lịch sử khám bệnh và khách hàng y tế
+				</p>
 			</div>
 
 			<div className="space-y-4">
@@ -132,27 +125,24 @@ export function PatientMedicalRecords({ records }: PatientMedicalRecordsProps) {
 						<CardContent>
 							<div className="space-y-3">
 								<div>
-									<span className="text-sm font-medium text-gray-600">Lý do khám:</span>
+									<span className="text-sm font-medium text-gray-600">
+										Lý do khám:
+									</span>
 									<p className="text-sm mt-1">{record.reason || 'Không có'}</p>
-								</div>
-								<div>
-									<span className="text-sm font-medium text-gray-600">Dịch vụ:</span>
-									<div className="flex flex-wrap gap-2 mt-1">
-										{record.requestedServices.map((service, index) => (
-											<Badge key={index} variant="outline" className="text-xs">
-												{service}
-											</Badge>
-										))}
-									</div>
 								</div>
 								{record.diagnosis && (
 									<div>
-										<span className="text-sm font-medium text-gray-600">Chẩn đoán:</span>
+										<span className="text-sm font-medium text-gray-600">
+											Chẩn đoán:
+										</span>
 										<p className="text-sm mt-1">{record.diagnosis}</p>
 									</div>
 								)}
 								<div className="pt-2">
-									<Badge variant="outline" className="flex items-center gap-1 w-fit">
+									<Badge
+										variant="outline"
+										className="flex items-center gap-1 w-fit"
+									>
 										<Eye className="h-3 w-3" />
 										Nhấn để xem chi tiết
 									</Badge>
@@ -179,7 +169,7 @@ export function PatientMedicalRecords({ records }: PatientMedicalRecordsProps) {
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
 							<FileText className="h-5 w-5" />
-							Chi tiết hồ sơ y tế - {selectedRecord?.receiveCode}
+							Chi tiết khách hàng y tế - {selectedRecord?.receiveCode}
 						</DialogTitle>
 					</DialogHeader>
 					{selectedRecord && (
@@ -189,25 +179,29 @@ export function PatientMedicalRecords({ records }: PatientMedicalRecordsProps) {
 								<CardHeader>
 									<CardTitle className="text-base flex items-center gap-2">
 										<User className="h-4 w-4" />
-										Thông tin bệnh nhân
+										Thông tin Khách hàng
 									</CardTitle>
 								</CardHeader>
 								<CardContent>
 									<div className="grid grid-cols-2 gap-4">
 										<div>
 											<span className="text-sm text-gray-600">Họ và tên:</span>
-											<p className="font-medium">{selectedRecord.patient.fullName}</p>
+											<p className="font-medium">
+												{selectedRecord.patient.fullName}
+											</p>
 										</div>
 										<div>
-											<span className="text-sm text-gray-600">Số điện thoại:</span>
+											<span className="text-sm text-gray-600">
+												Số điện thoại:
+											</span>
 											<p>{selectedRecord.patient.phoneNumber}</p>
 										</div>
 										<div>
 											<span className="text-sm text-gray-600">Ngày sinh:</span>
 											<p>
-												{new Date(selectedRecord.patient.dateOfBirth).toLocaleDateString(
-													'vi-VN'
-												)}
+												{new Date(
+													selectedRecord.patient.dateOfBirth,
+												).toLocaleDateString('vi-VN')}
 											</p>
 										</div>
 										<div>
@@ -241,16 +235,6 @@ export function PatientMedicalRecords({ records }: PatientMedicalRecordsProps) {
 										<div>
 											<span className="text-sm text-gray-600">Lý do khám:</span>
 											<p>{selectedRecord.reason || 'Không có'}</p>
-										</div>
-										<div>
-											<span className="text-sm text-gray-600">Dịch vụ:</span>
-											<div className="flex flex-wrap gap-2 mt-1">
-												{selectedRecord.requestedServices.map((service, index) => (
-													<Badge key={index} variant="outline">
-														{service}
-													</Badge>
-												))}
-											</div>
 										</div>
 										{selectedRecord.assignedDoctor && (
 											<div>
@@ -292,4 +276,3 @@ export function PatientMedicalRecords({ records }: PatientMedicalRecordsProps) {
 		</div>
 	);
 }
-

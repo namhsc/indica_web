@@ -8,15 +8,7 @@ import {
 	TreatmentPlan,
 	RecordStatus,
 } from '../types';
-import {
-	User,
-	Stethoscope,
-	FileText,
-	Calendar,
-	Phone,
-	DollarSign,
-	Clock,
-} from 'lucide-react';
+import { User, Stethoscope, FileText, Calendar, Phone } from 'lucide-react';
 import { TreatmentPlanManager } from './TreatmentPlanManager';
 
 interface RecordDetailProps {
@@ -30,20 +22,14 @@ const statusLabels: Record<RecordStatus, string> = {
 	PENDING_CHECKIN: 'Chưa check-in',
 	PENDING_EXAMINATION: 'Chờ khám',
 	IN_EXAMINATION: 'Đang khám',
-	WAITING_TESTS: 'Chờ xét nghiệm',
-	WAITING_DOCTOR_REVIEW: 'Chờ bác sĩ kết luận',
 	COMPLETED_EXAMINATION: 'Hoàn thành',
-	RETURNED: 'Đã trả',
 };
 
 const statusColors: Record<RecordStatus, string> = {
 	PENDING_CHECKIN: 'bg-yellow-100 text-yellow-800',
 	PENDING_EXAMINATION: 'bg-yellow-100 text-yellow-800',
 	IN_EXAMINATION: 'bg-blue-100 text-blue-800',
-	WAITING_TESTS: 'bg-orange-100 text-orange-800',
-	WAITING_DOCTOR_REVIEW: 'bg-purple-100 text-purple-800',
 	COMPLETED_EXAMINATION: 'bg-green-100 text-green-800',
-	RETURNED: 'bg-gray-100 text-gray-800',
 };
 
 export function RecordDetail({
@@ -69,13 +55,6 @@ export function RecordDetail({
 		});
 	};
 
-	const formatCurrency = (amount: number) => {
-		return new Intl.NumberFormat('vi-VN', {
-			style: 'currency',
-			currency: 'VND',
-		}).format(amount);
-	};
-
 	return (
 		<Dialog open={!!record} onOpenChange={onClose}>
 			<DialogContent className="max-w-[95vw] lg:max-w-5xl max-h-[95vh] overflow-hidden p-0 gap-0">
@@ -83,12 +62,12 @@ export function RecordDetail({
 				<div className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
 					<div className="mb-3">
 						<DialogTitle className="text-xl font-semibold text-gray-800">
-							Chi tiết hồ sơ
+							Chi tiết khách hàng
 						</DialogTitle>
 					</div>
 					<div className="flex items-center gap-4 flex-wrap">
 						<div className="flex items-center gap-2">
-							<span className="text-sm text-gray-600">Mã hồ sơ:</span>
+							<span className="text-sm text-gray-600">Mã khách hàng:</span>
 							<Badge
 								variant="outline"
 								className="font-mono text-sm px-2 py-0.5"
@@ -113,7 +92,7 @@ export function RecordDetail({
 								<div className="p-1.5 bg-blue-100 rounded-md">
 									<User className="h-4 w-4 text-blue-600" />
 								</div>
-								Thông tin bệnh nhân
+								Thông tin Khách hàng
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -170,34 +149,26 @@ export function RecordDetail({
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-4">
-							<div>
-								<div className="text-sm text-gray-600">Bác sĩ phụ trách</div>
+							{record.status !== 'PENDING_CHECKIN' && (
 								<div>
-									{record.assignedDoctor ? (
-										<>
-											{record.assignedDoctor.name} -{' '}
-											{record.assignedDoctor.specialty}
-										</>
-									) : (
-										<span className="text-gray-400">Chưa gán</span>
-									)}
+									<div className="text-sm text-gray-600">Bác sĩ phụ trách</div>
+									<div>
+										{record.assignedDoctor ? (
+											<>
+												{record.assignedDoctor.name} -{' '}
+												{record.assignedDoctor.specialty}
+											</>
+										) : (
+											<span className="text-gray-400">Chưa gán</span>
+										)}
+									</div>
 								</div>
-							</div>
+							)}
 							<div>
 								<div className="text-sm text-gray-600">Lý do khám</div>
 								<div>{record.reason || 'Không có'}</div>
 							</div>
-							<div>
-								<div className="text-sm text-gray-600">Dịch vụ yêu cầu</div>
-								<div className="flex flex-wrap gap-2 mt-1">
-									{record.requestedServices.map((service, index) => (
-										<Badge key={index} variant="outline">
-											{service}
-										</Badge>
-									))}
-								</div>
-							</div>
-							{record.diagnosis && (
+							{record.diagnosis && record.status !== 'IN_EXAMINATION' && (
 								<div>
 									<div className="text-sm text-gray-600">Chẩn đoán</div>
 									<div className="mt-1 p-3 bg-gray-50 rounded-lg">
@@ -280,65 +251,21 @@ export function RecordDetail({
 						</Card>
 					)}
 
-					{/* Payment & Timeline */}
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<Card>
-							<CardHeader>
-								<CardTitle className="text-base">Thanh toán</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-2">
-								<div className="flex justify-between">
-									<span className="text-gray-600">Tổng chi phí:</span>
-									<span>{formatCurrency(record.totalAmount || 0)}</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-gray-600">Đã thanh toán:</span>
-									<span>{formatCurrency(record.paidAmount || 0)}</span>
-								</div>
-								<div className="flex justify-between border-t pt-2">
-									<span className="text-gray-600">Còn lại:</span>
-									<span
-										className={
-											(record.totalAmount || 0) - (record.paidAmount || 0) > 0
-												? 'text-red-600'
-												: 'text-green-600'
-										}
-									>
-										{formatCurrency(
-											(record.totalAmount || 0) - (record.paidAmount || 0),
-										)}
-									</span>
-								</div>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader>
-								<CardTitle className="flex items-center gap-2 text-base">
-									<Calendar className="h-4 w-4" />
-									Thời gian
-								</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-2">
-								<div>
-									<div className="text-sm text-gray-600">Tiếp nhận</div>
-									<div className="text-sm">{formatDate(record.createdAt)}</div>
-								</div>
-								<div>
-									<div className="text-sm text-gray-600">Cập nhật</div>
-									<div className="text-sm">{formatDate(record.updatedAt)}</div>
-								</div>
-								{record.returnedAt && (
-									<div>
-										<div className="text-sm text-gray-600">Trả hồ sơ</div>
-										<div className="text-sm">
-											{formatDate(record.returnedAt)}
-										</div>
-									</div>
-								)}
-							</CardContent>
-						</Card>
-					</div>
+					{/* Timeline */}
+					<Card>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2 text-base">
+								<Calendar className="h-4 w-4" />
+								Thời gian
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-2">
+							<div>
+								<div className="text-sm text-gray-600">Cập nhật</div>
+								<div className="text-sm">{formatDate(record.updatedAt)}</div>
+							</div>
+						</CardContent>
+					</Card>
 				</div>
 			</DialogContent>
 		</Dialog>

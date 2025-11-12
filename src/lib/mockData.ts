@@ -14,7 +14,6 @@ import {
 	Department,
 	Position,
 	Specialty,
-	MedicationGroup,
 	UserRole,
 } from '../types';
 import { mockAppointments } from './mockPatients';
@@ -429,15 +428,12 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Amoxicillin',
 		code: 'MED001',
 		activeIngredient: 'Amoxicillin',
-		dosageForm: 'tablet',
 		strength: '500mg',
 		unit: 'viên',
 		category: 'antibiotic',
 		manufacturer: 'Công ty Dược phẩm A',
-		price: 50000,
-		stock: 150,
-		minStock: 50,
-		description: 'Kháng sinh phổ rộng, điều trị nhiễm khuẩn đường hô hấp, tiết niệu',
+		description:
+			'Kháng sinh phổ rộng, điều trị nhiễm khuẩn đường hô hấp, tiết niệu',
 		indications: 'Nhiễm khuẩn đường hô hấp, tiết niệu, da và mô mềm',
 		contraindications: 'Quá mẫn với penicillin, suy gan nặng',
 		sideEffects: 'Buồn nôn, tiêu chảy, phát ban',
@@ -450,14 +446,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Azithromycin',
 		code: 'MED002',
 		activeIngredient: 'Azithromycin',
-		dosageForm: 'tablet',
 		strength: '500mg',
 		unit: 'viên',
 		category: 'antibiotic',
 		manufacturer: 'Công ty Dược phẩm B',
-		price: 120000,
-		stock: 80,
-		minStock: 30,
 		description: 'Kháng sinh macrolide, điều trị nhiễm khuẩn đường hô hấp',
 		indications: 'Nhiễm khuẩn đường hô hấp, nhiễm khuẩn da và mô mềm',
 		contraindications: 'Quá mẫn với macrolide, rối loạn nhịp tim',
@@ -471,14 +463,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Cefuroxime',
 		code: 'MED003',
 		activeIngredient: 'Cefuroxime',
-		dosageForm: 'tablet',
 		strength: '250mg',
 		unit: 'viên',
 		category: 'antibiotic',
 		manufacturer: 'Công ty Dược phẩm C',
-		price: 80000,
-		stock: 100,
-		minStock: 40,
 		description: 'Kháng sinh cephalosporin thế hệ 2',
 		indications: 'Nhiễm khuẩn đường hô hấp, tiết niệu',
 		contraindications: 'Quá mẫn với cephalosporin',
@@ -493,14 +481,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Paracetamol',
 		code: 'MED004',
 		activeIngredient: 'Paracetamol',
-		dosageForm: 'tablet',
 		strength: '500mg',
 		unit: 'viên',
 		category: 'analgesic',
 		manufacturer: 'Công ty Dược phẩm D',
-		price: 20000,
-		stock: 500,
-		minStock: 200,
 		description: 'Thuốc giảm đau, hạ sốt',
 		indications: 'Đau nhức, sốt',
 		contraindications: 'Suy gan nặng, quá mẫn với paracetamol',
@@ -514,14 +498,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Ibuprofen',
 		code: 'MED005',
 		activeIngredient: 'Ibuprofen',
-		dosageForm: 'tablet',
 		strength: '400mg',
 		unit: 'viên',
 		category: 'analgesic',
 		manufacturer: 'Công ty Dược phẩm E',
-		price: 30000,
-		stock: 300,
-		minStock: 100,
 		description: 'Thuốc chống viêm không steroid, giảm đau, hạ sốt',
 		indications: 'Đau nhức, viêm khớp, sốt',
 		contraindications: 'Loét dạ dày, suy thận, quá mẫn với NSAID',
@@ -536,14 +516,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Diclofenac',
 		code: 'MED006',
 		activeIngredient: 'Diclofenac',
-		dosageForm: 'tablet',
 		strength: '50mg',
 		unit: 'viên',
 		category: 'anti_inflammatory',
 		manufacturer: 'Công ty Dược phẩm F',
-		price: 40000,
-		stock: 200,
-		minStock: 80,
 		description: 'Thuốc chống viêm không steroid',
 		indications: 'Viêm khớp, đau cơ xương khớp',
 		contraindications: 'Loét dạ dày, suy thận, suy gan',
@@ -558,14 +534,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Omeprazole',
 		code: 'MED007',
 		activeIngredient: 'Omeprazole',
-		dosageForm: 'capsule',
 		strength: '20mg',
 		unit: 'viên',
 		category: 'gastrointestinal',
 		manufacturer: 'Công ty Dược phẩm G',
-		price: 60000,
-		stock: 250,
-		minStock: 100,
 		description: 'Thuốc ức chế bơm proton, điều trị loét dạ dày',
 		indications: 'Loét dạ dày, trào ngược dạ dày thực quản',
 		contraindications: 'Quá mẫn với omeprazole',
@@ -579,14 +551,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Ranitidine',
 		code: 'MED008',
 		activeIngredient: 'Ranitidine',
-		dosageForm: 'tablet',
 		strength: '150mg',
 		unit: 'viên',
 		category: 'gastrointestinal',
 		manufacturer: 'Công ty Dược phẩm H',
-		price: 35000,
-		stock: 180,
-		minStock: 60,
 		description: 'Thuốc kháng histamine H2, giảm tiết acid dạ dày',
 		indications: 'Loét dạ dày, trào ngược dạ dày thực quản',
 		contraindications: 'Quá mẫn với ranitidine',
@@ -601,14 +569,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Codein',
 		code: 'MED009',
 		activeIngredient: 'Codein',
-		dosageForm: 'tablet',
 		strength: '15mg',
 		unit: 'viên',
 		category: 'respiratory',
 		manufacturer: 'Công ty Dược phẩm I',
-		price: 45000,
-		stock: 120,
-		minStock: 50,
 		description: 'Thuốc giảm ho, giảm đau',
 		indications: 'Ho khan, đau nhẹ đến trung bình',
 		contraindications: 'Suy hô hấp, quá mẫn với codein',
@@ -622,14 +586,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Dextromethorphan',
 		code: 'MED010',
 		activeIngredient: 'Dextromethorphan',
-		dosageForm: 'syrup',
 		strength: '15mg/5ml',
 		unit: 'chai',
 		category: 'respiratory',
 		manufacturer: 'Công ty Dược phẩm J',
-		price: 55000,
-		stock: 90,
-		minStock: 30,
 		description: 'Thuốc giảm ho không gây nghiện',
 		indications: 'Ho khan, ho do cảm lạnh',
 		contraindications: 'Quá mẫn với dextromethorphan',
@@ -644,14 +604,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Amlodipine',
 		code: 'MED011',
 		activeIngredient: 'Amlodipine',
-		dosageForm: 'tablet',
 		strength: '5mg',
 		unit: 'viên',
 		category: 'cardiovascular',
 		manufacturer: 'Công ty Dược phẩm K',
-		price: 70000,
-		stock: 200,
-		minStock: 80,
 		description: 'Thuốc chẹn kênh canxi, điều trị tăng huyết áp',
 		indications: 'Tăng huyết áp, đau thắt ngực',
 		contraindications: 'Suy tim nặng, hẹp van động mạch chủ',
@@ -665,14 +621,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Atenolol',
 		code: 'MED012',
 		activeIngredient: 'Atenolol',
-		dosageForm: 'tablet',
 		strength: '50mg',
 		unit: 'viên',
 		category: 'cardiovascular',
 		manufacturer: 'Công ty Dược phẩm L',
-		price: 65000,
-		stock: 150,
-		minStock: 60,
 		description: 'Thuốc chẹn beta, điều trị tăng huyết áp',
 		indications: 'Tăng huyết áp, đau thắt ngực, rối loạn nhịp tim',
 		contraindications: 'Suy tim nặng, block nhĩ thất, hen phế quản',
@@ -687,14 +639,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Vitamin C',
 		code: 'MED013',
 		activeIngredient: 'Ascorbic Acid',
-		dosageForm: 'tablet',
 		strength: '1000mg',
 		unit: 'viên',
 		category: 'vitamin',
 		manufacturer: 'Công ty Dược phẩm M',
-		price: 25000,
-		stock: 400,
-		minStock: 150,
 		description: 'Vitamin C tăng cường miễn dịch',
 		indications: 'Thiếu vitamin C, tăng cường miễn dịch',
 		contraindications: 'Quá mẫn với vitamin C',
@@ -708,14 +656,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Vitamin D3',
 		code: 'MED014',
 		activeIngredient: 'Cholecalciferol',
-		dosageForm: 'capsule',
 		strength: '2000 IU',
 		unit: 'viên',
 		category: 'vitamin',
 		manufacturer: 'Công ty Dược phẩm N',
-		price: 80000,
-		stock: 180,
-		minStock: 70,
 		description: 'Vitamin D3 bổ sung canxi, tăng cường xương',
 		indications: 'Thiếu vitamin D, loãng xương',
 		contraindications: 'Tăng canxi máu, tăng canxi niệu',
@@ -730,14 +674,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Hydrocortisone cream',
 		code: 'MED015',
 		activeIngredient: 'Hydrocortisone',
-		dosageForm: 'cream',
 		strength: '1%',
 		unit: 'tuýp',
 		category: 'dermatological',
 		manufacturer: 'Công ty Dược phẩm O',
-		price: 45000,
-		stock: 100,
-		minStock: 40,
 		description: 'Kem bôi chống viêm, chống dị ứng',
 		indications: 'Viêm da, dị ứng, chàm',
 		contraindications: 'Nhiễm trùng da, quá mẫn với hydrocortisone',
@@ -751,14 +691,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Clotrimazole cream',
 		code: 'MED016',
 		activeIngredient: 'Clotrimazole',
-		dosageForm: 'cream',
 		strength: '1%',
 		unit: 'tuýp',
 		category: 'dermatological',
 		manufacturer: 'Công ty Dược phẩm P',
-		price: 50000,
-		stock: 120,
-		minStock: 50,
 		description: 'Kem bôi kháng nấm',
 		indications: 'Nhiễm nấm da, nấm kẽ chân',
 		contraindications: 'Quá mẫn với clotrimazole',
@@ -773,14 +709,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Chloramphenicol eye drops',
 		code: 'MED017',
 		activeIngredient: 'Chloramphenicol',
-		dosageForm: 'drops',
 		strength: '0.5%',
 		unit: 'chai',
 		category: 'ophthalmic',
 		manufacturer: 'Công ty Dược phẩm Q',
-		price: 35000,
-		stock: 150,
-		minStock: 60,
 		description: 'Thuốc nhỏ mắt kháng khuẩn',
 		indications: 'Viêm kết mạc, viêm giác mạc do vi khuẩn',
 		contraindications: 'Quá mẫn với chloramphenicol',
@@ -794,14 +726,10 @@ export const mockMedicationCatalogData: MedicationCatalog[] = [
 		name: 'Tobramycin eye drops',
 		code: 'MED018',
 		activeIngredient: 'Tobramycin',
-		dosageForm: 'drops',
 		strength: '0.3%',
 		unit: 'chai',
 		category: 'ophthalmic',
 		manufacturer: 'Công ty Dược phẩm R',
-		price: 55000,
-		stock: 110,
-		minStock: 45,
 		description: 'Thuốc nhỏ mắt kháng sinh',
 		indications: 'Viêm kết mạc, viêm giác mạc do vi khuẩn',
 		contraindications: 'Quá mẫn với tobramycin',
@@ -884,19 +812,15 @@ export const mockExaminationPackages: ExaminationPackage[] = [
 
 // Generate mock medical records
 export const generateMockRecords = (): MedicalRecord[] => {
-	// Phân bố trạng thái cho appointments: 15% PENDING_CHECKIN, 25% PENDING_EXAMINATION, 20% IN_EXAMINATION,
-	// 15% WAITING_TESTS, 10% WAITING_DOCTOR_REVIEW, 10% COMPLETED_EXAMINATION, 5% RETURNED
+	// Phân bố trạng thái cho appointments: 20% PENDING_CHECKIN, 30% PENDING_EXAMINATION, 30% IN_EXAMINATION, 20% COMPLETED_EXAMINATION
 	const statusDistribution: Array<{
 		status: MedicalRecord['status'];
 		weight: number;
 	}> = [
-		{ status: 'PENDING_CHECKIN', weight: 0.15 },
-		{ status: 'PENDING_EXAMINATION', weight: 0.25 },
-		{ status: 'IN_EXAMINATION', weight: 0.2 },
-		{ status: 'WAITING_TESTS', weight: 0.15 },
-		{ status: 'WAITING_DOCTOR_REVIEW', weight: 0.1 },
-		{ status: 'COMPLETED_EXAMINATION', weight: 0.1 },
-		{ status: 'RETURNED', weight: 0.05 },
+		{ status: 'PENDING_CHECKIN', weight: 0.2 },
+		{ status: 'PENDING_EXAMINATION', weight: 0.3 },
+		{ status: 'IN_EXAMINATION', weight: 0.3 },
+		{ status: 'COMPLETED_EXAMINATION', weight: 0.2 },
 	];
 
 	const getStatusForIndex = (index: number): MedicalRecord['status'] => {
@@ -932,18 +856,9 @@ export const generateMockRecords = (): MedicalRecord[] => {
 			} else if (status === 'IN_EXAMINATION') {
 				// Currently being examined
 				updatedAt.setTime(createdAt.getTime() + 30 * 60000); // 30 minutes later
-			} else if (status === 'WAITING_TESTS') {
-				// Waiting for test results
-				updatedAt.setTime(createdAt.getTime() + 60 * 60000); // 1 hour later
-			} else if (status === 'WAITING_DOCTOR_REVIEW') {
-				// Tests done, waiting for doctor review
-				updatedAt.setTime(createdAt.getTime() + 90 * 60000); // 1.5 hours later
 			} else if (status === 'COMPLETED_EXAMINATION') {
 				// Completed
 				updatedAt.setTime(createdAt.getTime() + 120 * 60000); // 2 hours later
-			} else if (status === 'RETURNED') {
-				// Returned to patient
-				updatedAt.setTime(createdAt.getTime() + 150 * 60000); // 2.5 hours later
 			}
 
 			const baseRecord: MedicalRecord = {
@@ -957,7 +872,7 @@ export const generateMockRecords = (): MedicalRecord[] => {
 					gender: apt.gender,
 				},
 				reason: apt.reason,
-				requestedServices: apt.services,
+				requestedServices: [],
 				status,
 				assignedDoctor: {
 					id: apt.doctorId,
@@ -969,9 +884,9 @@ export const generateMockRecords = (): MedicalRecord[] => {
 				createdAt: createdAt.toISOString(),
 				updatedAt: updatedAt.toISOString(),
 				paymentStatus:
-					status === 'RETURNED' || status === 'COMPLETED_EXAMINATION'
+					status === 'COMPLETED_EXAMINATION'
 						? 'completed'
-						: status === 'WAITING_TESTS' || status === 'IN_EXAMINATION'
+						: status === 'IN_EXAMINATION'
 						? 'partial'
 						: 'pending',
 				totalAmount: Math.floor(((index * 37 + 41) % 500000) + 200000), // Deterministic random
@@ -981,34 +896,16 @@ export const generateMockRecords = (): MedicalRecord[] => {
 			};
 
 			// Add diagnosis for completed or in-progress records
-			if (
-				status === 'IN_EXAMINATION' ||
-				status === 'WAITING_TESTS' ||
-				status === 'WAITING_DOCTOR_REVIEW' ||
-				status === 'COMPLETED_EXAMINATION' ||
-				status === 'RETURNED'
-			) {
-				baseRecord.diagnosis = 'Đang chẩn đoán...';
-				if (status === 'COMPLETED_EXAMINATION' || status === 'RETURNED') {
+			if (status === 'IN_EXAMINATION' || status === 'COMPLETED_EXAMINATION') {
+				if (status === 'COMPLETED_EXAMINATION') {
 					baseRecord.diagnosis = 'Chẩn đoán hoàn tất, đã kê đơn thuốc';
 					baseRecord.paidAmount = baseRecord.totalAmount || 0;
-				} else if (
-					status === 'WAITING_TESTS' ||
-					status === 'WAITING_DOCTOR_REVIEW'
-				) {
-					baseRecord.paidAmount = Math.floor(
-						(baseRecord.totalAmount || 0) * 0.5,
-					);
 				} else if (status === 'IN_EXAMINATION') {
+					baseRecord.diagnosis = 'Đang chẩn đoán...';
 					baseRecord.paidAmount = Math.floor(
 						(baseRecord.totalAmount || 0) * 0.3,
 					);
 				}
-			}
-
-			if (status === 'RETURNED') {
-				baseRecord.signature = 'data:image/png;base64,signature_data';
-				baseRecord.returnedAt = updatedAt.toISOString();
 			}
 
 			return baseRecord;
@@ -1027,7 +924,7 @@ export const generateMockRecords = (): MedicalRecord[] => {
 				gender: 'male',
 			},
 			reason: 'Đau đầu, chóng mặt',
-			requestedServices: ['Khám tổng quát', 'Xét nghiệm máu'],
+			requestedServices: [],
 			status: 'PENDING_EXAMINATION',
 			assignedDoctor: mockDoctors[0],
 			createdAt: new Date().toISOString(),
@@ -1047,11 +944,7 @@ export const generateMockRecords = (): MedicalRecord[] => {
 				gender: 'female',
 			},
 			reason: 'Khám sức khỏe định kỳ',
-			requestedServices: [
-				'Khám tổng quát',
-				'Xét nghiệm máu',
-				'Xét nghiệm nước tiểu',
-			],
+			requestedServices: [],
 			status: 'IN_EXAMINATION',
 			assignedDoctor: mockDoctors[1],
 			createdAt: new Date(Date.now() - 3600000).toISOString(),
@@ -1072,14 +965,14 @@ export const generateMockRecords = (): MedicalRecord[] => {
 				gender: 'male',
 			},
 			reason: 'Đau bụng, khó tiêu',
-			requestedServices: ['Khám tổng quát', 'Siêu âm'],
-			status: 'WAITING_TESTS',
+			requestedServices: [],
+			status: 'IN_EXAMINATION',
 			assignedDoctor: mockDoctors[0],
 			createdAt: new Date(Date.now() - 7200000).toISOString(),
 			updatedAt: new Date(Date.now() - 3600000).toISOString(),
 			paymentStatus: 'partial',
 			totalAmount: 600000,
-			paidAmount: 300000,
+			paidAmount: 180000,
 			diagnosis: 'Nghi ngờ viêm dạ dày, cần siêu âm bụng',
 		},
 		{
@@ -1093,7 +986,7 @@ export const generateMockRecords = (): MedicalRecord[] => {
 				gender: 'female',
 			},
 			reason: 'Ho, sốt nhẹ',
-			requestedServices: ['Khám tổng quát', 'Chụp X-quang'],
+			requestedServices: [],
 			status: 'COMPLETED_EXAMINATION',
 			assignedDoctor: mockDoctors[2],
 			createdAt: new Date(Date.now() - 86400000).toISOString(),
@@ -1114,8 +1007,8 @@ export const generateMockRecords = (): MedicalRecord[] => {
 				gender: 'male',
 			},
 			reason: 'Tiêm chủng',
-			requestedServices: ['Khám tổng quát'],
-			status: 'RETURNED',
+			requestedServices: [],
+			status: 'COMPLETED_EXAMINATION',
 			assignedDoctor: mockDoctors[3],
 			createdAt: new Date(Date.now() - 86400000).toISOString(),
 			updatedAt: new Date(Date.now() - 3600000).toISOString(),
@@ -1123,8 +1016,6 @@ export const generateMockRecords = (): MedicalRecord[] => {
 			totalAmount: 200000,
 			paidAmount: 200000,
 			diagnosis: 'Tiêm vắc xin viêm gan B',
-			signature: 'data:image/png;base64,signature_data',
-			returnedAt: new Date(Date.now() - 3600000).toISOString(),
 		},
 	];
 
@@ -1420,8 +1311,6 @@ export const generateMockTreatmentPlans = (
 	const examinedRecords = records.filter(
 		(r) =>
 			r.status === 'COMPLETED_EXAMINATION' ||
-			r.status === 'RETURNED' ||
-			r.status === 'WAITING_DOCTOR_REVIEW' ||
 			(r.diagnosis && r.diagnosis !== 'Đang chẩn đoán...'),
 	);
 
@@ -1613,7 +1502,8 @@ export const generateMockTreatmentPlans = (
 			followUpDate: followUpDate.toISOString(),
 			followUpInstructions,
 			notes,
-			status: record.status === 'RETURNED' ? 'completed' : 'active',
+			status:
+				record.status === 'COMPLETED_EXAMINATION' ? 'completed' : 'active',
 			updatedAt: record.updatedAt || record.createdAt,
 			reminders: reminders.length > 0 ? reminders : undefined,
 		};
@@ -1649,7 +1539,7 @@ export const generateMockTreatmentPlansForPatient = (
 				gender: 'male',
 			},
 			reason: 'Khám tổng quát',
-			requestedServices: ['Khám tổng quát'],
+			requestedServices: [],
 			status: 'COMPLETED_EXAMINATION',
 			assignedDoctor: {
 				id: 'doc1',
@@ -1809,14 +1699,10 @@ export const generateDashboardStats = (
 		pendingExamination: records.filter(
 			(r) => r.status === 'PENDING_EXAMINATION',
 		).length,
-		inProgress: records.filter((r) =>
-			['IN_EXAMINATION', 'WAITING_TESTS', 'WAITING_DOCTOR_REVIEW'].includes(
-				r.status,
-			),
-		).length,
+		inProgress: records.filter((r) => r.status === 'IN_EXAMINATION').length,
 		completed: records.filter((r) => r.status === 'COMPLETED_EXAMINATION')
 			.length,
-		returned: records.filter((r) => r.status === 'RETURNED').length,
+		returned: 0,
 		todayRecords: records.filter(
 			(r) => new Date(r.createdAt).toDateString() === today,
 		).length,
@@ -1849,7 +1735,7 @@ export const generateMockNotifications = (
 		{
 			title: 'Kết quả xét nghiệm đã có',
 			message:
-				'Kết quả xét nghiệm của bạn đã sẵn sàng. Vui lòng xem trong hồ sơ y tế.',
+				'Kết quả xét nghiệm của bạn đã sẵn sàng. Vui lòng xem trong khách hàng y tế.',
 			type: 'info' as const,
 			relatedType: 'record' as const,
 		},
@@ -2214,81 +2100,6 @@ export const mockSpecialtiesData: Specialty[] = [
 	},
 ];
 
-export const mockMedicationGroupsData: MedicationGroup[] = [
-	{
-		id: 'mg1',
-		name: 'Kháng sinh',
-		description: 'Nhóm thuốc kháng sinh',
-		isActive: true,
-		createdAt: new Date('2023-01-01').toISOString(),
-		updatedAt: new Date('2024-01-01').toISOString(),
-	},
-	{
-		id: 'mg2',
-		name: 'Giảm đau, hạ sốt',
-		description: 'Nhóm thuốc giảm đau và hạ sốt',
-		isActive: true,
-		createdAt: new Date('2023-01-01').toISOString(),
-		updatedAt: new Date('2024-01-01').toISOString(),
-	},
-	{
-		id: 'mg3',
-		name: 'Chống viêm',
-		description: 'Nhóm thuốc chống viêm',
-		isActive: true,
-		createdAt: new Date('2023-01-01').toISOString(),
-		updatedAt: new Date('2024-01-01').toISOString(),
-	},
-	{
-		id: 'mg4',
-		name: 'Tiêu hóa',
-		description: 'Nhóm thuốc điều trị tiêu hóa',
-		isActive: true,
-		createdAt: new Date('2023-01-01').toISOString(),
-		updatedAt: new Date('2024-01-01').toISOString(),
-	},
-	{
-		id: 'mg5',
-		name: 'Hô hấp',
-		description: 'Nhóm thuốc điều trị hô hấp',
-		isActive: true,
-		createdAt: new Date('2023-01-01').toISOString(),
-		updatedAt: new Date('2024-01-01').toISOString(),
-	},
-	{
-		id: 'mg6',
-		name: 'Tim mạch',
-		description: 'Nhóm thuốc điều trị tim mạch',
-		isActive: true,
-		createdAt: new Date('2023-01-01').toISOString(),
-		updatedAt: new Date('2024-01-01').toISOString(),
-	},
-	{
-		id: 'mg7',
-		name: 'Vitamin',
-		description: 'Nhóm thuốc bổ sung vitamin',
-		isActive: true,
-		createdAt: new Date('2023-01-01').toISOString(),
-		updatedAt: new Date('2024-01-01').toISOString(),
-	},
-	{
-		id: 'mg8',
-		name: 'Da liễu',
-		description: 'Nhóm thuốc điều trị da liễu',
-		isActive: true,
-		createdAt: new Date('2023-01-01').toISOString(),
-		updatedAt: new Date('2024-01-01').toISOString(),
-	},
-	{
-		id: 'mg9',
-		name: 'Mắt',
-		description: 'Nhóm thuốc điều trị mắt',
-		isActive: true,
-		createdAt: new Date('2023-01-01').toISOString(),
-		updatedAt: new Date('2024-01-01').toISOString(),
-	},
-];
-
 interface Role {
 	id: string;
 	name: string;
@@ -2338,9 +2149,9 @@ export const mockRolesData: Role[] = [
 	},
 	{
 		id: 'role5',
-		name: 'Bệnh nhân',
+		name: 'Khách hàng',
 		code: 'patient',
-		description: 'Vai trò bệnh nhân',
+		description: 'Vai trò Khách hàng',
 		isActive: true,
 		createdAt: new Date('2023-01-01').toISOString(),
 		updatedAt: new Date('2024-01-01').toISOString(),

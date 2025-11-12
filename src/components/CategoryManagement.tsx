@@ -45,6 +45,7 @@ import * as XLSX from 'xlsx';
 import { usePagination } from '../hooks/usePagination';
 import { PaginationControls } from './PaginationControls';
 import { motion } from 'motion/react';
+import { Checkbox } from './ui/checkbox';
 
 interface CategoryManagementProps {
 	title: string;
@@ -69,6 +70,7 @@ export function CategoryManagement({
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [showDialog, setShowDialog] = useState(false);
 	const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
 	const [formData, setFormData] = useState({
 		name: '',
@@ -156,6 +158,47 @@ export function CategoryManagement({
 			toast.success('Xóa thành công');
 		}
 	};
+
+	const handleToggleSelect = (id: string) => {
+		const newSelected = new Set(selectedItems);
+		if (newSelected.has(id)) {
+			newSelected.delete(id);
+		} else {
+			newSelected.add(id);
+		}
+		setSelectedItems(newSelected);
+	};
+
+	const handleSelectAll = (checked: boolean) => {
+		if (checked) {
+			setSelectedItems(new Set(paginatedData.map((item) => item.id)));
+		} else {
+			setSelectedItems(new Set());
+		}
+	};
+
+	const handleDeleteSelected = () => {
+		if (selectedItems.size === 0) {
+			toast.error('Vui lòng chọn ít nhất một mục để xóa');
+			return;
+		}
+
+		if (
+			confirm(`Bạn có chắc chắn muốn xóa ${selectedItems.size} mục đã chọn?`)
+		) {
+			selectedItems.forEach((id) => {
+				onDelete(id);
+			});
+			setSelectedItems(new Set());
+			toast.success(`Đã xóa ${selectedItems.size} mục thành công`);
+		}
+	};
+
+	const isAllSelected =
+		paginatedData.length > 0 &&
+		paginatedData.every((item) => selectedItems.has(item.id));
+	const isIndeterminate =
+		selectedItems.size > 0 && selectedItems.size < paginatedData.length;
 
 	// Export to Excel
 	const handleExport = () => {
@@ -352,6 +395,16 @@ export function CategoryManagement({
 						<span className="text-sm text-gray-600">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
+					{selectedItems.size > 0 && (
+						<Button
+							onClick={handleDeleteSelected}
+							variant="destructive"
+							className="bg-delete-btn hover:bg-red-700 text-white border-red-600"
+						>
+							<Trash2 className="h-4 w-4 mr-2" />
+							Xóa ({selectedItems.size})
+						</Button>
+					)}
 					<Button
 						onClick={handleExport}
 						variant="outline"
@@ -411,9 +464,7 @@ export function CategoryManagement({
 								<SelectContent>
 									<SelectItem value="all">Tất cả trạng thái</SelectItem>
 									<SelectItem value="active">Đang hoạt động</SelectItem>
-									<SelectItem value="inactive">
-										Ngừng hoạt động hoạt động
-									</SelectItem>
+									<SelectItem value="inactive">Ngừng hoạt động</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -424,6 +475,17 @@ export function CategoryManagement({
 						<Table>
 							<TableHeader>
 								<TableRow className="bg-gray-50/80 hover:bg-gray-50">
+									<TableHead className="w-12">
+										<Checkbox
+											checked={isAllSelected}
+											onCheckedChange={handleSelectAll}
+											ref={(el) => {
+												if (el) {
+													el.indeterminate = isIndeterminate;
+												}
+											}}
+										/>
+									</TableHead>
 									<TableHead className="w-16 text-center">STT</TableHead>
 									<TableHead>Tên</TableHead>
 									<TableHead>Mô tả</TableHead>
@@ -434,7 +496,7 @@ export function CategoryManagement({
 							<TableBody>
 								{paginatedData.length === 0 ? (
 									<TableRow>
-										<TableCell colSpan={5} className="text-center py-12">
+										<TableCell colSpan={6} className="text-center py-12">
 											<div className="flex flex-col items-center gap-3 text-gray-500">
 												<Building2 className="h-12 w-12 text-gray-300" />
 												<p>Không tìm thấy dữ liệu nào</p>
@@ -458,6 +520,14 @@ export function CategoryManagement({
 											transition={{ delay: index * 0.05 }}
 											className="hover:bg-gray-50/80 transition-colors border-b border-gray-200"
 										>
+											<TableCell>
+												<Checkbox
+													checked={selectedItems.has(category.id)}
+													onCheckedChange={() =>
+														handleToggleSelect(category.id)
+													}
+												/>
+											</TableCell>
 											<TableCell className="text-center text-gray-500">
 												{startIndex + index}
 											</TableCell>

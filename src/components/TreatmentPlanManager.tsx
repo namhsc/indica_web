@@ -25,16 +25,26 @@ import {
 	DialogDescription,
 } from './ui/dialog';
 import { Badge } from './ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { TreatmentPlan, Medication, TreatmentReminder } from '../types';
-import { Pill, Plus, X, Calendar, FileText, Bell, AlertCircle } from 'lucide-react';
+import {
+	Pill,
+	Plus,
+	X,
+	Calendar,
+	FileText,
+	Bell,
+	AlertCircle,
+} from 'lucide-react';
 import { DatePicker } from './ui/date-picker';
 
 interface TreatmentPlanManagerProps {
 	recordId: string;
 	doctorName: string;
 	treatmentPlan?: TreatmentPlan;
-	onSave: (treatmentPlan: Omit<TreatmentPlan, 'id' | 'createdAt' | 'createdBy'>) => void;
+	onSave: (
+		treatmentPlan: Omit<TreatmentPlan, 'id' | 'createdAt' | 'createdBy'>,
+	) => void;
 	onUpdate?: (treatmentPlan: TreatmentPlan) => void;
 	readOnly?: boolean;
 	hideCard?: boolean; // Ẩn Card wrapper khi dùng trong Dialog
@@ -141,9 +151,7 @@ export function TreatmentPlanManager({
 
 	const updateMedication = (id: string, updates: Partial<Medication>) => {
 		setMedications(
-			medications.map((med) =>
-				med.id === id ? { ...med, ...updates } : med,
-			),
+			medications.map((med) => (med.id === id ? { ...med, ...updates } : med)),
 		);
 	};
 
@@ -168,7 +176,9 @@ export function TreatmentPlanManager({
 				return;
 			}
 			if (reminder.type === 'vital_sign' && !reminder.field) {
-				toast.error('Vui lòng chọn chỉ số sức khỏe cho nhắc nhở loại "Chỉ số sức khỏe"');
+				toast.error(
+					'Vui lòng chọn chỉ số sức khỏe cho nhắc nhở loại "Chỉ số sức khỏe"',
+				);
 				return;
 			}
 		}
@@ -220,78 +230,78 @@ export function TreatmentPlanManager({
 				<Label className="mb-2 block">Thuốc điều trị</Label>
 				<div className="space-y-3">
 					{treatmentPlan.medications.map((med) => (
-									<div
-										key={med.id}
-										className="p-3 border rounded-lg bg-gray-50"
-									>
-										<div className="flex justify-between items-start">
-											<div className="flex-1">
-												<div className="font-medium">{med.name}</div>
-												<div className="text-sm text-gray-600 mt-1">
-													<span className="font-medium">Liều lượng:</span>{' '}
-													{med.dosage} - <span className="font-medium">Tần suất:</span>{' '}
-													{med.frequency} - <span className="font-medium">Thời gian:</span>{' '}
-													{med.duration}
-												</div>
-												<div className="text-sm text-gray-600">
-													<span className="font-medium">Số lượng:</span> {med.quantity}{' '}
-													{med.unit}
-												</div>
-												{med.instructions && (
-													<div className="text-sm text-gray-600 mt-1">
-														<span className="font-medium">Ghi chú:</span>{' '}
-														{med.instructions}
-													</div>
-												)}
-											</div>
-										</div>
+						<div key={med.id} className="p-3 border rounded-lg bg-gray-50">
+							<div className="flex justify-between items-start">
+								<div className="flex-1">
+									<div className="font-medium">{med.name}</div>
+									<div className="text-sm text-gray-600 mt-1">
+										<span className="font-medium">Liều lượng:</span>{' '}
+										{med.dosage} -{' '}
+										<span className="font-medium">Tần suất:</span>{' '}
+										{med.frequency} -{' '}
+										<span className="font-medium">Thời gian:</span>{' '}
+										{med.duration}
 									</div>
-								))}
-							</div>
-						</div>
-
-						{/* Instructions */}
-						{treatmentPlan.instructions && (
-							<div>
-								<Label className="mb-2 block">Hướng dẫn điều trị</Label>
-								<div className="p-3 bg-gray-50 rounded-lg text-sm">
-									{treatmentPlan.instructions}
-								</div>
-							</div>
-						)}
-
-						{/* Follow-up */}
-						{treatmentPlan.followUpDate && (
-							<div>
-								<Label className="mb-2 block flex items-center gap-2">
-									<Calendar className="h-4 w-4" />
-									Tái khám
-								</Label>
-								<div className="p-3 bg-blue-50 rounded-lg">
-									<div className="text-sm font-medium">
-										Ngày: {new Date(treatmentPlan.followUpDate).toLocaleDateString('vi-VN')}
+									<div className="text-sm text-gray-600">
+										<span className="font-medium">Số lượng:</span>{' '}
+										{med.quantity} {med.unit}
 									</div>
-									{treatmentPlan.followUpInstructions && (
+									{med.instructions && (
 										<div className="text-sm text-gray-600 mt-1">
-											{treatmentPlan.followUpInstructions}
+											<span className="font-medium">Ghi chú:</span>{' '}
+											{med.instructions}
 										</div>
 									)}
 								</div>
 							</div>
-						)}
+						</div>
+					))}
+				</div>
+			</div>
 
-						{/* Notes */}
-						{treatmentPlan.notes && (
-							<div>
-								<Label className="mb-2 block flex items-center gap-2">
-									<FileText className="h-4 w-4" />
-									Ghi chú
-								</Label>
-								<div className="p-3 bg-gray-50 rounded-lg text-sm">
-									{treatmentPlan.notes}
-								</div>
+			{/* Instructions */}
+			{treatmentPlan.instructions && (
+				<div>
+					<Label className="mb-2 block">Hướng dẫn điều trị</Label>
+					<div className="p-3 bg-gray-50 rounded-lg text-sm">
+						{treatmentPlan.instructions}
+					</div>
+				</div>
+			)}
+
+			{/* Follow-up */}
+			{treatmentPlan.followUpDate && (
+				<div>
+					<Label className="mb-2 block flex items-center gap-2">
+						<Calendar className="h-4 w-4" />
+						Tái khám
+					</Label>
+					<div className="p-3 bg-blue-50 rounded-lg">
+						<div className="text-sm font-medium">
+							Ngày:{' '}
+							{new Date(treatmentPlan.followUpDate).toLocaleDateString('vi-VN')}
+						</div>
+						{treatmentPlan.followUpInstructions && (
+							<div className="text-sm text-gray-600 mt-1">
+								{treatmentPlan.followUpInstructions}
 							</div>
 						)}
+					</div>
+				</div>
+			)}
+
+			{/* Notes */}
+			{treatmentPlan.notes && (
+				<div>
+					<Label className="mb-2 block flex items-center gap-2">
+						<FileText className="h-4 w-4" />
+						Ghi chú
+					</Label>
+					<div className="p-3 bg-gray-50 rounded-lg text-sm">
+						{treatmentPlan.notes}
+					</div>
+				</div>
+			)}
 
 			{!readOnly && !hideCard && (
 				<Button onClick={handleOpenDialog} variant="outline" className="w-full">
@@ -307,7 +317,7 @@ export function TreatmentPlanManager({
 			<div className="space-y-6">
 				{/* Medications */}
 				<div className="space-y-4">
-					<div className="flex justify-between items-center">
+					<div className="flex justify-between items-center mt-4">
 						<Label>Thuốc điều trị</Label>
 						<Button
 							type="button"
@@ -320,26 +330,17 @@ export function TreatmentPlanManager({
 						</Button>
 					</div>
 
-					<div className="space-y-4">
+					<div className="space-y-3">
 						{medications.map((med, index) => (
-							<Card key={med.id} className="p-4">
-								<div className="flex justify-between items-start mb-3">
-									<span className="font-medium text-sm">
-										Thuốc {index + 1}
-									</span>
-									<Button
-										type="button"
-										size="sm"
-										variant="ghost"
-										onClick={() => removeMedication(med.id)}
-									>
-										<X className="h-4 w-4" />
-									</Button>
-								</div>
-
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<div className="space-y-2">
-										<Label>Tên thuốc *</Label>
+							<div
+								key={med.id}
+								className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50"
+							>
+								<span className="font-medium text-sm text-gray-600 min-w-[40px]">
+									{index + 1}.
+								</span>
+								<div className="flex-1 flex items-center gap-2 flex-wrap">
+									<div className="flex-1 min-w-[150px]">
 										<Select
 											value={med.name}
 											onValueChange={(value) =>
@@ -347,85 +348,26 @@ export function TreatmentPlanManager({
 											}
 										>
 											<SelectTrigger>
-												<SelectValue placeholder="Chọn hoặc nhập tên thuốc" />
+												<SelectValue placeholder="Tên thuốc *" />
 											</SelectTrigger>
 											<SelectContent>
 												{commonMedications.map((commonMed) => (
-													<SelectItem key={commonMed.name} value={commonMed.name}>
+													<SelectItem
+														key={commonMed.name}
+														value={commonMed.name}
+													>
 														{commonMed.name}
 													</SelectItem>
 												))}
 											</SelectContent>
 										</Select>
-										{!commonMedications.find((m) => m.name === med.name) && (
-											<Input
-												placeholder="Nhập tên thuốc"
-												value={med.name}
-												onChange={(e) =>
-													updateMedication(med.id, { name: e.target.value })
-												}
-											/>
-										)}
 									</div>
 
-									<div className="space-y-2">
-										<Label>Liều lượng *</Label>
-										<Input
-											placeholder="vd: 500mg, 1 viên"
-											value={med.dosage}
-											onChange={(e) =>
-												updateMedication(med.id, { dosage: e.target.value })
-											}
-										/>
-									</div>
-
-									<div className="space-y-2">
-										<Label>Tần suất *</Label>
-										<Select
-											value={med.frequency}
-											onValueChange={(value) =>
-												updateMedication(med.id, { frequency: value })
-											}
-										>
-											<SelectTrigger>
-												<SelectValue placeholder="Chọn tần suất" />
-											</SelectTrigger>
-											<SelectContent>
-												{frequencyOptions.map((freq) => (
-													<SelectItem key={freq} value={freq}>
-														{freq}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-									</div>
-
-									<div className="space-y-2">
-										<Label>Thời gian *</Label>
-										<Select
-											value={med.duration}
-											onValueChange={(value) =>
-												updateMedication(med.id, { duration: value })
-											}
-										>
-											<SelectTrigger>
-												<SelectValue placeholder="Chọn thời gian" />
-											</SelectTrigger>
-											<SelectContent>
-												{durationOptions.map((dur) => (
-													<SelectItem key={dur} value={dur}>
-														{dur}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-									</div>
-
-									<div className="space-y-2">
-										<Label>Số lượng</Label>
+									<div className="min-w-[80px]">
 										<Input
 											type="number"
 											min="1"
+											placeholder="SL"
 											value={med.quantity}
 											onChange={(e) =>
 												updateMedication(med.id, {
@@ -435,8 +377,7 @@ export function TreatmentPlanManager({
 										/>
 									</div>
 
-									<div className="space-y-2">
-										<Label>Đơn vị</Label>
+									<div className="min-w-[100px]">
 										<Select
 											value={med.unit}
 											onValueChange={(value) =>
@@ -455,20 +396,88 @@ export function TreatmentPlanManager({
 											</SelectContent>
 										</Select>
 									</div>
-								</div>
 
-								<div className="mt-4 space-y-2">
-									<Label>Ghi chú thêm</Label>
-									<Input
-										placeholder="vd: Uống sau ăn, Không dùng với rượu"
-										value={med.instructions || ''}
-										onChange={(e) =>
-											updateMedication(med.id, { instructions: e.target.value })
-										}
-									/>
+									<div className="min-w-[120px]">
+										<Input
+											placeholder="Liều lượng *"
+											value={med.dosage}
+											onChange={(e) =>
+												updateMedication(med.id, { dosage: e.target.value })
+											}
+										/>
+									</div>
+
+									<div className="min-w-[130px]">
+										<Select
+											value={med.frequency}
+											onValueChange={(value) =>
+												updateMedication(med.id, { frequency: value })
+											}
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="Tần suất *" />
+											</SelectTrigger>
+											<SelectContent>
+												{frequencyOptions.map((freq) => (
+													<SelectItem key={freq} value={freq}>
+														{freq}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+
+									<div className="min-w-[120px]">
+										<Select
+											value={med.duration}
+											onValueChange={(value) =>
+												updateMedication(med.id, { duration: value })
+											}
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="Thời gian *" />
+											</SelectTrigger>
+											<SelectContent>
+												{durationOptions.map((dur) => (
+													<SelectItem key={dur} value={dur}>
+														{dur}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+
+									<div className="flex-1 min-w-[150px]">
+										<Input
+											placeholder="Ghi chú thêm"
+											value={med.instructions || ''}
+											onChange={(e) =>
+												updateMedication(med.id, {
+													instructions: e.target.value,
+												})
+											}
+										/>
+									</div>
+
+									<Button
+										type="button"
+										size="sm"
+										variant="ghost"
+										onClick={() => removeMedication(med.id)}
+										className="text-red-600 hover:text-red-700 hover:bg-red-50"
+									>
+										<X className="h-4 w-4" />
+									</Button>
 								</div>
-							</Card>
+							</div>
 						))}
+
+						{medications.length === 0 && (
+							<div className="text-center py-8 text-gray-500 text-sm">
+								<Pill className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+								<p>Chưa có thuốc nào. Nhấn "Thêm thuốc" để tạo mới.</p>
+							</div>
+						)}
 					</div>
 				</div>
 
@@ -476,7 +485,7 @@ export function TreatmentPlanManager({
 				<div className="space-y-2">
 					<Label>Hướng dẫn điều trị chung</Label>
 					<Textarea
-						placeholder="Nhập hướng dẫn điều trị chung cho bệnh nhân..."
+						placeholder="Nhập hướng dẫn điều trị chung cho Khách hàng..."
 						value={instructions}
 						onChange={(e) => setInstructions(e.target.value)}
 						rows={3}
@@ -519,7 +528,7 @@ export function TreatmentPlanManager({
 					<div className="flex justify-between items-center">
 						<Label className="flex items-center gap-2">
 							<Bell className="h-4 w-4" />
-							Nhắc nhở cho bệnh nhân
+							Nhắc nhở cho Khách hàng
 						</Label>
 						<Button
 							type="button"
@@ -556,7 +565,9 @@ export function TreatmentPlanManager({
 										size="sm"
 										variant="ghost"
 										onClick={() => {
-											setReminders(reminders.filter((r) => r.id !== reminder.id));
+											setReminders(
+												reminders.filter((r) => r.id !== reminder.id),
+											);
 										}}
 									>
 										<X className="h-4 w-4" />
@@ -570,9 +581,7 @@ export function TreatmentPlanManager({
 											value={reminder.type}
 											onValueChange={(value: TreatmentReminder['type']) => {
 												const updated = reminders.map((r) =>
-													r.id === reminder.id
-														? { ...r, type: value }
-														: r,
+													r.id === reminder.id ? { ...r, type: value } : r,
 												);
 												setReminders(updated);
 											}}
@@ -581,7 +590,9 @@ export function TreatmentPlanManager({
 												<SelectValue />
 											</SelectTrigger>
 											<SelectContent>
-												<SelectItem value="vital_sign">Chỉ số sức khỏe</SelectItem>
+												<SelectItem value="vital_sign">
+													Chỉ số sức khỏe
+												</SelectItem>
 												<SelectItem value="activity">Hoạt động</SelectItem>
 												<SelectItem value="medication">Thuốc</SelectItem>
 												<SelectItem value="diet">Khẩu phần ăn</SelectItem>
@@ -608,8 +619,12 @@ export function TreatmentPlanManager({
 												</SelectTrigger>
 												<SelectContent>
 													<SelectItem value="temperature">Nhiệt độ</SelectItem>
-													<SelectItem value="bloodPressure">Huyết áp</SelectItem>
-													<SelectItem value="bloodSugar">Đường huyết</SelectItem>
+													<SelectItem value="bloodPressure">
+														Huyết áp
+													</SelectItem>
+													<SelectItem value="bloodSugar">
+														Đường huyết
+													</SelectItem>
 													<SelectItem value="heartRate">Nhịp tim</SelectItem>
 													<SelectItem value="weight">Cân nặng</SelectItem>
 													<SelectItem value="oxygenSaturation">SpO2</SelectItem>
@@ -626,7 +641,9 @@ export function TreatmentPlanManager({
 											value={reminder.title}
 											onChange={(e) => {
 												const updated = reminders.map((r) =>
-													r.id === reminder.id ? { ...r, title: e.target.value } : r,
+													r.id === reminder.id
+														? { ...r, title: e.target.value }
+														: r,
 												);
 												setReminders(updated);
 											}}
@@ -734,7 +751,9 @@ export function TreatmentPlanManager({
 								setMedications(treatmentPlan.medications);
 								setInstructions(treatmentPlan.instructions || '');
 								setFollowUpDate(treatmentPlan.followUpDate || '');
-								setFollowUpInstructions(treatmentPlan.followUpInstructions || '');
+								setFollowUpInstructions(
+									treatmentPlan.followUpInstructions || '',
+								);
 								setNotes(treatmentPlan.notes || '');
 							} else {
 								// Reset to empty
@@ -759,7 +778,11 @@ export function TreatmentPlanManager({
 					<>
 						{treatmentPlanContent}
 						{!readOnly && (
-							<Button onClick={handleOpenDialog} variant="outline" className="w-full mt-4">
+							<Button
+								onClick={handleOpenDialog}
+								variant="outline"
+								className="w-full mt-4"
+							>
 								Chỉnh sửa phác đồ
 							</Button>
 						)}
@@ -774,7 +797,7 @@ export function TreatmentPlanManager({
 							<DialogHeader>
 								<DialogTitle>Chỉnh sửa phác đồ điều trị</DialogTitle>
 								<DialogDescription>
-									Cập nhật thông tin thuốc và hướng dẫn điều trị cho bệnh nhân
+									Cập nhật thông tin thuốc và hướng dẫn điều trị cho Khách hàng
 								</DialogDescription>
 							</DialogHeader>
 							{formContent}
@@ -799,9 +822,7 @@ export function TreatmentPlanManager({
 							{new Date(treatmentPlan.createdAt).toLocaleDateString('vi-VN')}
 						</CardDescription>
 					</CardHeader>
-					<CardContent>
-						{treatmentPlanContent}
-					</CardContent>
+					<CardContent>{treatmentPlanContent}</CardContent>
 				</Card>
 			) : (
 				!readOnly && (
@@ -812,7 +833,7 @@ export function TreatmentPlanManager({
 								Phác đồ điều trị
 							</CardTitle>
 							<CardDescription>
-								Tạo phác đồ điều trị cho bệnh nhân
+								Tạo phác đồ điều trị cho Khách hàng
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
@@ -831,7 +852,7 @@ export function TreatmentPlanManager({
 					<DialogHeader>
 						<DialogTitle>Tạo phác đồ điều trị</DialogTitle>
 						<DialogDescription>
-							Nhập thông tin thuốc và hướng dẫn điều trị cho bệnh nhân
+							Nhập thông tin thuốc và hướng dẫn điều trị cho Khách hàng
 						</DialogDescription>
 					</DialogHeader>
 
@@ -882,21 +903,15 @@ export function TreatmentPlanManager({
 													</SelectTrigger>
 													<SelectContent>
 														{commonMedications.map((commonMed) => (
-															<SelectItem key={commonMed.name} value={commonMed.name}>
+															<SelectItem
+																key={commonMed.name}
+																value={commonMed.name}
+															>
 																{commonMed.name}
 															</SelectItem>
 														))}
 													</SelectContent>
 												</Select>
-												{!commonMedications.find((m) => m.name === med.name) && (
-													<Input
-														placeholder="Nhập tên thuốc"
-														value={med.name}
-														onChange={(e) =>
-															updateMedication(med.id, { name: e.target.value })
-														}
-													/>
-												)}
 											</div>
 
 											<div className="space-y-2">
@@ -994,7 +1009,9 @@ export function TreatmentPlanManager({
 												placeholder="vd: Uống sau ăn, Không dùng với rượu"
 												value={med.instructions || ''}
 												onChange={(e) =>
-													updateMedication(med.id, { instructions: e.target.value })
+													updateMedication(med.id, {
+														instructions: e.target.value,
+													})
 												}
 											/>
 										</div>
@@ -1007,7 +1024,7 @@ export function TreatmentPlanManager({
 						<div className="space-y-2">
 							<Label>Hướng dẫn điều trị chung</Label>
 							<Textarea
-								placeholder="Nhập hướng dẫn điều trị chung cho bệnh nhân..."
+								placeholder="Nhập hướng dẫn điều trị chung cho Khách hàng..."
 								value={instructions}
 								onChange={(e) => setInstructions(e.target.value)}
 								rows={3}
@@ -1058,4 +1075,3 @@ export function TreatmentPlanManager({
 		</>
 	);
 }
-

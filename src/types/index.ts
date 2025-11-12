@@ -94,7 +94,7 @@ export interface TreatmentReminderResponse {
 	reminderId: string;
 	date: string;
 	status: 'completed' | 'pending' | 'skipped';
-	response?: string; // Phản hồi của bệnh nhân
+	response?: string; // Phản hồi của Khách hàng
 	value?: any; // Giá trị nếu là vital sign (ví dụ: nhiệt độ 37.5)
 	createdAt: string;
 }
@@ -114,7 +114,7 @@ export interface TreatmentReminder {
 	frequency?: 'daily' | 'weekly' | 'custom'; // Tần suất nhắc nhở
 	enabled: boolean;
 	priority?: 'low' | 'medium' | 'high';
-	responses?: TreatmentReminderResponse[]; // Phản hồi của bệnh nhân
+	responses?: TreatmentReminderResponse[]; // Phản hồi của Khách hàng
 }
 
 export interface TreatmentPlan {
@@ -129,7 +129,7 @@ export interface TreatmentPlan {
 	notes?: string; // Ghi chú thêm
 	status: 'active' | 'completed' | 'cancelled';
 	updatedAt?: string;
-	reminders?: TreatmentReminder[]; // Danh sách nhắc nhở cho bệnh nhân
+	reminders?: TreatmentReminder[]; // Danh sách nhắc nhở cho Khách hàng
 }
 
 export interface DashboardStats {
@@ -247,7 +247,10 @@ export interface Staff {
 	specialty?: string; // Chuyên khoa (cho bác sĩ)
 	position?: string; // Chức vụ
 	department?: string; // Phòng ban
-	address?: string;
+	address?: string; // Địa chỉ cũ (giữ lại để tương thích)
+	province?: string; // Tỉnh/Thành phố
+	district?: string; // Xã/Phường/Quận/Huyện
+	detailedAddress?: string; // Địa chỉ chi tiết (số nhà, tên đường, v.v.)
 	isActive: boolean;
 	createdAt: string;
 	updatedAt: string;
@@ -259,14 +262,6 @@ export interface MedicationCatalog {
 	name: string;
 	code?: string;
 	activeIngredient?: string; // Hoạt chất
-	dosageForm:
-		| 'tablet'
-		| 'capsule'
-		| 'syrup'
-		| 'injection'
-		| 'cream'
-		| 'drops'
-		| 'other'; // Dạng bào chế
 	strength?: string; // Hàm lượng (vd: "500mg", "1%")
 	unit: string; // Đơn vị (viên, chai, tuýp, v.v.)
 	category:
@@ -281,9 +276,7 @@ export interface MedicationCatalog {
 		| 'ophthalmic'
 		| 'other'; // Phân loại
 	manufacturer?: string; // Nhà sản xuất
-	price?: number; // Giá bán
-	stock?: number; // Tồn kho
-	minStock?: number; // Tồn kho tối thiểu
+	drugGroup?: string; // Nhóm thuốc
 	description?: string; // Mô tả
 	indications?: string; // Chỉ định
 	contraindications?: string; // Chống chỉ định
@@ -312,6 +305,3 @@ export interface Position extends Category {}
 
 // Chuyên khoa
 export interface Specialty extends Category {}
-
-// Nhóm thuốc
-export interface MedicationGroup extends Category {}

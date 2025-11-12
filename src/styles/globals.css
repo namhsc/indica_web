@@ -194,16 +194,16 @@
 
 /* Đảm bảo tất cả input và textarea đều có border */
 @layer base {
-	input[type="text"],
-	input[type="email"],
-	input[type="password"],
-	input[type="number"],
-	input[type="tel"],
-	input[type="url"],
-	input[type="search"],
-	input[type="date"],
-	input[type="time"],
-	input[type="datetime-local"],
+	input[type='text'],
+	input[type='email'],
+	input[type='password'],
+	input[type='number'],
+	input[type='tel'],
+	input[type='url'],
+	input[type='search'],
+	input[type='date'],
+	input[type='time'],
+	input[type='datetime-local'],
 	input:not([type]),
 	textarea {
 		border-width: 1px;
@@ -212,13 +212,13 @@
 	}
 
 	/* Trừ các input đặc biệt như file, button, submit, reset */
-	input[type="file"],
-	input[type="button"],
-	input[type="submit"],
-	input[type="reset"],
-	input[type="checkbox"],
-	input[type="radio"],
-	input[type="range"] {
+	input[type='file'],
+	input[type='button'],
+	input[type='submit'],
+	input[type='reset'],
+	input[type='checkbox'],
+	input[type='radio'],
+	input[type='range'] {
 		/* Giữ nguyên border mặc định của chúng */
 	}
 }
@@ -434,4 +434,7 @@ html {
 }
 .text-day-selected {
 	color: #ffffff !important;
+}
+.bg-delete-btn {
+	background-color: #d4183d !important;
 }

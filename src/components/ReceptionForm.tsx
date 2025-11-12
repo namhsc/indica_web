@@ -31,7 +31,7 @@ import {
 import { toast } from 'sonner@2.0.3';
 import { QRCodeSVG } from 'qrcode.react';
 import { MedicalRecord, Gender } from '../types';
-import { mockDoctors, mockExaminationPackages } from '../lib/mockData';
+import { mockDoctors } from '../lib/mockData';
 import { mockExistingPatients } from '../lib/mockPatients';
 import administrativeData from '../administrative.json';
 import {
@@ -72,8 +72,6 @@ interface ReceptionFormProps {
 	onClose?: () => void;
 }
 
-type ExaminationType = 'specialty' | 'package';
-
 export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 	const [showImportDialog, setShowImportDialog] = useState(false);
 	const [formData, setFormData] = useState({
@@ -89,10 +87,6 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 		cccdNumber: '',
 		insurance: '',
 		reason: '',
-		examinationType: 'specialty' as ExaminationType, // Loại khám mặc định: 'specialty' | 'package'
-		selectedPackage: '', // ID của gói khám đã chọn (chỉ được chọn 1 gói)
-		assignedDoctorId: '',
-		specialty: '',
 	});
 
 	// Administrative data states
@@ -100,55 +94,9 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 	const [wardOpen, setWardOpen] = useState(false);
 	const [provinceSearch, setProvinceSearch] = useState('');
 	const [wardSearch, setWardSearch] = useState('');
-	const [specialtyOpen, setSpecialtyOpen] = useState(false);
-	const [specialtySearch, setSpecialtySearch] = useState('');
 
 	// Validation errors state
 	const [errors, setErrors] = useState<Record<string, boolean>>({});
-
-	// Danh sách chuyên khoa đầy đủ cho bệnh viện đa khoa
-	const allSpecialties = [
-		'Nội khoa',
-		'Ngoại khoa',
-		'Tim mạch',
-		'Nhi khoa',
-		'Sản phụ khoa',
-		'Tai mũi họng',
-		'Mắt',
-		'Da liễu',
-		'Thần kinh',
-		'Tâm thần',
-		'Chấn thương chỉnh hình',
-		'Ung bướu',
-		'Hồi sức cấp cứu',
-		'Gây mê hồi sức',
-		'Xét nghiệm',
-		'Chẩn đoán hình ảnh',
-		'Y học cổ truyền',
-		'Dinh dưỡng',
-		'Vật lý trị liệu',
-		'Phục hồi chức năng',
-		'Răng hàm mặt',
-		'Tiết niệu',
-		'Tiêu hóa',
-		'Hô hấp',
-		'Nội tiết',
-		'Dị ứng miễn dịch',
-		'Huyết học',
-		'Lão khoa',
-		'Y học thể thao',
-		'Y học gia đình',
-		'Thận học',
-		'Gan mật',
-		'Dịch tễ học',
-		'Y tế công cộng',
-		'Giải phẫu bệnh',
-		'Vi sinh',
-		'Hóa sinh',
-		'Huyết học truyền máu',
-		'Giải phẫu',
-		'Sinh lý bệnh',
-	];
 
 	// Filter administrative data
 	const provinces = useMemo(() => {
@@ -172,22 +120,6 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 				w.ID !== '-1' && w.TEN.toLowerCase().includes(wardSearch.toLowerCase()),
 		);
 	}, [selectedProvince, wardSearch]);
-
-	const filteredSpecialties = useMemo(() => {
-		return allSpecialties.filter((s) =>
-			s.toLowerCase().includes(specialtySearch.toLowerCase()),
-		);
-	}, [specialtySearch]);
-
-	// Filter doctors by selected specialty
-	const availableDoctors = useMemo(() => {
-		if (!formData.specialty) {
-			return mockDoctors;
-		}
-		return mockDoctors.filter(
-			(doctor) => doctor.specialty === formData.specialty,
-		);
-	}, [formData.specialty]);
 
 	// Autocomplete states
 	const [showSuggestions, setShowSuggestions] = useState(false);
@@ -249,24 +181,6 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 		toast.success(`Đã load thông tin của ${patient.fullName}`);
 	};
 
-	const handleSelectPackage = (packageId: string) => {
-		setFormData({
-			...formData,
-			// Nếu chọn lại gói đã chọn thì bỏ chọn, nếu chọn gói khác thì thay thế
-			selectedPackage: formData.selectedPackage === packageId ? '' : packageId,
-		});
-		if (errors.selectedPackage) {
-			setErrors({ ...errors, selectedPackage: false });
-		}
-	};
-
-	// Chuyển đổi gói khám đã chọn thành danh sách dịch vụ con
-	const getServicesFromPackage = (packageId: string): string[] => {
-		if (!packageId) return [];
-		const pkg = mockExaminationPackages.find((p) => p.id === packageId);
-		return pkg ? pkg.services : [];
-	};
-
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -281,16 +195,7 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 		if (!formData.cccdNumber) newErrors.cccdNumber = true;
 		if (!formData.provinceId) newErrors.provinceId = true;
 		if (!formData.wardId) newErrors.wardId = true;
-		if (!formData.examinationType) newErrors.examinationType = true;
 		if (!formData.reason) newErrors.reason = true;
-
-		// Validation theo loại khám
-		if (formData.examinationType === 'package' && !formData.selectedPackage) {
-			newErrors.selectedPackage = true;
-		}
-		if (formData.examinationType === 'specialty' && !formData.specialty) {
-			newErrors.specialty = true;
-		}
 
 		// Set errors và hiển thị thông báo nếu có lỗi
 		if (Object.keys(newErrors).length > 0) {
@@ -315,32 +220,6 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 		const fullAddress =
 			addressParts.length > 0 ? addressParts.join(', ') : formData.address;
 
-		// Xác định bác sĩ và dịch vụ theo loại khám
-		let assignedDoctor:
-			| { id: string; name: string; specialty: string }
-			| undefined;
-		let requestedServices: string[] = [];
-
-		if (formData.examinationType === 'package') {
-			requestedServices = getServicesFromPackage(formData.selectedPackage);
-			// Có thể tự động gán bác sĩ dựa trên gói khám nếu cần
-		} else if (formData.examinationType === 'specialty') {
-			// Khám chuyên khoa - có thể có hoặc không có bác sĩ cụ thể
-			requestedServices = [`Khám ${formData.specialty}`];
-			if (formData.assignedDoctorId) {
-				const doctor = mockDoctors.find(
-					(d) => d.id === formData.assignedDoctorId,
-				);
-				if (doctor) {
-					assignedDoctor = {
-						id: doctor.id,
-						name: doctor.name,
-						specialty: doctor.specialty,
-					};
-				}
-			}
-		}
-
 		onSubmit({
 			patient: {
 				id: formData.customerId || `patient_${Date.now()}`,
@@ -353,8 +232,8 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 				cccdNumber: formData.cccdNumber,
 				insurance: formData.insurance,
 			},
-			requestedServices,
-			assignedDoctor,
+			requestedServices: [],
+			assignedDoctor: undefined,
 			status: 'PENDING_EXAMINATION',
 			diagnosis: undefined,
 			reason: formData.reason,
@@ -375,10 +254,6 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 			cccdNumber: '',
 			insurance: '',
 			reason: '',
-			examinationType: 'specialty' as ExaminationType,
-			selectedPackage: '',
-			assignedDoctorId: '',
-			specialty: '',
 		});
 		setErrors({});
 		setSearchTerm('');
@@ -698,7 +573,7 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 				{ fullName: 'Lê C', phoneNumber: '0903333333', service: 'Siêu âm' },
 			];
 			setGroupRecords(mockRecords);
-			toast.success(`Đã load ${mockRecords.length} hồ sơ từ file Excel`);
+			toast.success(`Đã load ${mockRecords.length} khách hàng từ file Excel`);
 		}
 	};
 
@@ -718,7 +593,7 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 						cccdNumber: '',
 						insurance: '',
 					},
-					requestedServices: [record.service], // Giữ nguyên cho group import
+					requestedServices: [],
 					assignedDoctor: {
 						id: doctor.id,
 						name: doctor.name,
@@ -731,7 +606,7 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 				});
 			}, index * 100);
 		});
-		toast.success(`Đã tiếp nhận ${groupRecords.length} hồ sơ!`);
+		toast.success(`Đã tiếp nhận ${groupRecords.length} khách hàng!`);
 		setExcelFile(null);
 		setGroupRecords([]);
 	};
@@ -1256,284 +1131,6 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 					</div>
 				</div>
 
-				{/* Chọn loại khám */}
-				<div className="space-y-3">
-					<Label className="flex items-center gap-2">
-						Loại khám *
-						{formData.fullName && searchTerm && !formData.examinationType && (
-							<Badge variant="destructive" className="animate-pulse">
-								Chưa chọn
-							</Badge>
-						)}
-					</Label>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-						{/* Khám chuyên khoa */}
-						<button
-							type="button"
-							onClick={() => {
-								setFormData({
-									...formData,
-									examinationType: 'specialty',
-									selectedPackage: '',
-									assignedDoctorId: '',
-								});
-								if (errors.examinationType) {
-									setErrors({ ...errors, examinationType: false });
-								}
-							}}
-							className={`p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
-								formData.examinationType === 'specialty'
-									? 'border-blue-500 bg-blue-50 text-blue-700'
-									: errors.examinationType
-									? 'border-red-500 bg-red-50'
-									: 'border-gray-200 hover:border-gray-300 bg-white'
-							}`}
-						>
-							<div className="flex items-center gap-3">
-								{formData.examinationType === 'specialty' ? (
-									<CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
-								) : (
-									<div className="h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-300" />
-								)}
-								<div>
-									<div className="font-medium">Khám chuyên khoa</div>
-									<div className="text-xs text-gray-600 mt-1">
-										Chọn chuyên khoa để khám
-									</div>
-								</div>
-							</div>
-						</button>
-
-						{/* Khám theo gói */}
-						<button
-							type="button"
-							onClick={() => {
-								setFormData({
-									...formData,
-									examinationType: 'package',
-									specialty: '',
-									assignedDoctorId: '',
-								});
-								if (errors.examinationType) {
-									setErrors({ ...errors, examinationType: false });
-								}
-							}}
-							className={`p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
-								formData.examinationType === 'package'
-									? 'border-blue-500 bg-blue-50 text-blue-700'
-									: errors.examinationType
-									? 'border-red-500 bg-red-50'
-									: 'border-gray-200 hover:border-gray-300 bg-white'
-							}`}
-						>
-							<div className="flex items-center gap-3">
-								{formData.examinationType === 'package' ? (
-									<CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
-								) : (
-									<div className="h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-300" />
-								)}
-								<div>
-									<div className="font-medium">Khám theo gói</div>
-									<div className="text-xs text-gray-600 mt-1">
-										Chọn gói khám có sẵn
-									</div>
-								</div>
-							</div>
-						</button>
-					</div>
-				</div>
-
-				{/* Hiển thị form theo loại khám đã chọn */}
-				{formData.examinationType === 'package' && (
-					<div className="space-y-2">
-						<Label className="flex items-center gap-2">
-							Chọn gói khám *
-							{!formData.selectedPackage && (
-								<Badge variant="destructive" className="animate-pulse">
-									Chưa chọn
-								</Badge>
-							)}
-						</Label>
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-							{mockExaminationPackages.map((pkg) => {
-								const isSelected = formData.selectedPackage === pkg.id;
-								return (
-									<button
-										key={pkg.id}
-										type="button"
-										onClick={() => handleSelectPackage(pkg.id)}
-										className={`p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
-											isSelected
-												? 'border-blue-500 bg-blue-50 text-blue-700'
-												: errors.selectedPackage
-												? 'border-red-500 bg-red-50'
-												: 'border-gray-200 hover:border-gray-300 bg-white'
-										}`}
-									>
-										<div className="flex items-start gap-3">
-											{isSelected ? (
-												<CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-											) : (
-												<div className="h-5 w-5 mt-0.5 flex-shrink-0 rounded-full border-2 border-gray-300" />
-											)}
-											<div className="flex-1">
-												<div className="font-medium mb-1">{pkg.name}</div>
-												{pkg.description && (
-													<div className="text-xs text-gray-600 mb-2">
-														{pkg.description}
-													</div>
-												)}
-												<div className="flex flex-wrap gap-1 mt-2">
-													{pkg.services.map((service, idx) => (
-														<Badge
-															key={idx}
-															variant="outline"
-															className="text-xs"
-														>
-															{service}
-														</Badge>
-													))}
-												</div>
-											</div>
-										</div>
-									</button>
-								);
-							})}
-						</div>
-					</div>
-				)}
-
-				{formData.examinationType === 'specialty' && (
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div className="space-y-2">
-							<Label htmlFor="specialty" className="flex items-center gap-2">
-								Chọn chuyên khoa *
-								{!formData.specialty ? (
-									<Badge variant="destructive" className="animate-pulse">
-										Chưa chọn
-									</Badge>
-								) : (
-									<Badge
-										variant="outline"
-										className="bg-green-50 text-green-700 border-green-300"
-									>
-										Đã chọn
-									</Badge>
-								)}
-							</Label>
-							<Popover open={specialtyOpen} onOpenChange={setSpecialtyOpen}>
-								<PopoverTrigger asChild>
-									<Button
-										variant="outline"
-										role="combobox"
-										aria-expanded={specialtyOpen}
-										className={`w-full justify-between border-gray-300 focus:border-blue-500 ${
-											errors.specialty ? 'border-red-500 bg-red-50' : ''
-										}`}
-									>
-										{formData.specialty || 'Chọn chuyên khoa...'}
-										<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-									</Button>
-								</PopoverTrigger>
-								<PopoverContent
-									className="w-[400px] p-0 !h-[80px] !max-h-[80px]"
-									style={{
-										height: '280px',
-										maxheight: '280px',
-										overflow: 'hidden',
-									}}
-									align="start"
-								>
-									<Command className="h-full flex flex-col overflow-hidden">
-										<CommandInput
-											placeholder="Tìm kiếm chuyên khoa..."
-											value={specialtySearch}
-											onValueChange={setSpecialtySearch}
-										/>
-										<CommandList
-											className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
-											style={{
-												scrollbarWidth: 'thin',
-												scrollbarColor: '#cbd5e1 #f1f5f9',
-												maxHeight: '50px !important',
-												height: '50px',
-												overflowY: 'auto',
-											}}
-										>
-											<CommandEmpty>Không tìm thấy chuyên khoa.</CommandEmpty>
-											<CommandGroup>
-												{filteredSpecialties.map((specialty) => (
-													<CommandItem
-														key={specialty}
-														value={specialty}
-														className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
-														onSelect={() => {
-															setFormData({
-																...formData,
-																specialty: specialty,
-																assignedDoctorId: '', // Reset doctor when specialty changes
-															});
-															if (errors.specialty) {
-																setErrors({ ...errors, specialty: false });
-															}
-															setSpecialtyOpen(false);
-															setSpecialtySearch('');
-														}}
-													>
-														{specialty}
-													</CommandItem>
-												))}
-											</CommandGroup>
-										</CommandList>
-									</Command>
-								</PopoverContent>
-							</Popover>
-						</div>
-
-						<div className="space-y-2">
-							<Label
-								htmlFor="assignedDoctorId"
-								className="flex items-center gap-2"
-							>
-								Bác sĩ phụ trách
-								<Badge variant="outline" className="text-gray-600">
-									Tùy chọn
-								</Badge>
-							</Label>
-							<Select
-								value={formData.assignedDoctorId}
-								onValueChange={(value) =>
-									setFormData({ ...formData, assignedDoctorId: value })
-								}
-								disabled={!formData.specialty}
-							>
-								<SelectTrigger className="border-gray-300">
-									<SelectValue
-										placeholder={
-											formData.specialty
-												? 'Chọn bác sĩ hoặc để hệ thống tự phân công'
-												: 'Vui lòng chọn chuyên khoa trước'
-										}
-									/>
-								</SelectTrigger>
-								<SelectContent>
-									{availableDoctors.length > 0 ? (
-										availableDoctors.map((doctor) => (
-											<SelectItem key={doctor.id} value={doctor.id}>
-												{doctor.name} - {doctor.specialty}
-											</SelectItem>
-										))
-									) : (
-										<SelectItem value="" disabled>
-											Không có bác sĩ nào cho chuyên khoa này
-										</SelectItem>
-									)}
-								</SelectContent>
-							</Select>
-						</div>
-					</div>
-				)}
-
 				<div className="space-y-2">
 					<Label htmlFor="reason">Lý do khám *</Label>
 					<Textarea
@@ -1693,7 +1290,7 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 										<div className="flex-1">
 											<p className="text-sm mb-1">{excelFile.name}</p>
 											<p className="text-xs text-gray-600">
-												Đã load {groupRecords.length} hồ sơ
+												Đã load {groupRecords.length} khách hàng
 											</p>
 										</div>
 										<button
@@ -1710,7 +1307,7 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 
 								<div className="border border-gray-200 rounded-xl overflow-hidden">
 									<div className="bg-gray-50 p-3 border-b border-gray-200">
-										<h4 className="text-sm">Danh sách hồ sơ</h4>
+										<h4 className="text-sm">Danh sách khách hàng</h4>
 									</div>
 									<div className="divide-y divide-gray-200 max-h-[300px] overflow-y-auto">
 										{groupRecords.map((record, index) => (
@@ -1755,7 +1352,7 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 										className="flex-1 bg-gradient-to-r from-gray-700 to-slate-700"
 									>
 										<Zap className="h-4 w-4 mr-2" />
-										Tiếp nhận {groupRecords.length} hồ sơ
+										Tiếp nhận {groupRecords.length} khách hàng
 									</Button>
 								</div>
 							</motion.div>

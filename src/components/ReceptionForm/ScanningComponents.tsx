@@ -83,7 +83,7 @@ export function ScanningResult({
 
 			<div className="bg-white rounded-xl p-4 mb-4 border border-gray-200">
 				<h5 className="text-sm mb-3 text-gray-700">
-					📋 Thông tin bệnh nhân đã được tự động điền:
+					📋 Thông tin Khách hàng đã được tự động điền:
 				</h5>
 				<div className="grid grid-cols-2 gap-3 text-sm">
 					<div>

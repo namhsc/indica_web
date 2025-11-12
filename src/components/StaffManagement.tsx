@@ -26,6 +26,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from './ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import {
+	Command,
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+	CommandList,
+} from './ui/command';
 import {
 	Dialog,
 	DialogContent,
@@ -45,6 +54,7 @@ import {
 	Download,
 	Upload,
 	Filter,
+	ChevronsUpDown,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
@@ -52,6 +62,18 @@ import { usePagination } from '../hooks/usePagination';
 import { PaginationControls } from './PaginationControls';
 import { motion } from 'motion/react';
 import { DatePicker } from './ui/date-picker';
+import { Checkbox } from './ui/checkbox';
+import administrativeData from '../administrative.json';
+
+interface AdministrativeProvince {
+	ID: string;
+	NAME: string;
+	WARDS?: Array<{
+		ID: string;
+		TEN: string;
+		SORT_ORDER: string;
+	}>;
+}
 
 interface StaffManagementProps {
 	staff: Staff[];
@@ -67,7 +89,7 @@ const roleLabels: Record<UserRole, string> = {
 	doctor: 'Bác sĩ',
 	nurse: 'Điều dưỡng',
 	receptionist: 'Lễ tân',
-	patient: 'Bệnh nhân',
+	patient: 'Khách hàng',
 };
 
 const roleColors: Record<UserRole, string> = {
@@ -84,6 +106,11 @@ const genderLabels: Record<Gender, string> = {
 	female: 'Nữ',
 };
 
+// Load administrative data once
+const provinces = (administrativeData as AdministrativeProvince[]).filter(
+	(p) => p.ID !== '-1',
+);
+
 export function StaffManagement({
 	staff,
 	specialties = [],
@@ -96,6 +123,13 @@ export function StaffManagement({
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [showDialog, setShowDialog] = useState(false);
 	const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+	const [provinceOpen, setProvinceOpen] = useState(false);
+	const [wardOpen, setWardOpen] = useState(false);
+	const [specialtyOpen, setSpecialtyOpen] = useState(false);
+	const [provinceSearch, setProvinceSearch] = useState('');
+	const [wardSearch, setWardSearch] = useState('');
+	const [specialtySearch, setSpecialtySearch] = useState('');
 
 	const [formData, setFormData] = useState({
 		fullName: '',
@@ -107,8 +141,35 @@ export function StaffManagement({
 		role: '' as UserRole,
 		specialty: '',
 		address: '',
+		province: '',
+		provinceId: '',
+		district: '',
+		districtId: '',
+		detailedAddress: '',
 		isActive: true,
 	});
+
+	const selectedProvince = provinces.find(
+		(p) => p.ID === formData.provinceId || p.NAME === formData.province,
+	);
+
+	const wards = selectedProvince?.WARDS?.filter((w) => w.ID !== '-1') || [];
+
+	// Filter provinces based on search
+	const filteredProvinces = provinces.filter((province) =>
+		province.NAME.toLowerCase().includes(provinceSearch.toLowerCase()),
+	);
+
+	// Filter wards based on search
+	const filteredWards = wards.filter((ward) =>
+		ward.TEN.toLowerCase().includes(wardSearch.toLowerCase()),
+	);
+
+	// Filter specialties based on search
+	const activeSpecialties = specialties.filter((s) => s.isActive);
+	const filteredSpecialties = activeSpecialties.filter((specialty) =>
+		specialty.name.toLowerCase().includes(specialtySearch.toLowerCase()),
+	);
 
 	const filteredStaff = staff.filter((s) => {
 		const matchesSearch =
@@ -144,6 +205,14 @@ export function StaffManagement({
 	const handleOpenDialog = (staffMember?: Staff) => {
 		if (staffMember) {
 			setEditingStaff(staffMember);
+			// Tìm province và district ID từ tên
+			const provinceMatch = provinces.find(
+				(p) => p.NAME === staffMember.province,
+			);
+			const districtMatch = provinceMatch?.WARDS?.find(
+				(w) => w.TEN === staffMember.district,
+			);
+
 			setFormData({
 				fullName: staffMember.fullName,
 				code: staffMember.code || '',
@@ -154,6 +223,11 @@ export function StaffManagement({
 				role: staffMember.role || '',
 				specialty: staffMember.specialty || '',
 				address: staffMember.address || '',
+				province: staffMember.province || '',
+				provinceId: provinceMatch?.ID || '',
+				district: staffMember.district || '',
+				districtId: districtMatch?.ID || '',
+				detailedAddress: staffMember.detailedAddress || '',
 				isActive: staffMember.isActive,
 			});
 		} else {
@@ -168,9 +242,20 @@ export function StaffManagement({
 				role: '',
 				specialty: '',
 				address: '',
+				province: '',
+				provinceId: '',
+				district: '',
+				districtId: '',
+				detailedAddress: '',
 				isActive: true,
 			});
 		}
+		setProvinceSearch('');
+		setWardSearch('');
+		setSpecialtySearch('');
+		setProvinceOpen(false);
+		setWardOpen(false);
+		setSpecialtyOpen(false);
 		setShowDialog(true);
 	};
 
@@ -195,6 +280,13 @@ export function StaffManagement({
 			return;
 		}
 
+		const selectedProvinceName = provinces.find(
+			(p) => p.ID === formData.provinceId,
+		)?.NAME;
+		const selectedDistrictName = wards.find(
+			(w) => w.ID === formData.districtId,
+		)?.TEN;
+
 		const staffData = {
 			fullName: formData.fullName,
 			code: formData.code || undefined,
@@ -205,6 +297,9 @@ export function StaffManagement({
 			role: formData.role,
 			specialty: formData.specialty?.trim() || undefined,
 			address: formData.address || undefined,
+			province: selectedProvinceName || undefined,
+			district: selectedDistrictName || undefined,
+			detailedAddress: formData.detailedAddress?.trim() || undefined,
 			isActive: formData.isActive,
 		};
 
@@ -226,6 +321,49 @@ export function StaffManagement({
 		}
 	};
 
+	const handleToggleSelect = (id: string) => {
+		const newSelected = new Set(selectedItems);
+		if (newSelected.has(id)) {
+			newSelected.delete(id);
+		} else {
+			newSelected.add(id);
+		}
+		setSelectedItems(newSelected);
+	};
+
+	const handleSelectAll = (checked: boolean) => {
+		if (checked) {
+			setSelectedItems(new Set(paginatedData.map((item) => item.id)));
+		} else {
+			setSelectedItems(new Set());
+		}
+	};
+
+	const handleDeleteSelected = () => {
+		if (selectedItems.size === 0) {
+			toast.error('Vui lòng chọn ít nhất một mục để xóa');
+			return;
+		}
+
+		if (
+			confirm(
+				`Bạn có chắc chắn muốn xóa ${selectedItems.size} nhân viên đã chọn?`,
+			)
+		) {
+			selectedItems.forEach((id) => {
+				onDelete(id);
+			});
+			setSelectedItems(new Set());
+			toast.success(`Đã xóa ${selectedItems.size} nhân viên thành công`);
+		}
+	};
+
+	const isAllSelected =
+		paginatedData.length > 0 &&
+		paginatedData.every((item) => selectedItems.has(item.id));
+	const isIndeterminate =
+		selectedItems.size > 0 && selectedItems.size < paginatedData.length;
+
 	// Export to Excel
 	const handleExport = () => {
 		try {
@@ -239,8 +377,11 @@ export function StaffManagement({
 				Email: s.email || '',
 				'Ngày sinh': s.dateOfBirth || '',
 				'Giới tính': genderLabels[s.gender],
+				'Tỉnh/Thành phố': s.province || '',
+				'Xã/Phường/Quận/Huyện': s.district || '',
+				'Địa chỉ chi tiết': s.detailedAddress || '',
 				'Địa chỉ': s.address || '',
-				'Trạng thái': s.isActive ? 'Hoạt động' : 'Ngừng hoạt động hoạt động',
+				'Trạng thái': s.isActive ? 'Hoạt động' : 'Ngừng hoạt động',
 			}));
 
 			// Tạo workbook và worksheet
@@ -258,6 +399,9 @@ export function StaffManagement({
 				{ wch: 25 }, // Email
 				{ wch: 12 }, // Ngày sinh
 				{ wch: 10 }, // Giới tính
+				{ wch: 20 }, // Tỉnh/Thành phố
+				{ wch: 25 }, // Xã/Phường/Quận/Huyện
+				{ wch: 30 }, // Địa chỉ chi tiết
 				{ wch: 30 }, // Địa chỉ
 				{ wch: 15 }, // Trạng thái
 			];
@@ -329,6 +473,15 @@ export function StaffManagement({
 					email: 'email',
 					'ngày sinh': 'dateOfBirth',
 					'giới tính': 'gender',
+					'tỉnh/thành phố': 'province',
+					tỉnh: 'province',
+					'thành phố': 'province',
+					'xã/phường/quận/huyện': 'district',
+					xã: 'district',
+					phường: 'district',
+					quận: 'district',
+					huyện: 'district',
+					'địa chỉ chi tiết': 'detailedAddress',
 					'địa chỉ': 'address',
 					'trạng thái': 'isActive',
 				};
@@ -462,6 +615,13 @@ export function StaffManagement({
 							role,
 							specialty:
 								row[fieldIndexes['specialty']]?.toString().trim() || undefined,
+							province:
+								row[fieldIndexes['province']]?.toString().trim() || undefined,
+							district:
+								row[fieldIndexes['district']]?.toString().trim() || undefined,
+							detailedAddress:
+								row[fieldIndexes['detailedAddress']]?.toString().trim() ||
+								undefined,
 							address:
 								row[fieldIndexes['address']]?.toString().trim() || undefined,
 							isActive,
@@ -529,6 +689,16 @@ export function StaffManagement({
 						<span className="text-sm text-gray-600">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
+					{selectedItems.size > 0 && (
+						<Button
+							onClick={handleDeleteSelected}
+							variant="destructive"
+							className="bg-delete-btn hover:bg-red-700 text-white border-red-600"
+						>
+							<Trash2 className="h-4 w-4 mr-2" />
+							Xóa ({selectedItems.size})
+						</Button>
+					)}
 					<motion.div className="flex items-center gap-2">
 						<Button
 							variant="outline"
@@ -603,9 +773,7 @@ export function StaffManagement({
 								<SelectContent>
 									<SelectItem value="all">Tất cả trạng thái</SelectItem>
 									<SelectItem value="active">Đang hoạt động</SelectItem>
-									<SelectItem value="inactive">
-										Ngừng hoạt động hoạt động
-									</SelectItem>
+									<SelectItem value="inactive">Ngừng hoạt động</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -617,6 +785,17 @@ export function StaffManagement({
 						<Table>
 							<TableHeader>
 								<TableRow className="bg-gray-50/80 hover:bg-gray-50">
+									<TableHead className="w-12">
+										<Checkbox
+											checked={isAllSelected}
+											onCheckedChange={handleSelectAll}
+											ref={(el) => {
+												if (el) {
+													el.indeterminate = isIndeterminate;
+												}
+											}}
+										/>
+									</TableHead>
 									<TableHead className="w-16 text-center">STT</TableHead>
 									<TableHead>Mã</TableHead>
 									<TableHead>Họ tên</TableHead>
@@ -631,7 +810,7 @@ export function StaffManagement({
 							<TableBody>
 								{paginatedData.length === 0 ? (
 									<TableRow>
-										<TableCell colSpan={9} className="text-center py-12">
+										<TableCell colSpan={10} className="text-center py-12">
 											<div className="flex flex-col items-center gap-3 text-gray-500">
 												<Users className="h-12 w-12 text-gray-300" />
 												<p>Không tìm thấy nhân viên nào</p>
@@ -655,6 +834,14 @@ export function StaffManagement({
 											transition={{ delay: index * 0.05 }}
 											className="hover:bg-gray-50/80 transition-colors border-b border-gray-200"
 										>
+											<TableCell>
+												<Checkbox
+													checked={selectedItems.has(staffMember.id)}
+													onCheckedChange={() =>
+														handleToggleSelect(staffMember.id)
+													}
+												/>
+											</TableCell>
 											<TableCell className="text-center text-gray-500">
 												{startIndex + index}
 											</TableCell>
@@ -810,7 +997,7 @@ export function StaffManagement({
 										/>
 									</div>
 								</div>
-								<div className="grid grid-cols-3 gap-4">
+								<div className="grid grid-cols-2 gap-4">
 									<div className="space-y-2">
 										<Label htmlFor="dateOfBirth">Ngày sinh</Label>
 										<DatePicker
@@ -842,65 +1029,259 @@ export function StaffManagement({
 											</SelectContent>
 										</Select>
 									</div>
+								</div>
+								<div className="grid grid-cols-2 gap-4">
 									<div className="space-y-2">
-										<Label htmlFor="role">Vai trò</Label>
-										<Select
-											value={formData.role || undefined}
-											onValueChange={(value) =>
-												setFormData({ ...formData, role: value as UserRole })
-											}
-										>
-											<SelectTrigger>
-												<SelectValue placeholder="Chọn vai trò" />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="admin">Quản trị viên</SelectItem>
-												<SelectItem value="doctor">Bác sĩ</SelectItem>
-												<SelectItem value="nurse">Điều dưỡng</SelectItem>
-												<SelectItem value="receptionist">Lễ tân</SelectItem>
-											</SelectContent>
-										</Select>
+										<Label htmlFor="province">Tỉnh/Thành phố</Label>
+										<Popover open={provinceOpen} onOpenChange={setProvinceOpen}>
+											<PopoverTrigger asChild>
+												<Button
+													variant="outline"
+													role="combobox"
+													aria-expanded={provinceOpen}
+													className="w-full justify-between border-gray-300 focus:border-blue-500"
+												>
+													{formData.provinceId && selectedProvince
+														? selectedProvince.NAME
+														: 'Chọn tỉnh/thành phố...'}
+													<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+												</Button>
+											</PopoverTrigger>
+											<PopoverContent
+												className="w-[400px] p-0 !h-[80px] !max-h-[80px]"
+												style={{
+													height: '280px',
+													maxHeight: '280px',
+													overflow: 'hidden',
+												}}
+												align="start"
+											>
+												<Command className="h-full flex flex-col overflow-hidden">
+													<CommandInput
+														placeholder="Tìm kiếm tỉnh/thành phố..."
+														value={provinceSearch}
+														onValueChange={setProvinceSearch}
+													/>
+													<CommandList
+														className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+														style={{
+															scrollbarWidth: 'thin',
+															scrollbarColor: '#cbd5e1 #f1f5f9',
+															maxHeight: '50px !important',
+															height: '50px',
+															overflowY: 'auto',
+														}}
+													>
+														<CommandEmpty>
+															Không tìm thấy tỉnh/thành phố.
+														</CommandEmpty>
+														<CommandGroup>
+															{filteredProvinces.map((province) => (
+																<CommandItem
+																	key={province.ID}
+																	value={province.NAME}
+																	className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
+																	onSelect={() => {
+																		setFormData({
+																			...formData,
+																			provinceId: province.ID,
+																			province: province.NAME,
+																			districtId: '',
+																			district: '',
+																		});
+																		setProvinceOpen(false);
+																		setProvinceSearch('');
+																	}}
+																>
+																	{province.NAME}
+																</CommandItem>
+															))}
+														</CommandGroup>
+													</CommandList>
+												</Command>
+											</PopoverContent>
+										</Popover>
 									</div>
+									<div className="space-y-2">
+										<Label htmlFor="district">Xã/Phường</Label>
+										<Popover open={wardOpen} onOpenChange={setWardOpen}>
+											<PopoverTrigger asChild>
+												<Button
+													variant="outline"
+													role="combobox"
+													aria-expanded={wardOpen}
+													disabled={!formData.provinceId}
+													className="w-full justify-between border-gray-300 focus:border-blue-500 disabled:opacity-50"
+												>
+													{formData.districtId && selectedProvince
+														? selectedProvince.WARDS?.find(
+																(w) => w.ID === formData.districtId,
+														  )?.TEN || 'Chọn xã/phường...'
+														: 'Chọn xã/phường...'}
+													<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+												</Button>
+											</PopoverTrigger>
+											<PopoverContent
+												className="w-[400px] p-0 !h-[80px] !max-h-[80px]"
+												style={{
+													height: '280px',
+													maxHeight: '280px',
+													overflow: 'hidden',
+												}}
+												align="start"
+											>
+												<Command className="h-full flex flex-col overflow-hidden">
+													<CommandInput
+														placeholder="Tìm kiếm xã/phường..."
+														value={wardSearch}
+														onValueChange={setWardSearch}
+													/>
+													<CommandList
+														className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+														style={{
+															scrollbarWidth: 'thin',
+															scrollbarColor: '#cbd5e1 #f1f5f9',
+															maxHeight: '50px !important',
+															height: '50px',
+															overflowY: 'auto',
+														}}
+													>
+														<CommandEmpty>
+															Không tìm thấy xã/phường.
+														</CommandEmpty>
+														<CommandGroup>
+															{filteredWards.map((ward) => (
+																<CommandItem
+																	key={ward.ID}
+																	value={ward.TEN}
+																	className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
+																	onSelect={() => {
+																		setFormData({
+																			...formData,
+																			districtId: ward.ID,
+																			district: ward.TEN,
+																		});
+																		setWardOpen(false);
+																		setWardSearch('');
+																	}}
+																>
+																	{ward.TEN}
+																</CommandItem>
+															))}
+														</CommandGroup>
+													</CommandList>
+												</Command>
+											</PopoverContent>
+										</Popover>
+									</div>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="detailedAddress">Địa chỉ chi tiết</Label>
+									<Textarea
+										id="detailedAddress"
+										value={formData.detailedAddress}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												detailedAddress: e.target.value,
+											})
+										}
+										placeholder="Nhập địa chỉ chi tiết (số nhà, tên đường, v.v.)"
+										rows={2}
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="role">
+										Vai trò <span className="text-red-500">*</span>
+									</Label>
+									<Select
+										value={formData.role || undefined}
+										onValueChange={(value) =>
+											setFormData({ ...formData, role: value as UserRole })
+										}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="Chọn vai trò" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="admin">Quản trị viên</SelectItem>
+											<SelectItem value="doctor">Bác sĩ</SelectItem>
+											<SelectItem value="nurse">Điều dưỡng</SelectItem>
+											<SelectItem value="receptionist">Lễ tân</SelectItem>
+										</SelectContent>
+									</Select>
 								</div>
 								{formData.role === 'doctor' && (
 									<div className="space-y-2">
 										<Label htmlFor="specialty">Chuyên khoa</Label>
-										<Select
-											value={formData.specialty || undefined}
-											onValueChange={(value) =>
-												setFormData({ ...formData, specialty: value || '' })
-											}
+										<Popover
+											open={specialtyOpen}
+											onOpenChange={setSpecialtyOpen}
 										>
-											<SelectTrigger>
-												<SelectValue placeholder="Chọn chuyên khoa" />
-											</SelectTrigger>
-											<SelectContent>
-												{specialties
-													.filter((s) => s.isActive)
-													.map((specialty) => (
-														<SelectItem
-															key={specialty.id}
-															value={specialty.name}
-														>
-															{specialty.name}
-														</SelectItem>
-													))}
-											</SelectContent>
-										</Select>
+											<PopoverTrigger asChild>
+												<Button
+													variant="outline"
+													role="combobox"
+													aria-expanded={specialtyOpen}
+													className="w-full justify-between border-gray-300 focus:border-blue-500"
+												>
+													{formData.specialty || 'Chọn chuyên khoa...'}
+													<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+												</Button>
+											</PopoverTrigger>
+											<PopoverContent
+												className="w-[400px] p-0 !h-[80px] !max-h-[80px]"
+												style={{
+													height: '280px',
+													maxHeight: '280px',
+													overflow: 'hidden',
+												}}
+												align="start"
+											>
+												<Command className="h-full flex flex-col overflow-hidden">
+													<CommandInput
+														placeholder="Tìm kiếm chuyên khoa..."
+														value={specialtySearch}
+														onValueChange={setSpecialtySearch}
+													/>
+													<CommandList
+														className="!max-h-[50px] flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+														style={{
+															scrollbarWidth: 'thin',
+															scrollbarColor: '#cbd5e1 #f1f5f9',
+															maxHeight: '50px !important',
+															height: '50px',
+															overflowY: 'auto',
+														}}
+													>
+														<CommandEmpty>
+															Không tìm thấy chuyên khoa.
+														</CommandEmpty>
+														<CommandGroup>
+															{filteredSpecialties.map((specialty) => (
+																<CommandItem
+																	key={specialty.id}
+																	value={specialty.name}
+																	className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
+																	onSelect={() => {
+																		setFormData({
+																			...formData,
+																			specialty: specialty.name,
+																		});
+																		setSpecialtyOpen(false);
+																		setSpecialtySearch('');
+																	}}
+																>
+																	{specialty.name}
+																</CommandItem>
+															))}
+														</CommandGroup>
+													</CommandList>
+												</Command>
+											</PopoverContent>
+										</Popover>
 									</div>
 								)}
-								<div className="space-y-2">
-									<Label htmlFor="address">Địa chỉ</Label>
-									<Textarea
-										id="address"
-										value={formData.address}
-										onChange={(e) =>
-											setFormData({ ...formData, address: e.target.value })
-										}
-										placeholder="Nhập địa chỉ"
-										rows={2}
-									/>
-								</div>
 								<div className="flex items-center space-x-2 gap-2">
 									<input
 										type="checkbox"

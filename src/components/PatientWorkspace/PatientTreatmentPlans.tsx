@@ -362,10 +362,10 @@ export function PatientTreatmentPlans({
 			return;
 		}
 
-		// Cập nhật phác đồ với phản hồi của bệnh nhân
+		// Cập nhật phác đồ với phản hồi của Khách hàng
 		const feedbackText = `[${new Date().toLocaleString(
 			'vi-VN',
-		)}] Phản hồi bệnh nhân: ${patientFeedback}`;
+		)}] Phản hồi Khách hàng: ${patientFeedback}`;
 		onUpdateTreatmentPlan(selectedPlan.id, {
 			notes: selectedPlan.notes
 				? `${selectedPlan.notes}\n\n${feedbackText}`
@@ -652,7 +652,9 @@ export function PatientTreatmentPlans({
 												</div>
 												{record && (
 													<div className="flex items-center gap-2">
-														<span className="text-gray-600">Mã hồ sơ:</span>
+														<span className="text-gray-600">
+															Mã khách hàng:
+														</span>
 														<strong>{record.receiveCode}</strong>
 													</div>
 												)}
@@ -725,7 +727,8 @@ export function PatientTreatmentPlans({
 												{record && (
 													<div className="flex items-center gap-2">
 														<span className="text-sm">
-															Mã hồ sơ: <strong>{record.receiveCode}</strong>
+															Mã khách hàng:{' '}
+															<strong>{record.receiveCode}</strong>
 														</span>
 													</div>
 												)}

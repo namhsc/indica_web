@@ -9,7 +9,10 @@ interface PatientWorkspaceProps {
 	records: MedicalRecord[];
 	treatmentPlans: TreatmentPlan[];
 	treatmentProgress?: Record<string, any[]>;
-	onUpdateTreatmentPlan: (planId: string, updates: Partial<TreatmentPlan>) => void;
+	onUpdateTreatmentPlan: (
+		planId: string,
+		updates: Partial<TreatmentPlan>,
+	) => void;
 	onAddTreatmentProgress: (progress: {
 		treatmentPlanId: string;
 		medicationId?: string;
@@ -47,10 +50,10 @@ export function PatientWorkspace({
 }: PatientWorkspaceProps) {
 	const { user } = useAuth();
 
-	// Lọc dữ liệu theo bệnh nhân hiện tại
+	// Lọc dữ liệu theo Khách hàng hiện tại
 	const patientName = user?.fullName || '';
 	const patientRecords = records.filter(
-		(record) => record.patient.fullName === patientName
+		(record) => record.patient.fullName === patientName,
 	);
 	const patientTreatmentPlans = treatmentPlans.filter((plan) => {
 		const record = records.find((r) => r.id === plan.recordId);
@@ -86,11 +89,9 @@ export function PatientWorkspace({
 				<div>
 					<h2 className="text-2xl font-bold flex items-center gap-2">
 						<User className="h-6 w-6 text-blue-600" />
-						Không gian bệnh nhân
+						Không gian Khách hàng
 					</h2>
-					<p className="text-gray-600 mt-1">
-						Quản lý phác đồ điều trị của bạn
-					</p>
+					<p className="text-gray-600 mt-1">Quản lý phác đồ điều trị của bạn</p>
 				</div>
 			</div>
 
@@ -98,4 +99,3 @@ export function PatientWorkspace({
 		</div>
 	);
 }
-

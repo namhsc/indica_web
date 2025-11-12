@@ -4,19 +4,16 @@ import { AIAssistant } from './components/AIAssistant';
 import { ReceptionForm } from './components/ReceptionForm';
 import { RecordList } from './components/RecordList';
 import { DoctorWorkspace } from './components/DoctorWorkspace';
+import { ExaminationDetail } from './components/ExaminationDetail';
 import { TechnicianWorkspace } from './components/TechnicianWorkspace';
 import { PatientWorkspace } from './components/PatientWorkspace';
-import { RecordReturn } from './components/RecordReturn';
 import { RecordDetail } from './components/RecordDetail';
 import { LoginPage } from './components/LoginPage';
 import { RoleGuard } from './components/RoleGuard';
 import { AppSidebar } from './components/layout/AppSidebar';
-import { ServiceManagement } from './components/ServiceManagement';
-import { ServicePackageManagement } from './components/ServicePackageManagement';
 import { StaffManagement } from './components/StaffManagement';
 import { MedicationManagement } from './components/MedicationManagement';
 import { SpecialtyManagement } from './components/SpecialtyManagement';
-import { MedicationGroupManagement } from './components/MedicationGroupManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Button } from './components/ui/button';
 import { Menu } from 'lucide-react';
@@ -32,7 +29,6 @@ import {
 	Staff,
 	MedicationCatalog,
 	Specialty,
-	MedicationGroup,
 } from './types';
 import {
 	generateMockRecords,
@@ -48,7 +44,6 @@ import {
 	mockStaffData,
 	mockMedicationCatalogData,
 	mockSpecialtiesData,
-	mockMedicationGroupsData,
 } from './lib/mockData';
 import { motion } from 'motion/react';
 import useDualSocket from './hook/useDualSocket';
@@ -63,12 +58,14 @@ function MainApp() {
 	const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(
 		null,
 	);
+	const [examiningRecordId, setExaminingRecordId] = useState<string | null>(
+		null,
+	);
 	const [services, setServices] = useState<Service[]>([]);
 	const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
 	const [staff, setStaff] = useState<Staff[]>([]);
 	const [medications, setMedications] = useState<MedicationCatalog[]>([]);
 	const [specialties, setSpecialties] = useState<Specialty[]>([]);
-	const [medicationGroups, setMedicationGroups] = useState<MedicationGroup[]>([]);
 	const [activeTab, setActiveTab] = useState('ai');
 	const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -91,9 +88,8 @@ function MainApp() {
 			setServices(mockServicesData);
 			setServicePackages(mockServicePackagesData);
 			setStaff(mockStaffData);
-			setMedications(mockMedicationCatalogData);
-			setSpecialties(mockSpecialtiesData);
-			setMedicationGroups(mockMedicationGroupsData);
+		setMedications(mockMedicationCatalogData);
+		setSpecialties(mockSpecialtiesData);
 
 			// Generate appointments - if patient, generate specific appointments for them
 			if (user?.role === 'patient' && user?.fullName) {
@@ -142,7 +138,7 @@ function MainApp() {
 							gender: 'male',
 						},
 						reason: 'Khám tổng quát',
-						requestedServices: ['Khám tổng quát'],
+						requestedServices: [],
 						status: 'COMPLETED_EXAMINATION',
 						assignedDoctor: {
 							id: 'doc1',
@@ -253,22 +249,6 @@ function MainApp() {
 	) => {
 		setTestOrders(
 			testOrders.map((t) => (t.id === orderId ? { ...t, ...updates } : t)),
-		);
-	};
-
-	const handleReturnRecord = (recordId: string, signature: string) => {
-		setRecords(
-			records.map((r) =>
-				r.id === recordId
-					? {
-							...r,
-							status: 'RETURNED',
-							signature,
-							returnedAt: new Date().toISOString(),
-							updatedAt: new Date().toISOString(),
-					  }
-					: r,
-			),
 		);
 	};
 
@@ -429,63 +409,6 @@ function MainApp() {
 		);
 	};
 
-	// Service handlers
-	const handleCreateService = (
-		serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>,
-	) => {
-		const newService: Service = {
-			...serviceData,
-			id: `svc_${Date.now()}`,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-		};
-		setServices([...services, newService]);
-	};
-
-	const handleUpdateService = (id: string, updates: Partial<Service>) => {
-		setServices(
-			services.map((s) =>
-				s.id === id
-					? { ...s, ...updates, updatedAt: new Date().toISOString() }
-					: s,
-			),
-		);
-	};
-
-	const handleDeleteService = (id: string) => {
-		setServices(services.filter((s) => s.id !== id));
-	};
-
-	// Service Package handlers
-	const handleCreateServicePackage = (
-		packageData: Omit<ServicePackage, 'id' | 'createdAt' | 'updatedAt'>,
-	) => {
-		const newPackage: ServicePackage = {
-			...packageData,
-			id: `pkg_${Date.now()}`,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-		};
-		setServicePackages([...servicePackages, newPackage]);
-	};
-
-	const handleUpdateServicePackage = (
-		id: string,
-		updates: Partial<ServicePackage>,
-	) => {
-		setServicePackages(
-			servicePackages.map((p) =>
-				p.id === id
-					? { ...p, ...updates, updatedAt: new Date().toISOString() }
-					: p,
-			),
-		);
-	};
-
-	const handleDeleteServicePackage = (id: string) => {
-		setServicePackages(servicePackages.filter((p) => p.id !== id));
-	};
-
 	// Staff handlers
 	const handleCreateStaff = (
 		staffData: Omit<Staff, 'id' | 'createdAt' | 'updatedAt'>,
@@ -567,35 +490,6 @@ function MainApp() {
 		setSpecialties(specialties.filter((s) => s.id !== id));
 	};
 
-	// MedicationGroup handlers
-	const handleCreateMedicationGroup = (
-		medicationGroupData: Omit<MedicationGroup, 'id' | 'createdAt' | 'updatedAt'>,
-	) => {
-		const newMedicationGroup: MedicationGroup = {
-			...medicationGroupData,
-			id: `mg_${Date.now()}`,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-		};
-		setMedicationGroups([...medicationGroups, newMedicationGroup]);
-	};
-
-	const handleUpdateMedicationGroup = (
-		id: string,
-		updates: Partial<MedicationGroup>,
-	) => {
-		setMedicationGroups(
-			medicationGroups.map((mg) =>
-				mg.id === id
-					? { ...mg, ...updates, updatedAt: new Date().toISOString() }
-					: mg,
-			),
-		);
-	};
-
-	const handleDeleteMedicationGroup = (id: string) => {
-		setMedicationGroups(medicationGroups.filter((mg) => mg.id !== id));
-	};
 
 	if (!isAuthenticated) {
 		return <LoginPage />;
@@ -691,33 +585,89 @@ function MainApp() {
 							</RoleGuard>
 						)}
 
-						{activeTab === 'doctor' && (
-							<RoleGuard allowedRoles={['admin', 'doctor']}>
-								<DoctorWorkspace
-									records={records}
-									treatmentPlans={treatmentPlans}
-									onUpdateRecord={handleUpdateRecord}
-									onCreateTestOrder={handleCreateTestOrder}
-									onCreateTreatmentPlan={handleCreateTreatmentPlan}
-									onUpdateTreatmentPlan={handleUpdateTreatmentPlan}
-								/>
-							</RoleGuard>
-						)}
+					{activeTab === 'doctor' && !examiningRecordId && (
+						<RoleGuard allowedRoles={['admin', 'doctor']}>
+							<DoctorWorkspace
+								records={records}
+								treatmentPlans={treatmentPlans}
+								onUpdateRecord={handleUpdateRecord}
+								onCreateTestOrder={handleCreateTestOrder}
+								onCreateTreatmentPlan={handleCreateTreatmentPlan}
+								onUpdateTreatmentPlan={handleUpdateTreatmentPlan}
+								onExamineRecord={(recordId) => setExaminingRecordId(recordId)}
+							/>
+						</RoleGuard>
+					)}
+
+					{activeTab === 'doctor' && examiningRecordId && (
+						<RoleGuard allowedRoles={['admin', 'doctor']}>
+							{(() => {
+								const record = records.find(
+									(r) => r.id === examiningRecordId,
+								);
+								if (!record) return null;
+
+								const getExaminationDate = (record: MedicalRecord): string => {
+									const date = record.appointmentTime
+										? new Date(record.appointmentTime)
+										: new Date(record.createdAt);
+									return date.toLocaleDateString('vi-VN', {
+										day: '2-digit',
+										month: '2-digit',
+										year: 'numeric',
+									});
+								};
+
+								const getExaminationOrder = (record: MedicalRecord): number => {
+									const recordDate = record.appointmentTime
+										? new Date(record.appointmentTime).toDateString()
+										: new Date(record.createdAt).toDateString();
+
+									const sameDayRecords = records.filter((r) => {
+										const rDate = r.appointmentTime
+											? new Date(r.appointmentTime).toDateString()
+											: new Date(r.createdAt).toDateString();
+										return rDate === recordDate;
+									});
+
+									const sortedRecords = sameDayRecords.sort((a, b) => {
+										const aTime = a.appointmentTime
+											? new Date(a.appointmentTime).getTime()
+											: new Date(a.createdAt).getTime();
+										const bTime = b.appointmentTime
+											? new Date(b.appointmentTime).getTime()
+											: new Date(b.createdAt).getTime();
+										return aTime - bTime;
+									});
+
+									return sortedRecords.findIndex((r) => r.id === record.id) + 1;
+								};
+
+								return (
+									<ExaminationDetail
+										record={record}
+										treatmentPlan={treatmentPlans.find(
+											(tp) => tp.recordId === record.id,
+										)}
+										doctorName={
+											record.assignedDoctor?.name || 'Bác sĩ'
+										}
+										onBack={() => setExaminingRecordId(null)}
+										onCreateTreatmentPlan={handleCreateTreatmentPlan}
+										onUpdateTreatmentPlan={handleUpdateTreatmentPlan}
+										getExaminationDate={getExaminationDate}
+										getExaminationOrder={getExaminationOrder}
+									/>
+								);
+							})()}
+						</RoleGuard>
+					)}
 
 						{activeTab === 'nurse' && (
 							<RoleGuard allowedRoles={['admin', 'nurse']}>
 								<TechnicianWorkspace
 									testOrders={testOrders}
 									onUpdateTestOrder={handleUpdateTestOrder}
-								/>
-							</RoleGuard>
-						)}
-
-						{activeTab === 'return' && (
-							<RoleGuard allowedRoles={['admin', 'receptionist']}>
-								<RecordReturn
-									records={records}
-									onReturnRecord={handleReturnRecord}
 								/>
 							</RoleGuard>
 						)}
@@ -731,29 +681,6 @@ function MainApp() {
 									treatmentProgress={treatmentProgress}
 									onUpdateTreatmentPlan={handleUpdateTreatmentPlanForPatient}
 									onAddTreatmentProgress={handleAddTreatmentProgress}
-								/>
-							</RoleGuard>
-						)}
-
-						{activeTab === 'services' && (
-							<RoleGuard allowedRoles={['admin']}>
-								<ServiceManagement
-									services={services}
-									onCreate={handleCreateService}
-									onUpdate={handleUpdateService}
-									onDelete={handleDeleteService}
-								/>
-							</RoleGuard>
-						)}
-
-						{activeTab === 'service-packages' && (
-							<RoleGuard allowedRoles={['admin']}>
-								<ServicePackageManagement
-									packages={servicePackages}
-									services={services}
-									onCreate={handleCreateServicePackage}
-									onUpdate={handleUpdateServicePackage}
-									onDelete={handleDeleteServicePackage}
 								/>
 							</RoleGuard>
 						)}
@@ -792,16 +719,6 @@ function MainApp() {
 							</RoleGuard>
 						)}
 
-						{activeTab === 'medication-groups' && (
-							<RoleGuard allowedRoles={['admin']}>
-								<MedicationGroupManagement
-									medicationGroups={medicationGroups}
-									onCreate={handleCreateMedicationGroup}
-									onUpdate={handleUpdateMedicationGroup}
-									onDelete={handleDeleteMedicationGroup}
-								/>
-							</RoleGuard>
-						)}
 					</motion.div>
 				</main>
 			</div>

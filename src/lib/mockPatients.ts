@@ -1,5 +1,5 @@
 // Mock data for existing patients - Generated for AI training
-// Tổng cộng: 500 bệnh nhân và 200 cuộc hẹn
+// Tổng cộng: 500 Khách hàng và 200 cuộc hẹn
 
 const ho = [
 	'Nguyễn',

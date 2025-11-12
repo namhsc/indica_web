@@ -11,6 +11,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
+import { Checkbox } from './ui/checkbox';
 import {
 	Table,
 	TableBody,
@@ -87,16 +88,6 @@ const categoryColors: Record<MedicationCatalog['category'], string> = {
 	other: 'bg-gray-100 text-gray-800',
 };
 
-const dosageFormLabels: Record<MedicationCatalog['dosageForm'], string> = {
-	tablet: 'Viên nén',
-	capsule: 'Viên nang',
-	syrup: 'Sirô',
-	injection: 'Tiêm',
-	cream: 'Kem',
-	drops: 'Nhỏ giọt',
-	other: 'Khác',
-};
-
 export function MedicationManagement({
 	medications,
 	onCreate,
@@ -109,19 +100,17 @@ export function MedicationManagement({
 	const [showDialog, setShowDialog] = useState(false);
 	const [editingMedication, setEditingMedication] =
 		useState<MedicationCatalog | null>(null);
+	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
 	const [formData, setFormData] = useState({
 		name: '',
 		code: '',
 		activeIngredient: '',
-		dosageForm: 'tablet' as MedicationCatalog['dosageForm'],
 		strength: '',
 		unit: 'viên',
 		category: 'antibiotic' as MedicationCatalog['category'],
 		manufacturer: '',
-		price: '',
-		stock: '',
-		minStock: '',
+		drugGroup: '',
 		description: '',
 		indications: '',
 		contraindications: '',
@@ -136,7 +125,10 @@ export function MedicationManagement({
 			medication.activeIngredient
 				?.toLowerCase()
 				.includes(searchTerm.toLowerCase()) ||
-			medication.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase());
+			medication.manufacturer
+				?.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			medication.drugGroup?.toLowerCase().includes(searchTerm.toLowerCase());
 
 		const matchesCategory =
 			categoryFilter === 'all' || medication.category === categoryFilter;
@@ -171,14 +163,11 @@ export function MedicationManagement({
 				name: medication.name,
 				code: medication.code || '',
 				activeIngredient: medication.activeIngredient || '',
-				dosageForm: medication.dosageForm,
 				strength: medication.strength || '',
 				unit: medication.unit,
 				category: medication.category,
 				manufacturer: medication.manufacturer || '',
-				price: medication.price?.toString() || '',
-				stock: medication.stock?.toString() || '',
-				minStock: medication.minStock?.toString() || '',
+				drugGroup: medication.drugGroup || '',
 				description: medication.description || '',
 				indications: medication.indications || '',
 				contraindications: medication.contraindications || '',
@@ -191,14 +180,11 @@ export function MedicationManagement({
 				name: '',
 				code: '',
 				activeIngredient: '',
-				dosageForm: 'tablet',
 				strength: '',
 				unit: 'viên',
 				category: 'antibiotic',
 				manufacturer: '',
-				price: '',
-				stock: '',
-				minStock: '',
+				drugGroup: '',
 				description: '',
 				indications: '',
 				contraindications: '',
@@ -224,14 +210,11 @@ export function MedicationManagement({
 			name: formData.name,
 			code: formData.code || undefined,
 			activeIngredient: formData.activeIngredient || undefined,
-			dosageForm: formData.dosageForm,
 			strength: formData.strength || undefined,
 			unit: formData.unit,
 			category: formData.category,
 			manufacturer: formData.manufacturer || undefined,
-			price: formData.price ? parseFloat(formData.price) : undefined,
-			stock: formData.stock ? parseInt(formData.stock) : undefined,
-			minStock: formData.minStock ? parseInt(formData.minStock) : undefined,
+			drugGroup: formData.drugGroup || undefined,
 			description: formData.description || undefined,
 			indications: formData.indications || undefined,
 			contraindications: formData.contraindications || undefined,
@@ -257,23 +240,46 @@ export function MedicationManagement({
 		}
 	};
 
-	const formatPrice = (price?: number) => {
-		if (!price) return '-';
-		return new Intl.NumberFormat('vi-VN', {
-			style: 'currency',
-			currency: 'VND',
-		}).format(price);
+	const handleToggleSelect = (id: string) => {
+		const newSelected = new Set(selectedItems);
+		if (newSelected.has(id)) {
+			newSelected.delete(id);
+		} else {
+			newSelected.add(id);
+		}
+		setSelectedItems(newSelected);
 	};
 
-	const getStockStatus = (stock?: number, minStock?: number) => {
-		if (stock === undefined) return null;
-		if (minStock === undefined) return null;
-		if (stock <= 0)
-			return { label: 'Hết hàng', color: 'bg-red-100 text-red-800' };
-		if (stock <= minStock)
-			return { label: 'Sắp hết', color: 'bg-orange-100 text-orange-800' };
-		return { label: 'Còn hàng', color: 'bg-green-100 text-green-800' };
+	const handleSelectAll = (checked: boolean) => {
+		if (checked) {
+			setSelectedItems(new Set(paginatedData.map((item) => item.id)));
+		} else {
+			setSelectedItems(new Set());
+		}
 	};
+
+	const handleDeleteSelected = () => {
+		if (selectedItems.size === 0) {
+			toast.error('Vui lòng chọn ít nhất một mục để xóa');
+			return;
+		}
+
+		if (
+			confirm(`Bạn có chắc chắn muốn xóa ${selectedItems.size} thuốc đã chọn?`)
+		) {
+			selectedItems.forEach((id) => {
+				onDelete(id);
+			});
+			setSelectedItems(new Set());
+			toast.success(`Đã xóa ${selectedItems.size} thuốc thành công`);
+		}
+	};
+
+	const isAllSelected =
+		paginatedData.length > 0 &&
+		paginatedData.every((item) => selectedItems.has(item.id));
+	const isIndeterminate =
+		selectedItems.size > 0 && selectedItems.size < paginatedData.length;
 
 	// Export to Excel
 	const handleExport = () => {
@@ -282,14 +288,11 @@ export function MedicationManagement({
 				Mã: m.code || '',
 				Tên: m.name,
 				'Hoạt chất': m.activeIngredient || '',
-				'Dạng bào chế': dosageFormLabels[m.dosageForm],
 				'Hàm lượng': m.strength || '',
 				'Đơn vị': m.unit,
 				'Phân loại': categoryLabels[m.category],
 				'Nhà sản xuất': m.manufacturer || '',
-				'Giá bán': m.price || '',
-				'Số lượng': m.stock || '',
-				'Tồn tối thiểu': m.minStock || '',
+				'Nhóm thuốc': m.drugGroup || '',
 				'Chỉ định': m.indications || '',
 				'Chống chỉ định': m.contraindications || '',
 				'Tác dụng phụ': m.sideEffects || '',
@@ -304,14 +307,11 @@ export function MedicationManagement({
 				{ wch: 15 }, // Mã
 				{ wch: 30 }, // Tên
 				{ wch: 20 }, // Hoạt chất
-				{ wch: 15 }, // Dạng bào chế
 				{ wch: 15 }, // Hàm lượng
 				{ wch: 10 }, // Đơn vị
 				{ wch: 20 }, // Phân loại
 				{ wch: 25 }, // Nhà sản xuất
-				{ wch: 15 }, // Giá bán
-				{ wch: 12 }, // Số lượng
-				{ wch: 15 }, // Tồn tối thiểu
+				{ wch: 20 }, // Nhóm thuốc
 				{ wch: 50 }, // Chỉ định
 				{ wch: 50 }, // Chống chỉ định
 				{ wch: 50 }, // Tác dụng phụ
@@ -376,14 +376,11 @@ export function MedicationManagement({
 					mã: 'code',
 					tên: 'name',
 					'hoạt chất': 'activeIngredient',
-					'dạng bào chế': 'dosageForm',
 					'hàm lượng': 'strength',
 					'đơn vị': 'unit',
 					'phân loại': 'category',
 					'nhà sản xuất': 'manufacturer',
-					'giá bán': 'price',
-					'số lượng': 'stock',
-					'tồn tối thiểu': 'minStock',
+					'nhóm thuốc': 'drugGroup',
 					'chỉ định': 'indications',
 					'chống chỉ định': 'contraindications',
 					'tác dụng phụ': 'sideEffects',
@@ -419,44 +416,6 @@ export function MedicationManagement({
 							errorCount++;
 							errors.push(`Dòng ${i + 1}: Thiếu tên hoặc đơn vị`);
 							continue;
-						}
-
-						const dosageFormText =
-							row[fieldIndexes['dosageForm']]?.toString().trim() || '';
-						let dosageForm: MedicationCatalog['dosageForm'] = 'tablet';
-						if (dosageFormText) {
-							const formLower = dosageFormText.toLowerCase();
-							if (
-								formLower.includes('viên nén') ||
-								formLower.includes('tablet')
-							) {
-								dosageForm = 'tablet';
-							} else if (
-								formLower.includes('viên nang') ||
-								formLower.includes('capsule')
-							) {
-								dosageForm = 'capsule';
-							} else if (
-								formLower.includes('sirô') ||
-								formLower.includes('syrup')
-							) {
-								dosageForm = 'syrup';
-							} else if (
-								formLower.includes('tiêm') ||
-								formLower.includes('injection')
-							) {
-								dosageForm = 'injection';
-							} else if (
-								formLower.includes('kem') ||
-								formLower.includes('cream')
-							) {
-								dosageForm = 'cream';
-							} else if (
-								formLower.includes('nhỏ giọt') ||
-								formLower.includes('drops')
-							) {
-								dosageForm = 'drops';
-							}
 						}
 
 						const categoryText =
@@ -509,29 +468,6 @@ export function MedicationManagement({
 							}
 						}
 
-						const priceValue = row[fieldIndexes['price']];
-						const price = priceValue
-							? typeof priceValue === 'number'
-								? priceValue
-								: parseFloat(String(priceValue).replace(/[^\d.-]/g, ''))
-							: undefined;
-
-						const stockValue = row[fieldIndexes['stock']];
-						const stock =
-							stockValue !== undefined && stockValue !== ''
-								? typeof stockValue === 'number'
-									? stockValue
-									: parseInt(String(stockValue).replace(/[^\d.-]/g, ''), 10)
-								: undefined;
-
-						const minStockValue = row[fieldIndexes['minStock']];
-						const minStock =
-							minStockValue !== undefined && minStockValue !== ''
-								? typeof minStockValue === 'number'
-									? minStockValue
-									: parseInt(String(minStockValue).replace(/[^\d.-]/g, ''), 10)
-								: undefined;
-
 						const statusText =
 							row[fieldIndexes['isActive']]?.toString().trim() || '';
 						let isActive = true;
@@ -553,7 +489,6 @@ export function MedicationManagement({
 							activeIngredient:
 								row[fieldIndexes['activeIngredient']]?.toString().trim() ||
 								undefined,
-							dosageForm,
 							strength:
 								row[fieldIndexes['strength']]?.toString().trim() || undefined,
 							unit,
@@ -561,12 +496,8 @@ export function MedicationManagement({
 							manufacturer:
 								row[fieldIndexes['manufacturer']]?.toString().trim() ||
 								undefined,
-							price: price && !isNaN(price) ? price : undefined,
-							stock: stock !== undefined && !isNaN(stock) ? stock : undefined,
-							minStock:
-								minStock !== undefined && !isNaN(minStock)
-									? minStock
-									: undefined,
+							drugGroup:
+								row[fieldIndexes['drugGroup']]?.toString().trim() || undefined,
 							indications:
 								row[fieldIndexes['indications']]?.toString().trim() ||
 								undefined,
@@ -640,6 +571,16 @@ export function MedicationManagement({
 						<span className="text-sm text-gray-600">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
+					{selectedItems.size > 0 && (
+						<Button
+							onClick={handleDeleteSelected}
+							variant="destructive"
+							className="bg-delete-btn hover:bg-red-700 text-white border-red-600"
+						>
+							<Trash2 className="h-4 w-4 mr-2" />
+							Xóa ({selectedItems.size})
+						</Button>
+					)}
 					<Button
 						onClick={handleExport}
 						variant="outline"
@@ -720,9 +661,7 @@ export function MedicationManagement({
 								<SelectContent>
 									<SelectItem value="all">Tất cả trạng thái</SelectItem>
 									<SelectItem value="active">Đang hoạt động</SelectItem>
-									<SelectItem value="inactive">
-										Ngừng hoạt động hoạt động
-									</SelectItem>
+									<SelectItem value="inactive">Ngừng hoạt động</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -734,14 +673,24 @@ export function MedicationManagement({
 						<Table>
 							<TableHeader>
 								<TableRow className="bg-gray-50/80 hover:bg-gray-50">
+									<TableHead className="w-12">
+										<Checkbox
+											checked={isAllSelected}
+											onCheckedChange={handleSelectAll}
+											ref={(el) => {
+												if (el) {
+													el.indeterminate = isIndeterminate;
+												}
+											}}
+										/>
+									</TableHead>
+									<TableHead className="w-16 text-center">STT</TableHead>
 									<TableHead>Mã</TableHead>
 									<TableHead>Tên thuốc</TableHead>
 									<TableHead>Hoạt chất</TableHead>
-									<TableHead>Dạng bào chế</TableHead>
 									<TableHead>Hàm lượng</TableHead>
 									<TableHead>Phân loại</TableHead>
-									<TableHead>Tồn kho</TableHead>
-									<TableHead>Giá</TableHead>
+									<TableHead>Nhóm thuốc</TableHead>
 									<TableHead>Trạng thái</TableHead>
 									<TableHead className="text-right">Thao tác</TableHead>
 								</TableRow>
@@ -766,10 +715,6 @@ export function MedicationManagement({
 									</TableRow>
 								) : (
 									paginatedData.map((medication, index) => {
-										const stockStatus = getStockStatus(
-											medication.stock,
-											medication.minStock,
-										);
 										return (
 											<motion.tr
 												key={medication.id}
@@ -778,6 +723,17 @@ export function MedicationManagement({
 												transition={{ delay: index * 0.05 }}
 												className="hover:bg-gray-50/80 transition-colors border-b border-gray-200"
 											>
+												<TableCell>
+													<Checkbox
+														checked={selectedItems.has(medication.id)}
+														onCheckedChange={() =>
+															handleToggleSelect(medication.id)
+														}
+													/>
+												</TableCell>
+												<TableCell className="text-center text-gray-500">
+													{startIndex + index}
+												</TableCell>
 												<TableCell>
 													{medication.code ? (
 														<span className="font-mono text-sm bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
@@ -793,11 +749,6 @@ export function MedicationManagement({
 												<TableCell className="text-gray-600">
 													{medication.activeIngredient || '-'}
 												</TableCell>
-												<TableCell>
-													<Badge variant="outline">
-														{dosageFormLabels[medication.dosageForm]}
-													</Badge>
-												</TableCell>
 												<TableCell className="text-gray-600">
 													{medication.strength || '-'}
 												</TableCell>
@@ -808,24 +759,8 @@ export function MedicationManagement({
 														{categoryLabels[medication.category]}
 													</Badge>
 												</TableCell>
-												<TableCell>
-													{stockStatus ? (
-														<div className="flex flex-col gap-1">
-															<span className="text-sm font-medium">
-																{medication.stock !== undefined
-																	? `${medication.stock} ${medication.unit}`
-																	: '-'}
-															</span>
-															<Badge className={stockStatus.color}>
-																{stockStatus.label}
-															</Badge>
-														</div>
-													) : (
-														<span className="text-gray-400">-</span>
-													)}
-												</TableCell>
-												<TableCell className="font-medium">
-													{formatPrice(medication.price)}
+												<TableCell className="text-gray-600">
+													{medication.drugGroup || '-'}
 												</TableCell>
 												<TableCell>
 													{medication.isActive ? (
@@ -885,7 +820,7 @@ export function MedicationManagement({
 
 			{/* Dialog */}
 			<Dialog open={showDialog} onOpenChange={setShowDialog}>
-				<DialogContent className="max-w-[95vw] lg:max-w-4xl max-h-[95vh] overflow-hidden p-0 gap-0 bg-gradient-to-br from-gray-50 to-white border-0 shadow-none">
+				<DialogContent className="max-w-[95vw] lg:max-w-[90vw] xl:max-w-7xl max-h-[95vh] overflow-hidden p-0 gap-0 bg-gradient-to-br from-gray-50 to-white border-0 shadow-none">
 					<div className="overflow-y-auto max-h-[95vh]">
 						<div className="p-6">
 							<DialogHeader>
@@ -899,7 +834,7 @@ export function MedicationManagement({
 								</DialogDescription>
 							</DialogHeader>
 							<div className="space-y-4 mt-6">
-								<div className="grid grid-cols-2 gap-4">
+								<div className="grid grid-cols-3 gap-4">
 									<div className="space-y-2">
 										<Label htmlFor="name">
 											Tên thuốc <span className="text-red-500">*</span>
@@ -924,89 +859,6 @@ export function MedicationManagement({
 											placeholder="Nhập mã thuốc"
 										/>
 									</div>
-								</div>
-								<div className="grid grid-cols-2 gap-4">
-									<div className="space-y-2">
-										<Label htmlFor="activeIngredient">Hoạt chất</Label>
-										<Input
-											id="activeIngredient"
-											value={formData.activeIngredient}
-											onChange={(e) =>
-												setFormData({
-													...formData,
-													activeIngredient: e.target.value,
-												})
-											}
-											placeholder="Nhập hoạt chất"
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label htmlFor="manufacturer">Nhà sản xuất</Label>
-										<Input
-											id="manufacturer"
-											value={formData.manufacturer}
-											onChange={(e) =>
-												setFormData({
-													...formData,
-													manufacturer: e.target.value,
-												})
-											}
-											placeholder="Nhập nhà sản xuất"
-										/>
-									</div>
-								</div>
-								<div className="grid grid-cols-3 gap-4">
-									<div className="space-y-2">
-										<Label htmlFor="dosageForm">Dạng bào chế</Label>
-										<Select
-											value={formData.dosageForm}
-											onValueChange={(value) =>
-												setFormData({
-													...formData,
-													dosageForm: value as MedicationCatalog['dosageForm'],
-												})
-											}
-										>
-											<SelectTrigger>
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="tablet">Viên nén</SelectItem>
-												<SelectItem value="capsule">Viên nang</SelectItem>
-												<SelectItem value="syrup">Sirô</SelectItem>
-												<SelectItem value="injection">Tiêm</SelectItem>
-												<SelectItem value="cream">Kem</SelectItem>
-												<SelectItem value="drops">Nhỏ giọt</SelectItem>
-												<SelectItem value="other">Khác</SelectItem>
-											</SelectContent>
-										</Select>
-									</div>
-									<div className="space-y-2">
-										<Label htmlFor="strength">Hàm lượng</Label>
-										<Input
-											id="strength"
-											value={formData.strength}
-											onChange={(e) =>
-												setFormData({ ...formData, strength: e.target.value })
-											}
-											placeholder="vd: 500mg, 1%"
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label htmlFor="unit">
-											Đơn vị <span className="text-red-500">*</span>
-										</Label>
-										<Input
-											id="unit"
-											value={formData.unit}
-											onChange={(e) =>
-												setFormData({ ...formData, unit: e.target.value })
-											}
-											placeholder="viên, chai, tuýp..."
-										/>
-									</div>
-								</div>
-								<div className="grid grid-cols-2 gap-4">
 									<div className="space-y-2">
 										<Label htmlFor="category">Phân loại</Label>
 										<Select
@@ -1041,59 +893,77 @@ export function MedicationManagement({
 											</SelectContent>
 										</Select>
 									</div>
+								</div>
+								<div className="grid grid-cols-3 gap-4">
 									<div className="space-y-2">
-										<Label htmlFor="price">Giá bán</Label>
+										<Label htmlFor="activeIngredient">Hoạt chất</Label>
 										<Input
-											id="price"
-											type="number"
-											value={formData.price}
+											id="activeIngredient"
+											value={formData.activeIngredient}
 											onChange={(e) =>
-												setFormData({ ...formData, price: e.target.value })
+												setFormData({
+													...formData,
+													activeIngredient: e.target.value,
+												})
 											}
-											placeholder="Nhập giá bán"
-											min="0"
+											placeholder="Nhập hoạt chất"
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="manufacturer">Nhà sản xuất</Label>
+										<Input
+											id="manufacturer"
+											value={formData.manufacturer}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													manufacturer: e.target.value,
+												})
+											}
+											placeholder="Nhập nhà sản xuất"
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="drugGroup">Nhóm thuốc</Label>
+										<Input
+											id="drugGroup"
+											value={formData.drugGroup}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													drugGroup: e.target.value,
+												})
+											}
+											placeholder="Nhập nhóm thuốc"
 										/>
 									</div>
 								</div>
-								<div className="grid grid-cols-2 gap-4">
+								<div className="grid grid-cols-3 gap-4">
 									<div className="space-y-2">
-										<Label htmlFor="stock">Tồn kho</Label>
+										<Label htmlFor="strength">Hàm lượng</Label>
 										<Input
-											id="stock"
-											type="number"
-											value={formData.stock}
+											id="strength"
+											value={formData.strength}
 											onChange={(e) =>
-												setFormData({ ...formData, stock: e.target.value })
+												setFormData({ ...formData, strength: e.target.value })
 											}
-											placeholder="Nhập số lượng tồn kho"
-											min="0"
+											placeholder="vd: 500mg, 1%"
 										/>
 									</div>
 									<div className="space-y-2">
-										<Label htmlFor="minStock">Tồn kho tối thiểu</Label>
+										<Label htmlFor="unit">
+											Đơn vị <span className="text-red-500">*</span>
+										</Label>
 										<Input
-											id="minStock"
-											type="number"
-											value={formData.minStock}
+											id="unit"
+											value={formData.unit}
 											onChange={(e) =>
-												setFormData({ ...formData, minStock: e.target.value })
+												setFormData({ ...formData, unit: e.target.value })
 											}
-											placeholder="Nhập tồn kho tối thiểu"
-											min="0"
+											placeholder="viên, chai, tuýp..."
 										/>
 									</div>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="description">Mô tả</Label>
-									<Textarea
-										id="description"
-										value={formData.description}
-										onChange={(e) =>
-											setFormData({ ...formData, description: e.target.value })
-										}
-										placeholder="Nhập mô tả thuốc"
-										rows={2}
-									/>
+									<div></div>
 								</div>
 								<div className="space-y-2">
 									<Label htmlFor="indications">Chỉ định</Label>
@@ -1107,37 +977,35 @@ export function MedicationManagement({
 										rows={2}
 									/>
 								</div>
-								<div className="grid grid-cols-2 gap-4">
-									<div className="space-y-2">
-										<Label htmlFor="contraindications">Chống chỉ định</Label>
-										<Textarea
-											id="contraindications"
-											value={formData.contraindications}
-											onChange={(e) =>
-												setFormData({
-													...formData,
-													contraindications: e.target.value,
-												})
-											}
-											placeholder="Nhập chống chỉ định"
-											rows={2}
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label htmlFor="sideEffects">Tác dụng phụ</Label>
-										<Textarea
-											id="sideEffects"
-											value={formData.sideEffects}
-											onChange={(e) =>
-												setFormData({
-													...formData,
-													sideEffects: e.target.value,
-												})
-											}
-											placeholder="Nhập tác dụng phụ"
-											rows={2}
-										/>
-									</div>
+								<div className="space-y-2">
+									<Label htmlFor="contraindications">Chống chỉ định</Label>
+									<Textarea
+										id="contraindications"
+										value={formData.contraindications}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												contraindications: e.target.value,
+											})
+										}
+										placeholder="Nhập chống chỉ định"
+										rows={2}
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="sideEffects">Tác dụng phụ</Label>
+									<Textarea
+										id="sideEffects"
+										value={formData.sideEffects}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												sideEffects: e.target.value,
+											})
+										}
+										placeholder="Nhập tác dụng phụ"
+										rows={2}
+									/>
 								</div>
 								<div className="flex items-center space-x-2 gap-2">
 									<input

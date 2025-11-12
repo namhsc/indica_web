@@ -67,7 +67,7 @@ export function LoginPage() {
 			icon: Clock,
 			title: 'Tiếp nhận thông minh',
 			description:
-				'AI tự động xử lý đăng ký, sinh mã hồ sơ và phân công bác sĩ tối ưu',
+				'AI tự động xử lý đăng ký, sinh mã khách hàng và phân công bác sĩ tối ưu',
 			gradient: 'from-blue-500 to-cyan-500',
 			bgColor: 'bg-blue-50',
 		},
@@ -406,7 +406,7 @@ export function LoginPage() {
 														receptionist: 'Lễ tân',
 														doctor: 'Bác sĩ',
 														nurse: 'Điều dưỡng',
-														patient: 'Bệnh nhân',
+														patient: 'Khách hàng',
 													};
 													const roleColors: Record<string, string> = {
 														admin: 'from-red-500 to-pink-500',

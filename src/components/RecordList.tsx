@@ -36,12 +36,18 @@ import {
 	Calendar,
 	Clock,
 	ClipboardList,
+	Trash2,
+	Download,
+	Upload,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
 import { ReceptionForm } from './ReceptionForm';
 import { useAuth } from '../contexts/AuthContext';
 import { usePagination } from '../hooks/usePagination';
 import { PaginationControls } from './PaginationControls';
+import { Checkbox } from './ui/checkbox';
+import { toast } from 'sonner';
 
 interface RecordListProps {
 	records: MedicalRecord[];
@@ -52,39 +58,38 @@ interface RecordListProps {
 			'id' | 'receiveCode' | 'createdAt' | 'updatedAt'
 		>,
 	) => void;
+	onDeleteRecord?: (id: string) => void;
 }
 
 const statusLabels: Record<RecordStatus, string> = {
 	PENDING_CHECKIN: 'Chưa check-in',
 	PENDING_EXAMINATION: 'Chờ khám',
 	IN_EXAMINATION: 'Đang khám',
-	WAITING_TESTS: 'Chờ xét nghiệm',
-	WAITING_DOCTOR_REVIEW: 'Chờ bác sĩ kết luận',
 	COMPLETED_EXAMINATION: 'Hoàn thành',
-	RETURNED: 'Đã trả',
 };
 
 const statusGradients: Record<RecordStatus, string> = {
 	PENDING_CHECKIN: 'from-yellow-500 to-amber-500',
 	PENDING_EXAMINATION: 'from-amber-500 to-orange-500',
 	IN_EXAMINATION: 'from-blue-500 to-cyan-500',
-	WAITING_TESTS: 'from-orange-500 to-red-500',
-	WAITING_DOCTOR_REVIEW: 'from-violet-500 to-purple-500',
 	COMPLETED_EXAMINATION: 'from-emerald-500 to-teal-500',
-	RETURNED: 'from-gray-500 to-slate-500',
 };
 
 export function RecordList({
 	records,
 	onViewRecord,
 	onCreateRecord,
+	onDeleteRecord,
 }: RecordListProps) {
 	const { user } = useAuth();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [showReceptionDialog, setShowReceptionDialog] = useState(false);
+	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
 	const canCreateRecord = user && ['admin', 'receptionist'].includes(user.role);
+	const canDeleteRecord =
+		onDeleteRecord && user && ['admin', 'receptionist'].includes(user.role);
 
 	const filteredRecords = records.filter((record) => {
 		const matchesSearch =
@@ -137,6 +142,326 @@ export function RecordList({
 		}
 	};
 
+	const handleToggleSelect = (id: string) => {
+		const newSelected = new Set(selectedItems);
+		if (newSelected.has(id)) {
+			newSelected.delete(id);
+		} else {
+			newSelected.add(id);
+		}
+		setSelectedItems(newSelected);
+	};
+
+	const handleSelectAll = (checked: boolean) => {
+		if (checked) {
+			setSelectedItems(new Set(paginatedRecords.map((item) => item.id)));
+		} else {
+			setSelectedItems(new Set());
+		}
+	};
+
+	const handleDeleteSelected = () => {
+		if (!onDeleteRecord) return;
+
+		if (selectedItems.size === 0) {
+			toast.error('Vui lòng chọn ít nhất một mục để xóa');
+			return;
+		}
+
+		if (
+			confirm(
+				`Bạn có chắc chắn muốn xóa ${selectedItems.size} khách hàng đã chọn?`,
+			)
+		) {
+			selectedItems.forEach((id) => {
+				onDeleteRecord(id);
+			});
+			setSelectedItems(new Set());
+			toast.success(`Đã xóa ${selectedItems.size} khách hàng thành công`);
+		}
+	};
+
+	const isAllSelected =
+		paginatedRecords.length > 0 &&
+		paginatedRecords.every((item) => selectedItems.has(item.id));
+	const isIndeterminate =
+		selectedItems.size > 0 && selectedItems.size < paginatedRecords.length;
+
+	// Export to Excel
+	const handleExport = () => {
+		try {
+			// Chuẩn bị dữ liệu để export
+			const exportData = filteredRecords.map((record) => ({
+				'Mã khách hàng': record.receiveCode,
+				'Họ tên': record.patient.fullName,
+				'Số điện thoại': record.patient.phoneNumber,
+				'Ngày sinh': record.patient.dateOfBirth || '',
+				'Giới tính': record.patient.gender === 'male' ? 'Nam' : 'Nữ',
+				'Địa chỉ': record.patient.address || '',
+				'CCCD/CMND': record.patient.cccdNumber || '',
+				'Bảo hiểm': record.patient.insurance || '',
+				'Lý do khám': record.reason || '',
+				'Trạng thái': statusLabels[record.status],
+				'Ngày tiếp nhận': formatDate(record.createdAt),
+			}));
+
+			// Tạo workbook và worksheet
+			const ws = XLSX.utils.json_to_sheet(exportData);
+			const wb = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(wb, ws, 'Khách hàng');
+
+			// Đặt độ rộng cột
+			const colWidths = [
+				{ wch: 18 }, // Mã khách hàng
+				{ wch: 25 }, // Họ tên
+				{ wch: 15 }, // Số điện thoại
+				{ wch: 12 }, // Ngày sinh
+				{ wch: 10 }, // Giới tính
+				{ wch: 40 }, // Địa chỉ
+				{ wch: 15 }, // CCCD/CMND
+				{ wch: 20 }, // Bảo hiểm
+				{ wch: 30 }, // Lý do khám
+				{ wch: 20 }, // Trạng thái
+				{ wch: 20 }, // Ngày tiếp nhận
+			];
+			ws['!cols'] = colWidths;
+
+			// Xuất file
+			const fileName = `Danh_sach_khach_hang_${
+				new Date().toISOString().split('T')[0]
+			}.xlsx`;
+			XLSX.writeFile(wb, fileName);
+			toast.success(`Đã xuất ${exportData.length} khách hàng ra file Excel`);
+		} catch (error) {
+			console.error('Lỗi khi xuất file Excel:', error);
+			toast.error('Có lỗi xảy ra khi xuất file Excel');
+		}
+	};
+
+	// Import from Excel
+	const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		if (!onCreateRecord) {
+			toast.error('Không có quyền tạo khách hàng mới');
+			event.target.value = '';
+			return;
+		}
+
+		// Kiểm tra định dạng file
+		const validExtensions = [
+			'.xlsx',
+			'.xls',
+			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			'application/vnd.ms-excel',
+		];
+		const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+		const isValidFile =
+			validExtensions.includes(fileExtension) ||
+			validExtensions.includes(file.type);
+
+		if (!isValidFile) {
+			toast.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+			event.target.value = '';
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			try {
+				const data = new Uint8Array(e.target?.result as ArrayBuffer);
+				const workbook = XLSX.read(data, { type: 'array' });
+				const firstSheetName = workbook.SheetNames[0];
+				const worksheet = workbook.Sheets[firstSheetName];
+				const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+					header: 1,
+					defval: '',
+				}) as any[][];
+
+				if (jsonData.length < 2) {
+					toast.error('File Excel không có dữ liệu hoặc thiếu header');
+					event.target.value = '';
+					return;
+				}
+
+				// Lấy header (dòng đầu tiên)
+				const headers = jsonData[0].map((h: any) =>
+					String(h).toLowerCase().trim(),
+				);
+
+				// Mapping header tiếng Việt sang field name
+				const headerMap: Record<string, string> = {
+					'mã khách hàng': 'receiveCode',
+					'họ tên': 'fullName',
+					'số điện thoại': 'phoneNumber',
+					'ngày sinh': 'dateOfBirth',
+					'giới tính': 'gender',
+					'địa chỉ': 'address',
+					'cccd/cmnd': 'cccdNumber',
+					'bảo hiểm': 'insurance',
+					'lý do khám': 'reason',
+					'trạng thái': 'status',
+				};
+
+				// Tìm index của các cột cần thiết
+				const fieldIndexes: Record<string, number> = {};
+				headers.forEach((header, index) => {
+					const field = headerMap[header];
+					if (field) {
+						fieldIndexes[field] = index;
+					}
+				});
+
+				// Kiểm tra các trường bắt buộc
+				if (!fieldIndexes['fullName'] || !fieldIndexes['phoneNumber']) {
+					toast.error(
+						'File Excel thiếu các cột bắt buộc: Họ tên và Số điện thoại',
+					);
+					event.target.value = '';
+					return;
+				}
+
+				// Xử lý dữ liệu từ dòng 2 trở đi
+				let successCount = 0;
+				let errorCount = 0;
+				const errors: string[] = [];
+
+				for (let i = 1; i < jsonData.length; i++) {
+					const row = jsonData[i];
+					if (!row || row.every((cell) => !cell)) continue; // Bỏ qua dòng trống
+
+					try {
+						// Lấy giá trị từ các cột
+						const fullName =
+							row[fieldIndexes['fullName']]?.toString().trim() || '';
+						const phoneNumber =
+							row[fieldIndexes['phoneNumber']]?.toString().trim() || '';
+
+						if (!fullName || !phoneNumber) {
+							errorCount++;
+							errors.push(`Dòng ${i + 1}: Thiếu Họ tên hoặc Số điện thoại`);
+							continue;
+						}
+
+						// Xử lý giới tính
+						const genderText =
+							row[fieldIndexes['gender']]?.toString().trim() || '';
+						const gender =
+							genderText.toLowerCase().includes('nữ') ||
+							genderText.toLowerCase().includes('female')
+								? 'female'
+								: 'male';
+
+						// Xử lý ngày sinh
+						let dateOfBirth = '';
+						const dobValue = row[fieldIndexes['dateOfBirth']];
+						if (dobValue) {
+							if (typeof dobValue === 'number') {
+								// Excel date serial number
+								try {
+									const excelDate = XLSX.SSF.parse_date_code(dobValue);
+									if (excelDate) {
+										dateOfBirth = `${excelDate.y}-${String(
+											excelDate.m,
+										).padStart(2, '0')}-${String(excelDate.d).padStart(
+											2,
+											'0',
+										)}`;
+									}
+								} catch {
+									dateOfBirth = dobValue.toString().trim();
+								}
+							} else {
+								dateOfBirth = dobValue.toString().trim();
+							}
+						}
+
+						// Xử lý trạng thái
+						const statusText =
+							row[fieldIndexes['status']]?.toString().trim() || '';
+						let status: RecordStatus = 'PENDING_EXAMINATION';
+						if (statusText) {
+							const statusLower = statusText.toLowerCase();
+							if (statusLower.includes('chờ khám')) {
+								status = 'PENDING_EXAMINATION';
+							} else if (statusLower.includes('đang khám')) {
+								status = 'IN_EXAMINATION';
+							} else if (statusLower.includes('hoàn thành')) {
+								status = 'COMPLETED_EXAMINATION';
+							}
+						}
+
+						const recordData: Omit<
+							MedicalRecord,
+							'id' | 'receiveCode' | 'createdAt' | 'updatedAt'
+						> = {
+							patient: {
+								id: `patient_${Date.now()}_${i}`,
+								fullName,
+								phoneNumber,
+								dateOfBirth: dateOfBirth || undefined,
+								gender,
+								address:
+									row[fieldIndexes['address']]?.toString().trim() || undefined,
+								cccdNumber:
+									row[fieldIndexes['cccdNumber']]?.toString().trim() ||
+									undefined,
+								insurance:
+									row[fieldIndexes['insurance']]?.toString().trim() ||
+									undefined,
+							},
+							requestedServices: [],
+							assignedDoctor: undefined,
+							status,
+							diagnosis: undefined,
+							reason: row[fieldIndexes['reason']]?.toString().trim() || '',
+							paymentStatus: 'pending',
+						};
+
+						onCreateRecord(recordData);
+						successCount++;
+					} catch (error) {
+						errorCount++;
+						errors.push(
+							`Dòng ${i + 1}: ${
+								error instanceof Error ? error.message : 'Lỗi không xác định'
+							}`,
+						);
+					}
+				}
+
+				// Reset input file
+				event.target.value = '';
+
+				if (successCount > 0) {
+					toast.success(
+						`Đã import thành công ${successCount} khách hàng${
+							errorCount > 0 ? `, ${errorCount} lỗi` : ''
+						}`,
+					);
+				}
+
+				if (errorCount > 0 && errors.length > 0) {
+					console.error('Các lỗi khi import:', errors);
+					if (errors.length <= 10) {
+						toast.error(`Lỗi: ${errors.join('; ')}`);
+					} else {
+						toast.error(
+							`Có ${errors.length} lỗi. Vui lòng kiểm tra console để xem chi tiết.`,
+						);
+					}
+				}
+			} catch (error) {
+				console.error('Lỗi khi đọc file Excel:', error);
+				toast.error('Có lỗi xảy ra khi đọc file Excel');
+				event.target.value = '';
+			}
+		};
+
+		reader.readAsArrayBuffer(file);
+	};
+
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
@@ -156,17 +481,55 @@ export function RecordList({
 						<span className="text-sm text-gray-600">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
-					{canCreateRecord && (
-						<motion.div>
-							<Button
-								onClick={() => setShowReceptionDialog(true)}
-								className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/30"
-							>
-								<Plus className="h-4 w-4 mr-2" />
-								Tiếp nhận khách hàng
-							</Button>
-						</motion.div>
+					{canDeleteRecord && selectedItems.size > 0 && (
+						<Button
+							onClick={handleDeleteSelected}
+							variant="destructive"
+							className="bg-delete-btn hover:bg-red-700 text-white border-red-600"
+						>
+							<Trash2 className="h-4 w-4 mr-2" />
+							Xóa ({selectedItems.size})
+						</Button>
 					)}
+					<motion.div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							onClick={handleExport}
+							className="border-gray-200 hover:bg-gray-50"
+						>
+							<Download className="h-4 w-4 mr-2" />
+							Xuất Excel
+						</Button>
+						{canCreateRecord && (
+							<>
+								<label>
+									<input
+										type="file"
+										accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+										onChange={handleImport}
+										className="hidden"
+									/>
+									<Button
+										variant="outline"
+										asChild
+										className="border-gray-200 hover:bg-gray-50 cursor-pointer"
+									>
+										<span>
+											<Upload className="h-4 w-4 mr-2" />
+											Nhập Excel
+										</span>
+									</Button>
+								</label>
+								<Button
+									onClick={() => setShowReceptionDialog(true)}
+									className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/30"
+								>
+									<Plus className="h-4 w-4 mr-2" />
+									Tiếp nhận khách hàng
+								</Button>
+							</>
+						)}
+					</motion.div>
 				</div>
 			</div>
 
@@ -205,10 +568,24 @@ export function RecordList({
 						<Table>
 							<TableHeader>
 								<TableRow className="bg-gray-50/80 hover:bg-gray-50">
+									{canDeleteRecord && (
+										<TableHead className="w-12">
+											<Checkbox
+												checked={isAllSelected}
+												onCheckedChange={handleSelectAll}
+												ref={(el) => {
+													if (el) {
+														el.indeterminate = isIndeterminate;
+													}
+												}}
+											/>
+										</TableHead>
+									)}
+									<TableHead className="w-16 text-center">STT</TableHead>
 									<TableHead>Mã khách hàng</TableHead>
-									<TableHead>Bệnh nhân</TableHead>
+									<TableHead>Khách hàng</TableHead>
 									<TableHead>Ngày tiếp nhận</TableHead>
-									<TableHead>Dịch vụ</TableHead>
+									<TableHead>Lý do khám</TableHead>
 									<TableHead>Trạng thái</TableHead>
 									<TableHead className="text-right">Thao tác</TableHead>
 								</TableRow>
@@ -216,7 +593,10 @@ export function RecordList({
 							<TableBody>
 								{filteredRecords.length === 0 ? (
 									<TableRow>
-										<TableCell colSpan={6} className="text-center py-12">
+										<TableCell
+											colSpan={canDeleteRecord ? 8 : 7}
+											className="text-center py-12"
+										>
 											<div className="flex flex-col items-center gap-3 text-gray-500">
 												<FileText className="h-12 w-12 text-gray-300" />
 												<p>Không tìm thấy khách hàng nào</p>
@@ -242,6 +622,19 @@ export function RecordList({
 											transition={{ delay: index * 0.05 }}
 											className="hover:bg-gray-50/80 transition-colors border-b border-gray-200"
 										>
+											{canDeleteRecord && (
+												<TableCell>
+													<Checkbox
+														checked={selectedItems.has(record.id)}
+														onCheckedChange={() =>
+															handleToggleSelect(record.id)
+														}
+													/>
+												</TableCell>
+											)}
+											<TableCell className="text-center text-gray-500">
+												{startIndex + index}
+											</TableCell>
 											<TableCell>
 												<span className="font-mono text-sm bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
 													{record.receiveCode}
@@ -273,14 +666,11 @@ export function RecordList({
 												</div>
 											</TableCell>
 											<TableCell>
-												<div className="text-sm text-gray-600">
-													{record.requestedServices.slice(0, 2).join(', ')}
-													{record.requestedServices.length > 2 && (
-														<span className="text-xs text-gray-400">
-															{' '}
-															+{record.requestedServices.length - 2}
-														</span>
-													)}
+												<div
+													className="text-sm text-gray-600 max-w-xs truncate"
+													title={record.reason}
+												>
+													{record.reason || '-'}
 												</div>
 											</TableCell>
 											<TableCell>

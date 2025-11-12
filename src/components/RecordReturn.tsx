@@ -67,7 +67,7 @@ export function RecordReturn({ records, onReturnRecord }: RecordReturnProps) {
 		if (found) {
 			setSelectedRecord(found);
 		} else {
-			toast.error('Không tìm thấy hồ sơ hoặc hồ sơ chưa hoàn thành');
+			toast.error('Không tìm thấy khách hàng hoặc khách hàng chưa hoàn thành');
 		}
 	};
 
@@ -113,7 +113,7 @@ export function RecordReturn({ records, onReturnRecord }: RecordReturnProps) {
 		setSelectedRecord(null);
 		clearSignature();
 
-		toast.success('Đã trả hồ sơ và lưu chữ ký thành công');
+		toast.success('Đã trả khách hàng và lưu chữ ký thành công');
 	};
 
 	const formatDate = (dateString: string) => {
@@ -134,18 +134,18 @@ export function RecordReturn({ records, onReturnRecord }: RecordReturnProps) {
 					<CardTitle className="text-2xl font-bold">
 						<div className="flex items-center gap-2">
 							<FileCheck className="h-5 w-5" />
-							Trả hồ sơ khách hàng
+							Trả khách hàng khách hàng
 						</div>
 					</CardTitle>
 					<CardDescription>
-						Quản lý, tra cứu và trả hồ sơ khách hàng
+						Quản lý, tra cứu và trả khách hàng khách hàng
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div className="space-y-4">
 						<div className="flex gap-3">
 							<Input
-								placeholder="Nhập mã hồ sơ hoặc số điện thoại..."
+								placeholder="Nhập mã khách hàng hoặc số điện thoại..."
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
 								onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -160,17 +160,17 @@ export function RecordReturn({ records, onReturnRecord }: RecordReturnProps) {
 							<div className="border rounded-lg p-4 space-y-4">
 								<div className="flex justify-between items-start">
 									<div>
-										<h3>Thông tin hồ sơ</h3>
+										<h3>Thông tin khách hàng</h3>
 										<div className="mt-2 space-y-2 text-sm">
 											<div className="grid grid-cols-2 gap-x-4 gap-y-2">
 												<div>
-													<span className="text-gray-600">Mã hồ sơ:</span>
+													<span className="text-gray-600">Mã khách hàng:</span>
 													<span className="ml-2">
 														{selectedRecord.receiveCode}
 													</span>
 												</div>
 												<div>
-													<span className="text-gray-600">Bệnh nhân:</span>
+													<span className="text-gray-600">Khách hàng:</span>
 													<span className="ml-2">
 														{selectedRecord.patient.fullName}
 													</span>
@@ -255,7 +255,7 @@ export function RecordReturn({ records, onReturnRecord }: RecordReturnProps) {
 												(selectedRecord.totalAmount || 0) -
 													(selectedRecord.paidAmount || 0),
 											)}
-											. Vui lòng thu đủ trước khi trả hồ sơ.
+											. Vui lòng thu đủ trước khi trả khách hàng.
 										</AlertDescription>
 									</Alert>
 								)}
@@ -271,7 +271,7 @@ export function RecordReturn({ records, onReturnRecord }: RecordReturnProps) {
 										className="flex-1"
 									>
 										<PenTool className="h-4 w-4 mr-2" />
-										Ký nhận & Trả hồ sơ
+										Ký nhận & Trả khách hàng
 									</Button>
 									<Button variant="outline">
 										<Printer className="h-4 w-4 mr-2" />
@@ -283,7 +283,7 @@ export function RecordReturn({ records, onReturnRecord }: RecordReturnProps) {
 
 						<div className="mt-6">
 							<h4 className="mb-3 text-base font-medium">
-								Hồ sơ sẵn sàng trả ({completedRecords.length})
+								khách hàng sẵn sàng trả ({completedRecords.length})
 							</h4>
 							<div className="space-y-2">
 								{completedRecords.slice(0, 5).map((record) => (
@@ -316,8 +316,8 @@ export function RecordReturn({ records, onReturnRecord }: RecordReturnProps) {
 					<DialogHeader>
 						<DialogTitle>Chữ ký khách hàng</DialogTitle>
 						<DialogDescription>
-							Yêu cầu khách hàng ký xác nhận đã nhận đầy đủ hồ sơ và kết quả
-							khám
+							Yêu cầu khách hàng ký xác nhận đã nhận đầy đủ khách hàng và kết
+							quả khám
 						</DialogDescription>
 					</DialogHeader>
 					<div className="space-y-4">
@@ -339,7 +339,7 @@ export function RecordReturn({ records, onReturnRecord }: RecordReturnProps) {
 								Xóa
 							</Button>
 							<Button onClick={saveSignature} className="flex-1">
-								Xác nhận & Trả hồ sơ
+								Xác nhận & Trả khách hàng
 							</Button>
 						</div>
 					</div>

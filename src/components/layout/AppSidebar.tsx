@@ -69,24 +69,6 @@ const navigationItems: NavigationItem[] = [
 		roles: ['admin', 'nurse'],
 	},
 	{
-		id: 'return',
-		label: 'Trả khách hàng',
-		icon: FolderCheck,
-		roles: ['admin', 'receptionist'],
-	},
-	{
-		id: 'services',
-		label: 'Quản lý Dịch vụ',
-		icon: Settings,
-		roles: ['admin'],
-	},
-	{
-		id: 'service-packages',
-		label: 'Quản lý Gói dịch vụ',
-		icon: Package,
-		roles: ['admin'],
-	},
-	{
 		id: 'staff',
 		label: 'Quản lý Nhân viên',
 		icon: Users,
@@ -102,12 +84,6 @@ const navigationItems: NavigationItem[] = [
 		id: 'specialties',
 		label: 'Quản lý Chuyên khoa',
 		icon: Stethoscope,
-		roles: ['admin'],
-	},
-	{
-		id: 'medication-groups',
-		label: 'Quản lý Nhóm thuốc',
-		icon: Pill,
 		roles: ['admin'],
 	},
 	// Patient menu items - displayed directly without parent menu

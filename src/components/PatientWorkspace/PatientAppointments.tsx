@@ -22,18 +22,36 @@ import {
 } from '../ui/command';
 import { toast } from 'sonner@2.0.3';
 import { Appointment } from '../../types';
-import { Calendar, Plus, Clock, User, CheckCircle2, ChevronsUpDown } from 'lucide-react';
+import {
+	Calendar,
+	Plus,
+	Clock,
+	User,
+	CheckCircle2,
+	ChevronsUpDown,
+} from 'lucide-react';
 import { usePagination } from '../../hooks/usePagination';
 import { PaginationControls } from '../PaginationControls';
 import { useAuth } from '../../contexts/AuthContext';
 import { mockDoctors, mockExaminationPackages } from '../../lib/mockData';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '../ui/card';
 import { DatePicker } from '../ui/date-picker';
 
 interface PatientAppointmentsProps {
 	appointments: Appointment[];
-	onCreateAppointment: (appointment: Omit<Appointment, 'id' | 'code' | 'createdAt' | 'updatedAt'>) => void;
-	onUpdateAppointment: (appointmentId: string, updates: Partial<Appointment>) => void;
+	onCreateAppointment: (
+		appointment: Omit<Appointment, 'id' | 'code' | 'createdAt' | 'updatedAt'>,
+	) => void;
+	onUpdateAppointment: (
+		appointmentId: string,
+		updates: Partial<Appointment>,
+	) => void;
 }
 
 type ExaminationType = 'specialty' | 'package';
@@ -53,9 +71,22 @@ const appointmentStatusColors = {
 };
 
 const timeSlots = [
-	'08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-	'11:00', '11:30', '14:00', '14:30', '15:00', '15:30',
-	'16:00', '16:30', '17:00', '17:30',
+	'08:00',
+	'08:30',
+	'09:00',
+	'09:30',
+	'10:00',
+	'10:30',
+	'11:00',
+	'11:30',
+	'14:00',
+	'14:30',
+	'15:00',
+	'15:30',
+	'16:00',
+	'16:30',
+	'17:00',
+	'17:30',
 ];
 
 // Danh sách chuyên khoa
@@ -127,7 +158,7 @@ export function PatientAppointments({
 	const filteredSpecialties = useMemo(() => {
 		if (!specialtySearch) return allSpecialties;
 		return allSpecialties.filter((specialty) =>
-			specialty.toLowerCase().includes(specialtySearch.toLowerCase())
+			specialty.toLowerCase().includes(specialtySearch.toLowerCase()),
 		);
 	}, [specialtySearch]);
 
@@ -187,7 +218,9 @@ export function PatientAppointments({
 		} else if (formData.examinationType === 'specialty') {
 			services = [`Khám ${formData.specialty}`];
 			if (formData.assignedDoctorId) {
-				const selectedDoctor = mockDoctors.find((d) => d.id === formData.assignedDoctorId);
+				const selectedDoctor = mockDoctors.find(
+					(d) => d.id === formData.assignedDoctorId,
+				);
 				if (selectedDoctor) {
 					doctor = selectedDoctor.name;
 					doctorId = selectedDoctor.id;
@@ -200,7 +233,10 @@ export function PatientAppointments({
 		const appointmentNumber = String(appointments.length + 1).padStart(3, '0');
 		const code = `LH${dateStr}${appointmentNumber}`;
 
-		const newAppointment: Omit<Appointment, 'id' | 'code' | 'createdAt' | 'updatedAt'> = {
+		const newAppointment: Omit<
+			Appointment,
+			'id' | 'code' | 'createdAt' | 'updatedAt'
+		> = {
 			patientName: user?.fullName || '',
 			phoneNumber: user?.email || '',
 			dateOfBirth: '',
@@ -248,29 +284,31 @@ export function PatientAppointments({
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex items-center justify-between pb-4 border-b border-gray-200">
-				<h2 className="text-2xl font-semibold text-gray-900">
-					Đặt lịch hẹn
-				</h2>
+				<h2 className="text-2xl font-semibold text-gray-900">Đặt lịch hẹn</h2>
 			</div>
 
 			{/* Form đặt lịch */}
 			<form onSubmit={handleSubmit} className="space-y-6">
-				{/* Thông tin bệnh nhân - tự động điền */}
+				{/* Thông tin Khách hàng - tự động điền */}
 				<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
 					<div className="flex items-center gap-2 mb-3">
 						<User className="h-5 w-5 text-blue-600" />
 						<Label className="text-base font-semibold text-blue-900">
-							Thông tin bệnh nhân
+							Thông tin Khách hàng
 						</Label>
 					</div>
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
 							<Label className="text-sm text-gray-600">Họ và tên</Label>
-							<p className="font-medium">{user?.fullName || 'Chưa có thông tin'}</p>
+							<p className="font-medium">
+								{user?.fullName || 'Chưa có thông tin'}
+							</p>
 						</div>
 						<div>
 							<Label className="text-sm text-gray-600">Email</Label>
-							<p className="font-medium">{user?.email || 'Chưa có thông tin'}</p>
+							<p className="font-medium">
+								{user?.email || 'Chưa có thông tin'}
+							</p>
 						</div>
 					</div>
 				</div>
@@ -278,7 +316,10 @@ export function PatientAppointments({
 				{/* Ngày và giờ khám */}
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div className="space-y-2">
-						<Label htmlFor="appointmentDate" className="flex items-center gap-2">
+						<Label
+							htmlFor="appointmentDate"
+							className="flex items-center gap-2"
+						>
 							Ngày khám *
 							{!formData.appointmentDate && errors.appointmentDate && (
 								<Badge variant="destructive" className="animate-pulse">
@@ -303,7 +344,10 @@ export function PatientAppointments({
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="appointmentTime" className="flex items-center gap-2">
+						<Label
+							htmlFor="appointmentTime"
+							className="flex items-center gap-2"
+						>
 							Giờ khám *
 							{!formData.appointmentTime && errors.appointmentTime && (
 								<Badge variant="destructive" className="animate-pulse">
@@ -664,7 +708,10 @@ export function PatientAppointments({
 				) : (
 					<div className="space-y-4">
 						{paginatedAppointments.map((appointment) => (
-							<Card key={appointment.id} className="border-l-4 border-l-blue-500">
+							<Card
+								key={appointment.id}
+								className="border-l-4 border-l-blue-500"
+							>
 								<CardHeader>
 									<div className="flex items-start justify-between">
 										<div className="flex-1">
@@ -677,7 +724,8 @@ export function PatientAppointments({
 													<div className="flex items-center gap-2">
 														<Clock className="h-4 w-4 text-gray-400" />
 														<span>
-															{formatDate(appointment.appointmentDate)} - {appointment.appointmentTime}
+															{formatDate(appointment.appointmentDate)} -{' '}
+															{appointment.appointmentTime}
 														</span>
 													</div>
 													{appointment.doctor && (
@@ -689,7 +737,9 @@ export function PatientAppointments({
 												</div>
 											</CardDescription>
 										</div>
-										<Badge className={appointmentStatusColors[appointment.status]}>
+										<Badge
+											className={appointmentStatusColors[appointment.status]}
+										>
 											{appointmentStatusLabels[appointment.status]}
 										</Badge>
 									</div>
@@ -697,7 +747,9 @@ export function PatientAppointments({
 								<CardContent>
 									<div className="space-y-3">
 										<div>
-											<span className="text-sm font-medium text-gray-600">Dịch vụ:</span>
+											<span className="text-sm font-medium text-gray-600">
+												Dịch vụ:
+											</span>
 											<div className="flex flex-wrap gap-2 mt-1">
 												{appointment.services.map((service, index) => (
 													<Badge key={index} variant="outline">
@@ -708,16 +760,21 @@ export function PatientAppointments({
 										</div>
 										{appointment.reason && (
 											<div>
-												<span className="text-sm font-medium text-gray-600">Lý do khám:</span>
+												<span className="text-sm font-medium text-gray-600">
+													Lý do khám:
+												</span>
 												<p className="text-sm mt-1">{appointment.reason}</p>
 											</div>
 										)}
-										{appointment.status === 'pending' || appointment.status === 'confirmed' ? (
+										{appointment.status === 'pending' ||
+										appointment.status === 'confirmed' ? (
 											<div className="flex gap-2 pt-2">
 												<Button
 													variant="outline"
 													size="sm"
-													onClick={() => handleCancelAppointment(appointment.id)}
+													onClick={() =>
+														handleCancelAppointment(appointment.id)
+													}
 												>
 													Hủy lịch hẹn
 												</Button>

@@ -43,7 +43,6 @@ export const getFunctionName = (tabId: string): string => {
 		records: 'Khách hàng',
 		doctor: 'Bác sĩ',
 		nurse: 'Điều dưỡng',
-		return: 'Trả khách hàng',
 	};
 	return functionNames[tabId] || 'Hệ thống quản lý phòng khám đa khoa Indica';
 };
