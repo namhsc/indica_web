@@ -451,9 +451,8 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 
 	// Self Check-in Handler
 	const handleGenerateQRPortal = () => {
-		const url = `https://indica-clinic.com/check-in/${Math.random()
-			.toString(36)
-			.substring(7)}`;
+		const baseUrl = window.location.origin;
+		const url = `${baseUrl}#booking`;
 		setPortalUrl(url);
 		setShowQRPortal(true);
 		setCopied(false);
@@ -794,7 +793,7 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 				<Dialog open={showQRPortal} onOpenChange={setShowQRPortal}>
 					<DialogContent className="sm:max-w-lg">
 						<DialogHeader>
-							<DialogTitle>Khách hàng tự check-in</DialogTitle>
+							<DialogTitle>Khách hàng đặt lịch</DialogTitle>
 							<DialogDescription>
 								Khách hàng quét mã QR này để tự nhập thông tin
 							</DialogDescription>
@@ -1171,7 +1170,7 @@ export function ReceptionForm({ onSubmit, onClose }: ReceptionFormProps) {
 			<Dialog open={showQRPortal} onOpenChange={setShowQRPortal}>
 				<DialogContent className="sm:max-w-lg">
 					<DialogHeader>
-						<DialogTitle>Khách hàng tự check-in</DialogTitle>
+						<DialogTitle>Khách hàng đặt lịch</DialogTitle>
 						<DialogDescription>
 							Khách hàng quét mã QR này để tự nhập thông tin
 						</DialogDescription>

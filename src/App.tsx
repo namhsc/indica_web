@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Toaster } from './components/ui/sonner';
+import { toast } from 'sonner';
 import { AIAssistant } from './components/AIAssistant';
 import { ReceptionForm } from './components/ReceptionForm';
 import { RecordList } from './components/RecordList';
@@ -14,60 +15,90 @@ import { AppSidebar } from './components/layout/AppSidebar';
 import { StaffManagement } from './components/StaffManagement';
 import { MedicationManagement } from './components/MedicationManagement';
 import { SpecialtyManagement } from './components/SpecialtyManagement';
+import { CustomerBookingPage } from './components/CustomerBookingPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Button } from './components/ui/button';
 import { Menu } from 'lucide-react';
-import {
-	MedicalRecord,
-	TestOrder,
-	TestType,
-	TreatmentPlan,
-	Appointment,
-	Notification,
-	Service,
-	ServicePackage,
-	Staff,
-	MedicationCatalog,
-	Specialty,
-} from './types';
-import {
-	generateMockRecords,
-	generateMockTestOrders,
-	generateMockTreatmentPlans,
-	generateMockTreatmentPlansForPatient,
-	generateDashboardStats,
-	generateMockAppointments,
-	generateMockAppointmentsForPatient,
-	generateMockNotifications,
-	mockServicesData,
-	mockServicePackagesData,
-	mockStaffData,
-	mockMedicationCatalogData,
-	mockSpecialtiesData,
-} from './lib/mockData';
+import { MedicalRecord } from './types';
+import { generateDashboardStats } from './lib/mockData';
 import { motion } from 'motion/react';
-import useDualSocket from './hook/useDualSocket';
+import useDualSocket from './hooks/useDualSocket';
+import { useMedicalData } from './hooks/useMedicalData';
+import { useAppHandlers } from './hooks/useAppHandlers';
+import { useTreatmentProgress } from './hooks/useTreatmentProgress';
+
+// Helper functions outside component
+const getExaminationDate = (record: MedicalRecord): string => {
+	const date = record.appointmentTime
+		? new Date(record.appointmentTime)
+		: new Date(record.createdAt);
+	return date.toLocaleDateString('vi-VN', {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric',
+	});
+};
+
+const getExaminationOrder = (
+	record: MedicalRecord,
+	records: MedicalRecord[],
+): number => {
+	const recordDate = record.appointmentTime
+		? new Date(record.appointmentTime).toDateString()
+		: new Date(record.createdAt).toDateString();
+
+	const sameDayRecords = records.filter((r) => {
+		const rDate = r.appointmentTime
+			? new Date(r.appointmentTime).toDateString()
+			: new Date(r.createdAt).toDateString();
+		return rDate === recordDate;
+	});
+
+	const sortedRecords = sameDayRecords.sort((a, b) => {
+		const aTime = a.appointmentTime
+			? new Date(a.appointmentTime).getTime()
+			: new Date(a.createdAt).getTime();
+		const bTime = b.appointmentTime
+			? new Date(b.appointmentTime).getTime()
+			: new Date(b.createdAt).getTime();
+		return aTime - bTime;
+	});
+
+	return sortedRecords.findIndex((r) => r.id === record.id) + 1;
+};
 
 function MainApp() {
 	const { user, isAuthenticated } = useAuth();
-	const [records, setRecords] = useState<MedicalRecord[]>([]);
-	const [testOrders, setTestOrders] = useState<TestOrder[]>([]);
-	const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([]);
-	const [appointments, setAppointments] = useState<Appointment[]>([]);
-	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(
 		null,
 	);
 	const [examiningRecordId, setExaminingRecordId] = useState<string | null>(
 		null,
 	);
-	const [services, setServices] = useState<Service[]>([]);
-	const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
-	const [staff, setStaff] = useState<Staff[]>([]);
-	const [medications, setMedications] = useState<MedicationCatalog[]>([]);
-	const [specialties, setSpecialties] = useState<Specialty[]>([]);
 	const [activeTab, setActiveTab] = useState('ai');
 	const [sidebarOpen, setSidebarOpen] = useState(true);
+	const [showBookingPage, setShowBookingPage] = useState(false);
+
+	// Custom hooks for data management
+	const medicalData = useMedicalData(user, isAuthenticated);
+	const {
+		records,
+		testOrders,
+		treatmentPlans,
+		appointments,
+		notifications,
+		staff,
+		medications,
+		specialties,
+	} = medicalData;
+
+	const handlers = useAppHandlers({
+		user,
+		...medicalData,
+	});
+
+	const { treatmentProgress, handleAddTreatmentProgress } =
+		useTreatmentProgress();
 
 	const {
 		messages,
@@ -79,431 +110,169 @@ function MainApp() {
 		isStreaming,
 	} = useDualSocket();
 
-	// Initialize with mock data
+	// Check for booking hash route
 	useEffect(() => {
-		if (isAuthenticated) {
-			const mockRecords = generateMockRecords();
-			setRecords(mockRecords);
-			setTestOrders(generateMockTestOrders());
-			setServices(mockServicesData);
-			setServicePackages(mockServicePackagesData);
-			setStaff(mockStaffData);
-		setMedications(mockMedicationCatalogData);
-		setSpecialties(mockSpecialtiesData);
-
-			// Generate appointments - if patient, generate specific appointments for them
-			if (user?.role === 'patient' && user?.fullName) {
-				const patientAppointments = generateMockAppointmentsForPatient(
-					user.fullName,
-					user.email,
-				);
-				// Also include some general appointments
-				const generalAppointments = generateMockAppointments();
-				setAppointments([...patientAppointments, ...generalAppointments]);
-			} else {
-				setAppointments(generateMockAppointments());
-			}
-
-			setNotifications(generateMockNotifications(user?.fullName));
-
-			// Generate treatment plans for examined records
-			let mockTreatmentPlans = generateMockTreatmentPlans(mockRecords);
-			let updatedRecords = mockRecords;
-
-			// If patient, also generate specific treatment plans for them
-			if (user?.role === 'patient' && user?.fullName) {
-				// Check if patient has records
-				const patientRecords = mockRecords.filter(
-					(r) => r.patient.fullName === user.fullName,
-				);
-
-				// If no records, we'll create a mock record in generateMockTreatmentPlansForPatient
-				// But we need to add it to the records list
-				const patientTreatmentPlans = generateMockTreatmentPlansForPatient(
-					user.fullName,
-					mockRecords,
-				);
-
-				// If patient has no records but has treatment plans, add the mock record
-				if (patientRecords.length === 0 && patientTreatmentPlans.length > 0) {
-					const treatmentPlan = patientTreatmentPlans[0];
-					const mockRecord: MedicalRecord = {
-						id: treatmentPlan.recordId,
-						receiveCode: `RC${Date.now()}`,
-						patient: {
-							id: `patient_${Date.now()}`,
-							fullName: user.fullName,
-							phoneNumber: '0900000000',
-							dateOfBirth: '1990-01-01',
-							gender: 'male',
-						},
-						reason: 'Khám tổng quát',
-						requestedServices: [],
-						status: 'COMPLETED_EXAMINATION',
-						assignedDoctor: {
-							id: 'doc1',
-							name: treatmentPlan.createdBy,
-							specialty: 'Nội khoa',
-						},
-						diagnosis: 'Khám sức khỏe tổng quát, cần theo dõi và điều trị',
-						createdAt: treatmentPlan.createdAt,
-						updatedAt: treatmentPlan.updatedAt || treatmentPlan.createdAt,
-						paymentStatus: 'completed',
-						totalAmount: 300000,
-						paidAmount: 300000,
-					};
-					updatedRecords = [...mockRecords, mockRecord];
-				}
-
-				mockTreatmentPlans = [...mockTreatmentPlans, ...patientTreatmentPlans];
-			}
-
-			setTreatmentPlans(mockTreatmentPlans);
-
-			// Update records with treatmentPlanId
-			const finalRecords = updatedRecords.map((record) => {
-				const treatmentPlan = mockTreatmentPlans.find(
-					(tp) => tp.recordId === record.id,
-				);
-				if (treatmentPlan) {
-					return {
-						...record,
-						treatmentPlanId: treatmentPlan.id,
-					};
-				}
-				return record;
-			});
-			setRecords(finalRecords);
+		if (window.location.hash === '#booking') {
+			setShowBookingPage(true);
 		}
-	}, [isAuthenticated, user]);
+
+		// Listen for hash changes
+		const handleHashChange = () => {
+			if (window.location.hash === '#booking') {
+				setShowBookingPage(true);
+			} else {
+				setShowBookingPage(false);
+			}
+		};
+
+		window.addEventListener('hashchange', handleHashChange);
+		return () => window.removeEventListener('hashchange', handleHashChange);
+	}, []);
 
 	// Auto-select default tab based on role
 	useEffect(() => {
-		if (user) {
+		if (user && !showBookingPage) {
 			// All roles default to AI Assistant
 			setActiveTab('ai');
 		}
-	}, [user]);
+	}, [user, showBookingPage]);
 
-	const handleCreateRecord = (
-		newRecordData: Omit<
-			MedicalRecord,
-			'id' | 'receiveCode' | 'createdAt' | 'updatedAt'
-		>,
-	) => {
-		const today = new Date();
-		const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-		const recordNumber = String(records.length + 1).padStart(3, '0');
-		const receiveCode = `RC${dateStr}${recordNumber}`;
+	// Memoized values
+	const stats = useMemo(() => generateDashboardStats(records), [records]);
 
-		const newRecord: MedicalRecord = {
-			...newRecordData,
-			id: String(Date.now()),
-			receiveCode,
-			createdAt: today.toISOString(),
-			updatedAt: today.toISOString(),
-		};
+	const unreadNotificationsCount = useMemo(
+		() => notifications.filter((n) => !n.read).length,
+		[notifications],
+	);
 
-		setRecords([newRecord, ...records]);
-	};
+	const examiningRecord = useMemo(
+		() => records.find((r) => r.id === examiningRecordId) || null,
+		[records, examiningRecordId],
+	);
 
-	const handleUpdateRecord = (
-		recordId: string,
-		updates: Partial<MedicalRecord>,
-	) => {
-		setRecords(
-			records.map((r) =>
-				r.id === recordId
-					? { ...r, ...updates, updatedAt: new Date().toISOString() }
-					: r,
-			),
-		);
-	};
+	const examiningTreatmentPlan = useMemo(
+		() =>
+			examiningRecord
+				? treatmentPlans.find((tp) => tp.recordId === examiningRecord.id)
+				: undefined,
+		[examiningRecord, treatmentPlans],
+	);
 
-	const handleCreateTestOrder = (
-		recordId: string,
-		testType: TestType,
-		testName: string,
-	) => {
-		const record = records.find((r) => r.id === recordId);
-		if (!record) return;
-
-		const newTestOrder: TestOrder = {
-			id: `t${Date.now()}`,
-			recordId,
-			receiveCode: record.receiveCode,
-			patientName: record.patient.fullName,
-			testType,
-			testName,
-			orderedBy: user?.fullName || 'Bác sĩ',
-			orderedAt: new Date().toISOString(),
-			status: 'pending',
-		};
-
-		setTestOrders([newTestOrder, ...testOrders]);
-	};
-
-	const handleUpdateTestOrder = (
-		orderId: string,
-		updates: Partial<TestOrder>,
-	) => {
-		setTestOrders(
-			testOrders.map((t) => (t.id === orderId ? { ...t, ...updates } : t)),
-		);
-	};
-
-	const handleCreateTreatmentPlan = (
-		planData: Omit<TreatmentPlan, 'id' | 'createdAt' | 'createdBy'>,
-	) => {
-		const newPlan: TreatmentPlan = {
-			...planData,
-			id: `tp_${Date.now()}`,
-			createdAt: new Date().toISOString(),
-			createdBy: user?.fullName || 'Bác sĩ',
-		};
-
-		setTreatmentPlans([...treatmentPlans, newPlan]);
-
-		// Update record with treatment plan ID
-		setRecords(
-			records.map((r) =>
-				r.id === planData.recordId
-					? {
-							...r,
-							treatmentPlanId: newPlan.id,
-							updatedAt: new Date().toISOString(),
-					  }
-					: r,
-			),
-		);
-	};
-
-	const handleUpdateTreatmentPlan = (plan: TreatmentPlan) => {
-		setTreatmentPlans(
-			treatmentPlans.map((tp) =>
-				tp.id === plan.id
-					? { ...plan, updatedAt: new Date().toISOString() }
-					: tp,
-			),
-		);
-	};
-
-	const handleCreateAppointment = (
-		appointmentData: Omit<
-			Appointment,
-			'id' | 'code' | 'createdAt' | 'updatedAt'
-		>,
-	) => {
-		const today = new Date();
-		const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-		const appointmentNumber = String(appointments.length + 1).padStart(3, '0');
-		const code = `LH${dateStr}${appointmentNumber}`;
-
-		const newAppointment: Appointment = {
-			...appointmentData,
-			id: `apt_${Date.now()}`,
-			code,
-			createdAt: today.toISOString(),
-			updatedAt: today.toISOString(),
-		};
-
-		setAppointments([...appointments, newAppointment]);
-	};
-
-	const handleUpdateAppointment = (
-		appointmentId: string,
-		updates: Partial<Appointment>,
-	) => {
-		setAppointments(
-			appointments.map((apt) =>
-				apt.id === appointmentId
-					? { ...apt, ...updates, updatedAt: new Date().toISOString() }
-					: apt,
-			),
-		);
-	};
-
-	const handleUpdateTreatmentPlanForPatient = (
-		planId: string,
-		updates: Partial<TreatmentPlan>,
-	) => {
-		setTreatmentPlans(
-			treatmentPlans.map((tp) =>
-				tp.id === planId
-					? { ...tp, ...updates, updatedAt: new Date().toISOString() }
-					: tp,
-			),
-		);
-	};
-
-	const [treatmentProgress, setTreatmentProgress] = useState<
-		Record<string, any[]>
-	>({});
-
-	const handleAddTreatmentProgress = (progress: {
-		treatmentPlanId: string;
-		medicationId?: string;
-		date: string;
-		status?: 'taken' | 'missed' | 'skipped';
-		notes?: string;
-		patientFeedback?: string;
-		vitalSigns?: {
-			bloodPressure?: {
-				systolic: number;
-				diastolic: number;
-				time?: string;
-			};
-			bloodSugar?: {
-				value: number;
-				type: 'fasting' | 'postprandial' | 'random';
-				time?: string;
-			};
-			heartRate?: number;
-			weight?: number;
-			temperature?: number;
-			oxygenSaturation?: number;
-			painLevel?: number;
-		};
-	}) => {
-		// If medicationId is provided, store as medication-specific progress
-		// Otherwise, store as daily update (general progress for the day)
-		const key = progress.medicationId
-			? `${progress.treatmentPlanId}_${progress.medicationId}`
-			: `${progress.treatmentPlanId}_daily_${progress.date}`;
-
-		const existingProgress = treatmentProgress[key] || [];
-
-		// Check if progress for this date already exists
-		const existingIndex = existingProgress.findIndex(
-			(p) => p.date === progress.date,
-		);
-
-		const newProgress = {
-			id: `progress_${Date.now()}`,
-			...progress,
-			createdAt: new Date().toISOString(),
-		};
-
-		if (existingIndex >= 0) {
-			// Update existing progress
-			existingProgress[existingIndex] = newProgress;
-		} else {
-			// Add new progress
-			existingProgress.push(newProgress);
-		}
-
-		setTreatmentProgress({
-			...treatmentProgress,
-			[key]: existingProgress,
-		});
-	};
-
-	const handleUpdateNotification = (
-		notificationId: string,
-		updates: Partial<Notification>,
-	) => {
-		setNotifications(
-			notifications.map((notif) =>
-				notif.id === notificationId ? { ...notif, ...updates } : notif,
-			),
-		);
-	};
-
-	// Staff handlers
-	const handleCreateStaff = (
-		staffData: Omit<Staff, 'id' | 'createdAt' | 'updatedAt'>,
-	) => {
-		const newStaff: Staff = {
-			...staffData,
-			id: `staff_${Date.now()}`,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-		};
-		setStaff([...staff, newStaff]);
-	};
-
-	const handleUpdateStaff = (id: string, updates: Partial<Staff>) => {
-		setStaff(
-			staff.map((s) =>
-				s.id === id
-					? { ...s, ...updates, updatedAt: new Date().toISOString() }
-					: s,
-			),
-		);
-	};
-
-	const handleDeleteStaff = (id: string) => {
-		setStaff(staff.filter((s) => s.id !== id));
-	};
-
-	// Medication handlers
-	const handleCreateMedication = (
-		medicationData: Omit<MedicationCatalog, 'id' | 'createdAt' | 'updatedAt'>,
-	) => {
-		const newMedication: MedicationCatalog = {
-			...medicationData,
-			id: `med_${Date.now()}`,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-		};
-		setMedications([...medications, newMedication]);
-	};
-
-	const handleUpdateMedication = (id: string, updates: Partial<MedicationCatalog>) => {
-		setMedications(
-			medications.map((m) =>
-				m.id === id
-					? { ...m, ...updates, updatedAt: new Date().toISOString() }
-					: m,
-			),
-		);
-	};
-
-	const handleDeleteMedication = (id: string) => {
-		setMedications(medications.filter((m) => m.id !== id));
-	};
-
-	// Specialty handlers
-	const handleCreateSpecialty = (
-		specialtyData: Omit<Specialty, 'id' | 'createdAt' | 'updatedAt'>,
-	) => {
-		const newSpecialty: Specialty = {
-			...specialtyData,
-			id: `spec_${Date.now()}`,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-		};
-		setSpecialties([...specialties, newSpecialty]);
-	};
-
-	const handleUpdateSpecialty = (id: string, updates: Partial<Specialty>) => {
-		setSpecialties(
-			specialties.map((s) =>
-				s.id === id
-					? { ...s, ...updates, updatedAt: new Date().toISOString() }
-					: s,
-			),
-		);
-	};
-
-	const handleDeleteSpecialty = (id: string) => {
-		setSpecialties(specialties.filter((s) => s.id !== id));
-	};
-
-
-	if (!isAuthenticated) {
-		return <LoginPage />;
-	}
-
-	const stats = generateDashboardStats(records);
-
-	const handleEndDemoClick = () => {
+	// Callbacks
+	const handleEndDemoClick = useCallback(() => {
 		// Xóa tất cả dữ liệu trong localStorage
 		localStorage.clear();
 
 		// Reload trang để reset về trạng thái ban đầu
 		window.location.reload();
-	};
+	}, []);
+
+	const handleTabChange = useCallback((tab: string) => {
+		setActiveTab(tab);
+		if (window.innerWidth < 1024) setSidebarOpen(false);
+	}, []);
+
+	const handleToggleSidebar = useCallback(() => {
+		setSidebarOpen((prev) => !prev);
+	}, []);
+
+	const handleOpenSidebar = useCallback(() => {
+		setSidebarOpen(true);
+	}, []);
+
+	const handleNewRecord = useCallback(() => {
+		setActiveTab('records');
+	}, []);
+
+	const handleViewRecords = useCallback(() => {
+		setActiveTab('records');
+	}, []);
+
+	const handleExamineRecord = useCallback((recordId: string) => {
+		setExaminingRecordId(recordId);
+	}, []);
+
+	const handleBackFromExamination = useCallback(() => {
+		setExaminingRecordId(null);
+	}, []);
+
+	const handleCloseRecordDetail = useCallback(() => {
+		setSelectedRecord(null);
+	}, []);
+
+	const getExaminationDateMemo = useCallback(
+		(record: MedicalRecord) => getExaminationDate(record),
+		[],
+	);
+
+	const getExaminationOrderMemo = useCallback(
+		(record: MedicalRecord) => getExaminationOrder(record, records),
+		[records],
+	);
+
+	if (!isAuthenticated && !showBookingPage) {
+		return <LoginPage />;
+	}
+
+	// Show booking page if booking query parameter exists (no auth required)
+	if (showBookingPage) {
+		return (
+			<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+				<Toaster position="top-right" />
+				<CustomerBookingPage
+					onSubmit={(record) => {
+						if (isAuthenticated && handlers.handleCreateRecord) {
+							// Nếu đã đăng nhập, tạo record trực tiếp
+							handlers.handleCreateRecord(record);
+							toast.success('Đặt lịch khám thành công!');
+							// Xóa hash và quay về trang chủ
+							window.history.replaceState({}, '', window.location.pathname);
+							setShowBookingPage(false);
+						} else {
+							// Nếu chưa đăng nhập, lưu vào localStorage để xử lý sau
+							const bookingId = `booking_${Date.now()}_${Math.random()
+								.toString(36)
+								.substring(7)}`;
+							const bookingData = {
+								id: bookingId,
+								record: record,
+								createdAt: new Date().toISOString(),
+								status: 'pending',
+							};
+
+							// Lấy danh sách booking hiện có
+							const existingBookings = JSON.parse(
+								localStorage.getItem('pendingBookings') || '[]',
+							);
+							existingBookings.push(bookingData);
+							localStorage.setItem(
+								'pendingBookings',
+								JSON.stringify(existingBookings),
+							);
+
+							toast.success(
+								'Đặt lịch khám thành công! Mã đặt lịch: ' +
+									bookingId.substring(8, 16).toUpperCase() +
+									'. Vui lòng chờ xác nhận từ phòng khám.',
+							);
+
+							// Xóa hash và quay về trang chủ
+							window.history.replaceState({}, '', window.location.pathname);
+							setShowBookingPage(false);
+						}
+					}}
+					onBack={() => {
+						window.history.replaceState({}, '', window.location.pathname);
+						setShowBookingPage(false);
+					}}
+				/>
+			</div>
+		);
+	}
+
+	if (!isAuthenticated) {
+		return <LoginPage />;
+	}
 
 	return (
 		<div className="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden">
@@ -513,13 +282,10 @@ function MainApp() {
 				<AppSidebar
 					isOpen={sidebarOpen}
 					activeTab={activeTab}
-					onTabChange={(tab) => {
-						setActiveTab(tab);
-						if (window.innerWidth < 1024) setSidebarOpen(false);
-					}}
-					onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+					onTabChange={handleTabChange}
+					onToggleSidebar={handleToggleSidebar}
 					userRole={user?.role}
-					unreadNotificationsCount={notifications.filter((n) => !n.read).length}
+					unreadNotificationsCount={unreadNotificationsCount}
 				/>
 
 				{/* Main Content Area */}
@@ -530,7 +296,7 @@ function MainApp() {
 							<Button
 								variant="ghost"
 								size="icon"
-								onClick={() => setSidebarOpen(true)}
+								onClick={handleOpenSidebar}
 								className="lg:hidden"
 							>
 								<Menu className="h-5 w-5" />
@@ -557,10 +323,8 @@ function MainApp() {
 							>
 								<AIAssistant
 									stats={stats}
-									onNewRecord={() => setActiveTab('records')}
-									onViewRecords={() => {
-										setActiveTab('records');
-									}}
+									onNewRecord={handleNewRecord}
+									onViewRecords={handleViewRecords}
 									userRole={user?.role || 'receptionist'}
 									handSendMessage={sendMessage}
 									messagesAI={messages}
@@ -580,94 +344,45 @@ function MainApp() {
 								<RecordList
 									records={records}
 									onViewRecord={setSelectedRecord}
-									onCreateRecord={handleCreateRecord}
+									onCreateRecord={handlers.handleCreateRecord}
 								/>
 							</RoleGuard>
 						)}
 
-					{activeTab === 'doctor' && !examiningRecordId && (
-						<RoleGuard allowedRoles={['admin', 'doctor']}>
-							<DoctorWorkspace
-								records={records}
-								treatmentPlans={treatmentPlans}
-								onUpdateRecord={handleUpdateRecord}
-								onCreateTestOrder={handleCreateTestOrder}
-								onCreateTreatmentPlan={handleCreateTreatmentPlan}
-								onUpdateTreatmentPlan={handleUpdateTreatmentPlan}
-								onExamineRecord={(recordId) => setExaminingRecordId(recordId)}
-							/>
-						</RoleGuard>
-					)}
+						{activeTab === 'doctor' && !examiningRecordId && (
+							<RoleGuard allowedRoles={['admin', 'doctor']}>
+								<DoctorWorkspace
+									records={records}
+									treatmentPlans={treatmentPlans}
+									onUpdateRecord={handlers.handleUpdateRecord}
+									onCreateTestOrder={handlers.handleCreateTestOrder}
+									onCreateTreatmentPlan={handlers.handleCreateTreatmentPlan}
+									onUpdateTreatmentPlan={handlers.handleUpdateTreatmentPlan}
+									onExamineRecord={handleExamineRecord}
+								/>
+							</RoleGuard>
+						)}
 
-					{activeTab === 'doctor' && examiningRecordId && (
-						<RoleGuard allowedRoles={['admin', 'doctor']}>
-							{(() => {
-								const record = records.find(
-									(r) => r.id === examiningRecordId,
-								);
-								if (!record) return null;
-
-								const getExaminationDate = (record: MedicalRecord): string => {
-									const date = record.appointmentTime
-										? new Date(record.appointmentTime)
-										: new Date(record.createdAt);
-									return date.toLocaleDateString('vi-VN', {
-										day: '2-digit',
-										month: '2-digit',
-										year: 'numeric',
-									});
-								};
-
-								const getExaminationOrder = (record: MedicalRecord): number => {
-									const recordDate = record.appointmentTime
-										? new Date(record.appointmentTime).toDateString()
-										: new Date(record.createdAt).toDateString();
-
-									const sameDayRecords = records.filter((r) => {
-										const rDate = r.appointmentTime
-											? new Date(r.appointmentTime).toDateString()
-											: new Date(r.createdAt).toDateString();
-										return rDate === recordDate;
-									});
-
-									const sortedRecords = sameDayRecords.sort((a, b) => {
-										const aTime = a.appointmentTime
-											? new Date(a.appointmentTime).getTime()
-											: new Date(a.createdAt).getTime();
-										const bTime = b.appointmentTime
-											? new Date(b.appointmentTime).getTime()
-											: new Date(b.createdAt).getTime();
-										return aTime - bTime;
-									});
-
-									return sortedRecords.findIndex((r) => r.id === record.id) + 1;
-								};
-
-								return (
-									<ExaminationDetail
-										record={record}
-										treatmentPlan={treatmentPlans.find(
-											(tp) => tp.recordId === record.id,
-										)}
-										doctorName={
-											record.assignedDoctor?.name || 'Bác sĩ'
-										}
-										onBack={() => setExaminingRecordId(null)}
-										onCreateTreatmentPlan={handleCreateTreatmentPlan}
-										onUpdateTreatmentPlan={handleUpdateTreatmentPlan}
-										getExaminationDate={getExaminationDate}
-										getExaminationOrder={getExaminationOrder}
-									/>
-								);
-							})()}
-						</RoleGuard>
-					)}
+						{activeTab === 'doctor' && examiningRecord && (
+							<RoleGuard allowedRoles={['admin', 'doctor']}>
+								<ExaminationDetail
+									record={examiningRecord}
+									treatmentPlan={examiningTreatmentPlan}
+									doctorName={examiningRecord.assignedDoctor?.name || 'Bác sĩ'}
+									onBack={handleBackFromExamination}
+									onCreateTreatmentPlan={handlers.handleCreateTreatmentPlan}
+									onUpdateTreatmentPlan={handlers.handleUpdateTreatmentPlan}
+									getExaminationDate={getExaminationDateMemo}
+									getExaminationOrder={getExaminationOrderMemo}
+								/>
+							</RoleGuard>
+						)}
 
 						{activeTab === 'nurse' && (
 							<RoleGuard allowedRoles={['admin', 'nurse']}>
 								<TechnicianWorkspace
 									testOrders={testOrders}
-									onUpdateTestOrder={handleUpdateTestOrder}
+									onUpdateTestOrder={handlers.handleUpdateTestOrder}
 								/>
 							</RoleGuard>
 						)}
@@ -679,7 +394,9 @@ function MainApp() {
 									records={records}
 									treatmentPlans={treatmentPlans}
 									treatmentProgress={treatmentProgress}
-									onUpdateTreatmentPlan={handleUpdateTreatmentPlanForPatient}
+									onUpdateTreatmentPlan={
+										handlers.handleUpdateTreatmentPlanForPatient
+									}
 									onAddTreatmentProgress={handleAddTreatmentProgress}
 								/>
 							</RoleGuard>
@@ -690,9 +407,9 @@ function MainApp() {
 								<StaffManagement
 									staff={staff}
 									specialties={specialties}
-									onCreate={handleCreateStaff}
-									onUpdate={handleUpdateStaff}
-									onDelete={handleDeleteStaff}
+									onCreate={handlers.handleCreateStaff}
+									onUpdate={handlers.handleUpdateStaff}
+									onDelete={handlers.handleDeleteStaff}
 								/>
 							</RoleGuard>
 						)}
@@ -701,9 +418,9 @@ function MainApp() {
 							<RoleGuard allowedRoles={['admin']}>
 								<MedicationManagement
 									medications={medications}
-									onCreate={handleCreateMedication}
-									onUpdate={handleUpdateMedication}
-									onDelete={handleDeleteMedication}
+									onCreate={handlers.handleCreateMedication}
+									onUpdate={handlers.handleUpdateMedication}
+									onDelete={handlers.handleDeleteMedication}
 								/>
 							</RoleGuard>
 						)}
@@ -712,13 +429,12 @@ function MainApp() {
 							<RoleGuard allowedRoles={['admin']}>
 								<SpecialtyManagement
 									specialties={specialties}
-									onCreate={handleCreateSpecialty}
-									onUpdate={handleUpdateSpecialty}
-									onDelete={handleDeleteSpecialty}
+									onCreate={handlers.handleCreateSpecialty}
+									onUpdate={handlers.handleUpdateSpecialty}
+									onDelete={handlers.handleDeleteSpecialty}
 								/>
 							</RoleGuard>
 						)}
-
 					</motion.div>
 				</main>
 			</div>
@@ -728,7 +444,7 @@ function MainApp() {
 				record={selectedRecord}
 				testOrders={testOrders}
 				treatmentPlans={treatmentPlans}
-				onClose={() => setSelectedRecord(null)}
+				onClose={handleCloseRecordDetail}
 			/>
 		</div>
 	);

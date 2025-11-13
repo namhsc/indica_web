@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent } from './ui/card';
 import { motion } from 'motion/react';
 import { DashboardStats } from '../types';
@@ -9,7 +9,7 @@ import { AIHeader } from './AIAssistant/AIHeader';
 import { MessageList } from './AIAssistant/MessageList';
 import { ChatInput } from './AIAssistant/ChatInput';
 import { mapSuggestionToFullMessage } from './AIAssistant/suggestionMapper';
-import { ChatMessageAI } from '../hook/useDualSocket';
+import { ChatMessageAI } from '../hooks/useDualSocket';
 
 interface AIAssistantProps {
 	stats: DashboardStats;
@@ -40,88 +40,80 @@ export function AIAssistant({
 }: AIAssistantProps) {
 	const aiConfig = getAIConfig(userRole);
 
-	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState('');
-	// const [isTyping, setIsTyping] = useState(false);
 
-	useEffect(() => {
-		console.log('isStreaming', isStreaming);
-		if (!messagesAI.length) {
-			setMessages([
-				{
-					id: '1',
-					type: 'ai',
-					content: aiConfig.greeting,
-					timestamp: new Date(),
-					suggestions: aiConfig.suggestions,
-				},
-			]);
-		} else {
-			setMessages([
-				{
-					id: '1',
-					type: 'ai',
-					content: aiConfig.greeting,
-					timestamp: new Date(),
-					suggestions: aiConfig.suggestions,
-				},
-				...messagesAI.map((itemMess: ChatMessageAI) => {
-					const { content } = itemMess;
-					const inforCretor = JSON.parse(content.author);
-					const isUser = inforCretor.type === 'user';
-					const rawText = content.content;
+	// Memoized greeting message
+	const greetingMessage = useMemo(
+		() => ({
+			id: '1',
+			type: 'ai' as const,
+			content: aiConfig.greeting,
+			timestamp: new Date(),
+			suggestions: aiConfig.suggestions,
+		}),
+		[aiConfig.greeting, aiConfig.suggestions],
+	);
 
-					// Chỉ trích xuất gợi ý và loại bỏ dấu ngoặc khi là tin nhắn từ AI
-					// const matches = isUser ? [] : rawText.match(/\(([^)]+)\)/g) || [];
-					// const suggestionIds = matches.map((m) => m.slice(1, -1));
-					// const suggestions = suggestionIds
-					//   .map((id) => menuData.find((item) => item.id === id))
-					//   .filter(Boolean) as MenuItem[];
-					const displayText = isUser
-						? rawText
-						: rawText.replace(/\s*\([^)]*\)/g, '');
+	// Memoized messages transformation
+	const messages = useMemo(() => {
+		const transformedMessages = messagesAI.map((itemMess: ChatMessageAI) => {
+			const { content } = itemMess;
+			const inforCretor = JSON.parse(content.author);
+			const isUser = inforCretor.type === 'user';
+			const rawText = content.content;
 
-					return {
-						id: content.id,
-						content: displayText,
-						type: (isUser ? 'user' : 'ai') as 'user' | 'ai',
-						timestamp: new Date(content.created_at),
-					};
-				}),
-				// Thêm streaming message nếu đang streaming
-				...(isStreaming && streamingMessage
-					? [
-							{
-								id: 'streaming',
-								content: streamingMessage,
-								type: 'ai',
-								timestamp: new Date(),
-							},
-					  ]
-					: []),
-			]);
-		}
-	}, [messagesAI, streamingMessage, isStreaming]);
+			const displayText = isUser
+				? rawText
+				: rawText.replace(/\s*\([^)]*\)/g, '');
 
-	const sendMessage = (message: string) => {
-		if (!message.trim()) return;
+			return {
+				id: content.id,
+				content: displayText,
+				type: (isUser ? 'user' : 'ai') as 'user' | 'ai',
+				timestamp: new Date(content.created_at),
+			};
+		});
 
-		const userInput = message.trim();
-		handSendMessage(userInput);
-		setIsTyping(true);
-	};
+		const streamingMsg =
+			isStreaming && streamingMessage
+				? [
+						{
+							id: 'streaming',
+							content: streamingMessage,
+							type: 'ai' as const,
+							timestamp: new Date(),
+						},
+				  ]
+				: [];
 
-	const handleSend = () => {
+		return [greetingMessage, ...transformedMessages, ...streamingMsg];
+	}, [messagesAI, streamingMessage, isStreaming, greetingMessage]);
+
+	const sendMessage = useCallback(
+		(message: string) => {
+			if (!message.trim()) return;
+
+			const userInput = message.trim();
+			handSendMessage(userInput);
+			setIsTyping(true);
+		},
+		[handSendMessage, setIsTyping],
+	);
+
+	const handleSend = useCallback(() => {
 		if (!input.trim()) return;
 		const userInput = input.trim();
 		setInput('');
 		sendMessage(userInput);
-	};
+	}, [input, sendMessage]);
 
-	const handleSuggestionClick = (suggestion: string) => {
-		const fullMessage = mapSuggestionToFullMessage(suggestion);
-		sendMessage(fullMessage);
-	};
+	const handleSuggestionClick = useCallback(
+		(suggestion: string) => {
+			const fullMessage = mapSuggestionToFullMessage(suggestion);
+			sendMessage(fullMessage);
+		},
+		[sendMessage],
+	);
 
 	return (
 		<div className="h-full flex flex-col">

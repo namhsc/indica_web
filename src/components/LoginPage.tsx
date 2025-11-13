@@ -24,7 +24,6 @@ import {
 import logo from '@/assets/images/logo.svg';
 import { mockUsers } from '../lib/authData';
 import { motion, AnimatePresence } from 'motion/react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
 import { toast } from 'sonner@2.0.3';
 
 export function LoginPage() {
@@ -101,11 +100,6 @@ export function LoginPage() {
 		<div className="min-h-screen relative overflow-hidden">
 			{/* Background Image with Overlay */}
 			<div className="absolute inset-0">
-				<ImageWithFallback
-					src="https://images.unsplash.com/photo-1758691463610-3c2ecf5fb3fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWRpY2FsJTIwY2xpbmljJTIwbW9kZXJufGVufDF8fHx8MTc2MjMwOTU3NXww&ixlib=rb-4.1.0&q=80&w=1080"
-					alt="Medical Clinic Background"
-					className="w-full h-full object-cover"
-				/>
 				<div className="absolute inset-0 bg-gradient-to-br from-blue-900/95 via-indigo-900/90 to-purple-900/95 backdrop-blur-[2px]" />
 
 				{/* Animated particles */}

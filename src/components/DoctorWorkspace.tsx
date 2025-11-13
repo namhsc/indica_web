@@ -177,7 +177,7 @@ export function DoctorWorkspace({
 				</div>
 				<div className="flex items-center gap-3">
 					<div className="px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm">
-						<span className="text-sm text-gray-600">Tổng:</span>
+						<span className="text-sm text-gray-600 font-medium">Tổng:</span>
 						<span className="text-sm ml-1">{totalItems}</span>
 					</div>
 					{onDeleteRecord && selectedItems.size > 0 && (
