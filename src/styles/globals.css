@@ -438,3 +438,6 @@ html {
 .bg-delete-btn {
 	background-color: #d4183d !important;
 }
+.bg-radio-selected {
+	background-color: #2563eb !important;
+}

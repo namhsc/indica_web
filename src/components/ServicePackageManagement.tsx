@@ -916,7 +916,7 @@ export function ServicePackageManagement({
 										/>
 									</div>
 								</div>
-								<div className="flex items-center space-x-2 gap-2">
+								<div className="flex items-center space-x-2">
 									<input
 										type="checkbox"
 										id="isActive"
