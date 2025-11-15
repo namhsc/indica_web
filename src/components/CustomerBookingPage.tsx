@@ -740,38 +740,55 @@ export function CustomerBookingPage({
 													</div>
 
 													<div className="space-y-2">
-														<Label htmlFor="gender">
+														<Label>
 															Giới tính <span className="text-red-500">*</span>
 														</Label>
-														<Select
-															value={formData.gender}
-															onValueChange={(value) => {
-																setFormData({
-																	...formData,
-																	gender: value as Gender,
-																});
-																if (errors.gender) {
-																	setErrors({ ...errors, gender: false });
-																}
-															}}
+														<div
+															className={`rounded-md p-2 ${
+																errors.gender
+																	? 'border-2 border-red-500 bg-red-50'
+																	: ''
+															}`}
 														>
-															<SelectTrigger
-																className={`border-gray-300 text-base md:text-sm ${
-																	errors.gender
-																		? 'border-red-500 bg-red-50'
-																		: ''
-																}`}
+															<RadioGroup
+																value={formData.gender}
+																onValueChange={(value) => {
+																	setFormData({
+																		...formData,
+																		gender: value as Gender,
+																	});
+																	if (errors.gender) {
+																		setErrors({ ...errors, gender: false });
+																	}
+																}}
+																className="flex flex-row gap-6"
 															>
-																<SelectValue
-																	placeholder="Chọn giới tính"
-																	className="text-base md:text-sm"
-																/>
-															</SelectTrigger>
-															<SelectContent>
-																<SelectItem value="male">Nam</SelectItem>
-																<SelectItem value="female">Nữ</SelectItem>
-															</SelectContent>
-														</Select>
+																<div className="flex items-center space-x-2">
+																	<RadioGroupItem
+																		value="male"
+																		id="gender-male"
+																	/>
+																	<Label
+																		htmlFor="gender-male"
+																		className="cursor-pointer px-2"
+																	>
+																		Nam
+																	</Label>
+																</div>
+																<div className="flex items-center space-x-2">
+																	<RadioGroupItem
+																		value="female"
+																		id="gender-female"
+																	/>
+																	<Label
+																		htmlFor="gender-female"
+																		className="cursor-pointer px-2"
+																	>
+																		Nữ
+																	</Label>
+																</div>
+															</RadioGroup>
+														</div>
 													</div>
 
 													<div className="space-y-2">
