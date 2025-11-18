@@ -16,6 +16,9 @@ import { StaffManagement } from './components/StaffManagement';
 import { MedicationManagement } from './components/MedicationManagement';
 import { SpecialtyManagement } from './components/SpecialtyManagement';
 import { CustomerBookingPage } from './components/CustomerBookingPage';
+import { CustomerManagement } from './components/CustomerManagement';
+import { AppointmentManagement } from './components/AppointmentManagement';
+import { TaskManagement } from './components/TaskManagement/TaskManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Button } from './components/ui/button';
 import { Menu } from 'lucide-react';
@@ -26,6 +29,7 @@ import useDualSocket from './hooks/useDualSocket';
 import { useMedicalData } from './hooks/useMedicalData';
 import { useAppHandlers } from './hooks/useAppHandlers';
 import { useTreatmentProgress } from './hooks/useTreatmentProgress';
+import { useTaskManagement } from './hooks/useTaskManagement';
 
 // Helper functions outside component
 const getExaminationDate = (record: MedicalRecord): string => {
@@ -90,6 +94,7 @@ function MainApp() {
 		staff,
 		medications,
 		specialties,
+		customers,
 	} = medicalData;
 
 	const handlers = useAppHandlers({
@@ -187,6 +192,25 @@ function MainApp() {
 	const handleViewRecords = useCallback(() => {
 		setActiveTab('records');
 	}, []);
+
+	const handleViewTasks = useCallback(() => {
+		setActiveTab('tasks');
+	}, []);
+
+	// Task management hook
+	const taskManagement = useTaskManagement({
+		userId: user?.id || '',
+		userName: user?.name || 'Người dùng',
+		userRole: user?.role || 'receptionist',
+	});
+
+	const handleCreateTask = useCallback(
+		(taskData: any) => {
+			taskManagement.createTask(taskData);
+			toast.success('Đã tạo công việc thành công!');
+		},
+		[taskManagement],
+	);
 
 	const handleExamineRecord = useCallback((recordId: string) => {
 		setExaminingRecordId(recordId);
@@ -325,6 +349,13 @@ function MainApp() {
 									stats={stats}
 									onNewRecord={handleNewRecord}
 									onViewRecords={handleViewRecords}
+									onViewTasks={handleViewTasks}
+									onCreateTask={handleCreateTask}
+									currentUser={
+										user
+											? { id: user.id, name: user.name, role: user.role }
+											: undefined
+									}
 									userRole={user?.role || 'receptionist'}
 									handSendMessage={sendMessage}
 									messagesAI={messages}
@@ -334,6 +365,20 @@ function MainApp() {
 									isStreaming={isStreaming}
 									onEndDemo={handleEndDemoClick}
 								/>
+							</RoleGuard>
+						)}
+
+						{activeTab === 'tasks' && (
+							<RoleGuard
+								allowedRoles={[
+									'admin',
+									'receptionist',
+									'doctor',
+									'nurse',
+									'patient',
+								]}
+							>
+								<TaskManagement taskManagement={taskManagement} />
 							</RoleGuard>
 						)}
 
@@ -432,6 +477,29 @@ function MainApp() {
 									onCreate={handlers.handleCreateSpecialty}
 									onUpdate={handlers.handleUpdateSpecialty}
 									onDelete={handlers.handleDeleteSpecialty}
+								/>
+							</RoleGuard>
+						)}
+
+						{activeTab === 'customers' && (
+							<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}>
+								<CustomerManagement
+									customers={customers}
+									onCreate={handlers.handleCreateCustomer}
+									onUpdate={handlers.handleUpdateCustomer}
+									onDelete={handlers.handleDeleteCustomer}
+								/>
+							</RoleGuard>
+						)}
+
+						{activeTab === 'appointments' && (
+							<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}>
+								<AppointmentManagement
+									appointments={appointments}
+									customers={customers}
+									onCreate={handlers.handleCreateAppointment}
+									onUpdate={handlers.handleUpdateAppointment}
+									onDelete={handlers.handleDeleteAppointment}
 								/>
 							</RoleGuard>
 						)}

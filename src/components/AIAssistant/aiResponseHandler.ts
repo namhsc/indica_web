@@ -1,6 +1,7 @@
 import { UserRole } from '../../types/auth';
 import { DashboardStats } from '../../types';
 import { Message } from './types';
+import { parseTaskFromConversation, generateTaskCreationResponse } from '../TaskManagement/taskAIHandler';
 
 export interface AIResponseHandlerProps {
 	userInput: string;
@@ -8,6 +9,9 @@ export interface AIResponseHandlerProps {
 	stats: DashboardStats;
 	onNewRecord: () => void;
 	onViewRecords: () => void;
+	onCreateTask?: (taskData: any) => void;
+	onViewTasks?: () => void;
+	currentUser?: { id: string; name: string; role: UserRole };
 }
 
 export const handleAIResponse = ({
@@ -16,8 +20,59 @@ export const handleAIResponse = ({
 	stats,
 	onNewRecord,
 	onViewRecords,
-}: AIResponseHandlerProps): { content: string; suggestions?: string[] } => {
+	onCreateTask,
+	onViewTasks,
+	currentUser,
+}: AIResponseHandlerProps): { content: string; suggestions?: string[]; taskCreated?: boolean } => {
 	const lowerInput = userInput.toLowerCase();
+
+	// Xử lý yêu cầu tạo công việc
+	if (currentUser && onCreateTask) {
+		const parsedTask = parseTaskFromConversation(
+			userInput,
+			currentUser,
+			undefined,
+		);
+
+		if (parsedTask) {
+			// Tạo công việc
+			const taskData = {
+				...parsedTask,
+				assignedTo: {
+					id: currentUser.id,
+					name: currentUser.name,
+					role: currentUser.role,
+				},
+			};
+
+			onCreateTask(taskData);
+
+			// Tạo phản hồi
+			const response = generateTaskCreationResponse(parsedTask);
+			return {
+				...response,
+				taskCreated: true,
+				suggestions: [
+					...response.suggestions || [],
+					'Xem danh sách công việc',
+				],
+			};
+		}
+	}
+
+	// Xử lý yêu cầu xem công việc
+	if (
+		(lowerInput.includes('công việc') || lowerInput.includes('task') || lowerInput.includes('todo')) &&
+		(lowerInput.includes('xem') || lowerInput.includes('danh sách') || lowerInput.includes('list'))
+	) {
+		if (onViewTasks) {
+			onViewTasks();
+		}
+		return {
+			content: 'Đang mở danh sách công việc của bạn...',
+			suggestions: ['Xem công việc ưu tiên cao', 'Xem công việc quá hạn'],
+		};
+	}
 
 	// Common responses for all roles
 	if (lowerInput.includes('thống kê') || lowerInput.includes('báo cáo')) {

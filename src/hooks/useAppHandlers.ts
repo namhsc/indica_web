@@ -9,6 +9,7 @@ import {
 	Staff,
 	MedicationCatalog,
 	Specialty,
+	Customer,
 } from '../types';
 import { User } from '../types/auth';
 
@@ -30,6 +31,8 @@ interface UseAppHandlersProps {
 	setMedications: React.Dispatch<React.SetStateAction<MedicationCatalog[]>>;
 	specialties: Specialty[];
 	setSpecialties: React.Dispatch<React.SetStateAction<Specialty[]>>;
+	customers: Customer[];
+	setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
 }
 
 export function useAppHandlers({
@@ -50,6 +53,8 @@ export function useAppHandlers({
 	setMedications,
 	specialties,
 	setSpecialties,
+	customers,
+	setCustomers,
 }: UseAppHandlersProps) {
 	const handleCreateRecord = useCallback(
 		(
@@ -329,6 +334,41 @@ export function useAppHandlers({
 		[setSpecialties],
 	);
 
+	// Customer handlers
+	const handleCreateCustomer = useCallback(
+		(customerData: Omit<Customer, 'id'>) => {
+			const newCustomer: Customer = {
+				...customerData,
+				id: `customer_${Date.now()}`,
+			};
+			setCustomers((prev) => [...prev, newCustomer]);
+		},
+		[setCustomers],
+	);
+
+	const handleUpdateCustomer = useCallback(
+		(id: string, updates: Partial<Customer>) => {
+			setCustomers((prev) =>
+				prev.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+			);
+		},
+		[setCustomers],
+	);
+
+	const handleDeleteCustomer = useCallback(
+		(id: string) => {
+			setCustomers((prev) => prev.filter((c) => c.id !== id));
+		},
+		[setCustomers],
+	);
+
+	const handleDeleteAppointment = useCallback(
+		(id: string) => {
+			setAppointments((prev) => prev.filter((apt) => apt.id !== id));
+		},
+		[setAppointments],
+	);
+
 	return {
 		handleCreateRecord,
 		handleUpdateRecord,
@@ -338,6 +378,7 @@ export function useAppHandlers({
 		handleUpdateTreatmentPlan,
 		handleCreateAppointment,
 		handleUpdateAppointment,
+		handleDeleteAppointment,
 		handleUpdateTreatmentPlanForPatient,
 		handleUpdateNotification,
 		handleCreateStaff,
@@ -349,6 +390,9 @@ export function useAppHandlers({
 		handleCreateSpecialty,
 		handleUpdateSpecialty,
 		handleDeleteSpecialty,
+		handleCreateCustomer,
+		handleUpdateCustomer,
+		handleDeleteCustomer,
 	};
 }
 

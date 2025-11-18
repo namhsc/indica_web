@@ -19,6 +19,7 @@ import {
 	Settings,
 	Building2,
 	Briefcase,
+	ListTodo,
 } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import logo from '@/assets/images/logo.svg';
@@ -49,6 +50,12 @@ const navigationItems: NavigationItem[] = [
 		label: 'Trợ lý AI',
 		icon: LayoutDashboard,
 		roles: ['admin', 'receptionist', 'doctor', 'nurse'],
+	},
+	{
+		id: 'tasks',
+		label: 'Công việc',
+		icon: ListTodo,
+		roles: ['admin', 'receptionist', 'doctor', 'nurse', 'patient'],
 	},
 	{
 		id: 'records',
@@ -91,6 +98,12 @@ const navigationItems: NavigationItem[] = [
 		id: 'ai',
 		label: 'Trợ lý AI',
 		icon: LayoutDashboard,
+		roles: ['patient'],
+	},
+	{
+		id: 'tasks',
+		label: 'Công việc',
+		icon: ListTodo,
 		roles: ['patient'],
 	},
 	{

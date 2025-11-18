@@ -21,7 +21,8 @@ export type UserRole =
 	| 'patient'
 	| 'super_admin';
 
-export interface Patient {
+// Customer interface - đại diện cho khách hàng của phòng khám
+export interface Customer {
 	id: string;
 	fullName: string;
 	phoneNumber: string;
@@ -29,10 +30,13 @@ export interface Patient {
 	gender: Gender;
 	address?: string;
 	email?: string;
-	customerId?: string;
-	cccdNumber?: string;
-	insurance?: string;
+	customerId?: string; // Mã khách hàng
+	cccdNumber?: string; // Số CCCD/CMND
+	insurance?: string; // Bảo hiểm y tế
 }
+
+// Alias để tương thích với code cũ
+export type Patient = Customer;
 
 export interface MedicalRecord {
 	id: string;
@@ -145,14 +149,7 @@ export interface DashboardStats {
 export interface Appointment {
 	id: string;
 	code: string;
-	patientName: string;
-	phoneNumber: string;
-	dateOfBirth: string;
-	gender: Gender;
-	email?: string;
-	address?: string;
-	customerId?: string;
-	insurance?: string;
+	customerId: string; // Tham chiếu đến khách hàng (Customer.id)
 	appointmentDate: string;
 	appointmentTime: string;
 	services: string[];
@@ -305,3 +302,82 @@ export interface Position extends Category {}
 
 // Chuyên khoa
 export interface Specialty extends Category {}
+
+// ============================================
+// QUẢN LÝ CÔNG VIỆC (TASK/TODO SYSTEM)
+// ============================================
+
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
+
+export type TaskType = 'personal' | 'assigned'; // Công việc cá nhân hoặc được giao
+
+export interface Task {
+	id: string;
+	title: string;
+	description?: string;
+	type: TaskType;
+	status: TaskStatus;
+	priority: TaskPriority;
+	dueDate?: string; // ISO date string
+	dueTime?: string; // HH:mm format
+	assignedBy?: {
+		id: string;
+		name: string;
+		role: UserRole;
+	}; // Người giao việc (nếu là công việc được giao)
+	assignedTo: {
+		id: string;
+		name: string;
+		role: UserRole;
+	}; // Người được giao việc
+	category?: string; // Phân loại công việc
+	tags?: string[]; // Tags để tìm kiếm và lọc
+	createdAt: string;
+	updatedAt: string;
+	completedAt?: string;
+	rejectedAt?: string;
+	rejectionReason?: string;
+	estimatedDuration?: number; // Thời gian ước tính (phút)
+	actualDuration?: number; // Thời gian thực tế (phút)
+	notes?: string; // Ghi chú thêm
+	reminderEnabled: boolean;
+	reminderTime?: string; // Thời gian nhắc nhở (HH:mm)
+	reminderDate?: string; // Ngày nhắc nhở (ISO date string)
+	aiGenerated: boolean; // Đánh dấu công việc được tạo bởi AI
+	aiContext?: string; // Ngữ cảnh từ hội thoại AI
+}
+
+export interface TaskReminder {
+	id: string;
+	taskId: string;
+	reminderDate: string; // ISO date string
+	reminderTime: string; // HH:mm format
+	message: string;
+	sent: boolean;
+	sentAt?: string;
+	createdAt: string;
+}
+
+export interface TaskHistory {
+	id: string;
+	taskId: string;
+	action: 'created' | 'updated' | 'status_changed' | 'priority_changed' | 'completed' | 'rejected' | 'accepted';
+	userId: string;
+	userName: string;
+	changes?: Record<string, { old: any; new: any }>; // Chi tiết thay đổi
+	timestamp: string;
+	note?: string;
+}
+
+export interface TaskStats {
+	total: number;
+	pending: number;
+	inProgress: number;
+	completed: number;
+	overdue: number;
+	highPriority: number;
+	assigned: number; // Công việc được giao
+	personal: number; // Công việc cá nhân
+}

@@ -10,11 +10,15 @@ import { MessageList } from './AIAssistant/MessageList';
 import { ChatInput } from './AIAssistant/ChatInput';
 import { mapSuggestionToFullMessage } from './AIAssistant/suggestionMapper';
 import { ChatMessageAI } from '../hooks/useDualSocket';
+import { parseTaskFromConversation } from './TaskManagement/taskAIHandler';
 
 interface AIAssistantProps {
 	stats: DashboardStats;
 	onNewRecord: () => void;
 	onViewRecords: () => void;
+	onViewTasks?: () => void;
+	onCreateTask?: (taskData: any) => void;
+	currentUser?: { id: string; name: string; role: UserRole };
 	userRole: UserRole;
 	handSendMessage: (text: string) => void;
 	messagesAI: ChatMessageAI[];
@@ -29,6 +33,9 @@ export function AIAssistant({
 	stats,
 	onNewRecord,
 	onViewRecords,
+	onViewTasks,
+	onCreateTask,
+	currentUser,
 	userRole,
 	messagesAI,
 	handSendMessage,
@@ -94,10 +101,43 @@ export function AIAssistant({
 			if (!message.trim()) return;
 
 			const userInput = message.trim();
+
+			// Xử lý tạo công việc nếu có yêu cầu
+			if (currentUser && onCreateTask) {
+				const parsedTask = parseTaskFromConversation(
+					userInput,
+					currentUser,
+					undefined,
+				);
+
+				if (parsedTask) {
+					// Tạo công việc
+					const taskData = {
+						...parsedTask,
+						assignedTo: {
+							id: currentUser.id,
+							name: currentUser.name,
+							role: currentUser.role,
+						},
+					};
+					onCreateTask(taskData);
+				}
+			}
+
+			// Xử lý yêu cầu xem công việc
+			const lowerInput = userInput.toLowerCase();
+			if (
+				(lowerInput.includes('công việc') || lowerInput.includes('task') || lowerInput.includes('todo')) &&
+				(lowerInput.includes('xem') || lowerInput.includes('danh sách') || lowerInput.includes('list')) &&
+				onViewTasks
+			) {
+				onViewTasks();
+			}
+
 			handSendMessage(userInput);
 			setIsTyping(true);
 		},
-		[handSendMessage, setIsTyping],
+		[handSendMessage, setIsTyping, currentUser, onCreateTask, onViewTasks],
 	);
 
 	const handleSend = useCallback(() => {

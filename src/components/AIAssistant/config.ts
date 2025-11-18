@@ -5,24 +5,23 @@ export const getAIConfig = (role: UserRole): AIConfig => {
 	const configs: Record<UserRole, AIConfig> = {
 		receptionist: {
 			greeting:
-				'Xin chào! Tôi là trợ lý AI của Indica Clinic. Tôi sẽ giúp bạn tiếp nhận khách hàng nhanh chóng. Bạn cần hỗ trợ gì hôm nay?',
+				'Xin chào! Tôi là trợ lý AI của Indica Clinic. Tôi sẽ giúp bạn tiếp nhận khách hàng nhanh chóng và quản lý công việc. Bạn cần hỗ trợ gì hôm nay?',
 			suggestions: [
 				'Tìm Khách hàng theo số điện thoại',
 				'Có bao nhiêu cuộc hẹn hôm nay?',
-				'Khách hàng nào chưa đến khám lâu nhất?',
-				'Xem danh sách cuộc hẹn đã hủy',
+				'Tạo công việc mới',
+				'Xem danh sách công việc',
 			],
 			color: 'from-blue-500 via-cyan-500 to-blue-600',
 		},
 		doctor: {
 			greeting:
-				'Xin chào Bác sĩ! Tôi là trợ lý AI hỗ trợ khám chữa bệnh. Tôi sẽ giúp bạn quản lý khách hàng khám và chuẩn đoán. Bạn cần hỗ trợ gì?',
+				'Xin chào Bác sĩ! Tôi là trợ lý AI hỗ trợ khám chữa bệnh. Tôi sẽ giúp bạn quản lý khách hàng khám, chuẩn đoán và công việc. Bạn cần hỗ trợ gì?',
 			suggestions: [
 				'Có bao nhiêu khách hàng đang chờ khám?',
 				'Xem phác đồ điều trị',
-				'Khách hàng nào cần tái khám trong tuần này?',
-				'khách hàng nào có chẩn đoán nhưng chưa có phác đồ?',
-				'Tôi đã khám bao nhiêu Khách hàng hôm nay?',
+				'Tạo công việc mới',
+				'Xem danh sách công việc',
 			],
 			color: 'from-emerald-500 via-teal-500 to-emerald-600',
 		},
@@ -50,12 +49,12 @@ export const getAIConfig = (role: UserRole): AIConfig => {
 		},
 		patient: {
 			greeting:
-				'Xin chào! Tôi là trợ lý AI của Indica Clinic. Tôi sẽ giúp bạn quản lý lịch hẹn, theo dõi phác đồ điều trị và giải đáp các thắc mắc về sức khỏe. Bạn cần hỗ trợ gì hôm nay?',
+				'Xin chào! Tôi là trợ lý AI của Indica Clinic. Tôi sẽ giúp bạn quản lý lịch hẹn, theo dõi phác đồ điều trị, quản lý công việc và giải đáp các thắc mắc về sức khỏe. Bạn cần hỗ trợ gì hôm nay?',
 			suggestions: [
 				'Xem lịch hẹn của tôi',
-				'Cách cập nhật tình hình điều trị',
+				'Tạo công việc mới',
+				'Xem danh sách công việc',
 				'Xem phác đồ điều trị',
-				'Thời gian khám sắp tới',
 			],
 			color: 'from-rose-500 via-pink-500 to-rose-600',
 		},

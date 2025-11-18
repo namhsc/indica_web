@@ -10,6 +10,7 @@ import {
 	Staff,
 	MedicationCatalog,
 	Specialty,
+	Customer,
 } from '../types';
 import {
 	generateMockRecords,
@@ -25,6 +26,7 @@ import {
 	mockMedicationCatalogData,
 	mockSpecialtiesData,
 } from '../lib/mockData';
+import { mockExistingPatients } from '../lib/mockPatientsStatic';
 import { User } from '../types/auth';
 
 export function useMedicalData(user: User | null, isAuthenticated: boolean) {
@@ -38,10 +40,26 @@ export function useMedicalData(user: User | null, isAuthenticated: boolean) {
 	const [staff, setStaff] = useState<Staff[]>([]);
 	const [medications, setMedications] = useState<MedicationCatalog[]>([]);
 	const [specialties, setSpecialties] = useState<Specialty[]>([]);
+	const [customers, setCustomers] = useState<Customer[]>([]);
 
 	// Initialize with mock data
 	useEffect(() => {
 		if (!isAuthenticated) return;
+
+		// Initialize customers from mock data
+		const mockCustomers: Customer[] = mockExistingPatients.map((p) => ({
+			id: p.id,
+			fullName: p.fullName,
+			phoneNumber: p.phoneNumber,
+			dateOfBirth: p.dateOfBirth,
+			gender: p.gender,
+			address: p.address,
+			email: p.email,
+			customerId: p.customerId,
+			cccdNumber: p.cccdNumber,
+			insurance: p.insurance || undefined,
+		}));
+		setCustomers(mockCustomers);
 
 		const mockRecords = generateMockRecords();
 		setRecords(mockRecords);
@@ -57,11 +75,12 @@ export function useMedicalData(user: User | null, isAuthenticated: boolean) {
 			const patientAppointments = generateMockAppointmentsForPatient(
 				user.fullName,
 				user.email,
+				mockCustomers,
 			);
-			const generalAppointments = generateMockAppointments();
+			const generalAppointments = generateMockAppointments(mockCustomers);
 			setAppointments([...patientAppointments, ...generalAppointments]);
 		} else {
-			setAppointments(generateMockAppointments());
+			setAppointments(generateMockAppointments(mockCustomers));
 		}
 
 		setNotifications(generateMockNotifications(user?.fullName));
@@ -154,6 +173,8 @@ export function useMedicalData(user: User | null, isAuthenticated: boolean) {
 		setMedications,
 		specialties,
 		setSpecialties,
+		customers,
+		setCustomers,
 	};
 }
 

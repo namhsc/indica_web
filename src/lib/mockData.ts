@@ -15,6 +15,11 @@ import {
 	Position,
 	Specialty,
 	UserRole,
+	Customer,
+	Task,
+	TaskStatus,
+	TaskPriority,
+	TaskType,
 } from '../types';
 import { mockAppointments } from './mockPatients';
 
@@ -1778,45 +1783,63 @@ export const generateMockNotifications = (
 };
 
 // Convert mockAppointments to Appointment type
-export const generateMockAppointments = (): Appointment[] => {
-	return mockAppointments.map((apt) => ({
-		id: apt.id,
-		code: apt.code,
-		patientName: apt.patientName,
-		phoneNumber: apt.phoneNumber,
-		dateOfBirth: apt.dateOfBirth,
-		gender: apt.gender as 'male' | 'female' | 'other',
-		email: apt.email,
-		address: apt.address,
-		customerId: apt.customerId,
-		insurance: apt.insurance,
-		appointmentDate: apt.appointmentDate,
-		appointmentTime: apt.appointmentTime,
-		services: Array.isArray(apt.services)
-			? apt.services
-			: [apt.services as string],
-		doctor: apt.doctor,
-		doctorId: apt.doctorId,
-		reason: apt.reason,
-		status: apt.status as 'pending' | 'confirmed' | 'cancelled' | 'completed',
-		createdAt: new Date(
-			`${apt.appointmentDate}T${apt.appointmentTime}`,
-		).toISOString(),
-		updatedAt: new Date(
-			`${apt.appointmentDate}T${apt.appointmentTime}`,
-		).toISOString(),
-	}));
+export const generateMockAppointments = (customers: Customer[] = []): Appointment[] => {
+	return mockAppointments.map((apt, index) => {
+		// Try to find customer by customerId or use first available customer
+		let customerId = customers.find((c) => c.customerId === apt.customerId)?.id;
+		if (!customerId && customers.length > 0) {
+			// Use customer at index % customers.length to distribute appointments
+			customerId = customers[index % customers.length].id;
+		} else if (!customerId) {
+			// Fallback: create a temporary customer ID
+			customerId = `customer_temp_${index}`;
+		}
+
+		return {
+			id: apt.id,
+			code: apt.code,
+			customerId,
+			appointmentDate: apt.appointmentDate,
+			appointmentTime: apt.appointmentTime,
+			services: Array.isArray(apt.services)
+				? apt.services
+				: [apt.services as string],
+			doctor: apt.doctor,
+			doctorId: apt.doctorId,
+			reason: apt.reason,
+			status: apt.status as 'pending' | 'confirmed' | 'cancelled' | 'completed',
+			createdAt: new Date(
+				`${apt.appointmentDate}T${apt.appointmentTime}`,
+			).toISOString(),
+			updatedAt: new Date(
+				`${apt.appointmentDate}T${apt.appointmentTime}`,
+			).toISOString(),
+		};
+	});
 };
 
-// Generate mock appointments for a specific patient
+// Generate mock appointments for a specific customer
 export const generateMockAppointmentsForPatient = (
-	patientName: string,
-	patientEmail?: string,
+	customerName: string,
+	customerEmail?: string,
+	customers: Customer[] = [],
 ): Appointment[] => {
 	const appointments: Appointment[] = [];
 	const today = new Date();
 
-	// Generate 5-8 appointments for the patient
+	// Find customer by name or email
+	let customerId = customers.find(
+		(c) => c.fullName === customerName || c.email === customerEmail,
+	)?.id;
+	if (!customerId && customers.length > 0) {
+		// Use first customer as fallback
+		customerId = customers[0].id;
+	} else if (!customerId) {
+		// Create a temporary customer ID
+		customerId = `customer_temp_${Date.now()}`;
+	}
+
+	// Generate 5-8 appointments for the customer
 	const appointmentCount = Math.floor(Math.random() * 4) + 5; // 5-8 appointments
 
 	const statuses: Array<'pending' | 'confirmed' | 'cancelled' | 'completed'> = [
@@ -1894,16 +1917,9 @@ export const generateMockAppointmentsForPatient = (
 		const reason = reasons[Math.floor(Math.random() * reasons.length)];
 
 		appointments.push({
-			id: `apt_patient_${Date.now()}_${i}`,
+			id: `apt_customer_${Date.now()}_${i}`,
 			code,
-			patientName,
-			phoneNumber: patientEmail || '0900000000',
-			dateOfBirth: '1990-01-01',
-			gender: 'male' as const,
-			email: patientEmail,
-			address: '',
-			customerId: `KH${String(i + 1).padStart(3, '0')}`,
-			insurance: '',
+			customerId,
 			appointmentDate: appointmentDate.toISOString().split('T')[0],
 			appointmentTime,
 			services,
@@ -2157,3 +2173,246 @@ export const mockRolesData: Role[] = [
 		updatedAt: new Date('2024-01-01').toISOString(),
 	},
 ];
+
+// Generate mock tasks
+export const generateMockTasks = (
+	userId: string,
+	userName: string,
+	userRole: UserRole,
+): Task[] => {
+	const now = new Date();
+	const today = new Date(now);
+	today.setHours(0, 0, 0, 0);
+	
+	const tomorrow = new Date(now);
+	tomorrow.setDate(tomorrow.getDate() + 1);
+	tomorrow.setHours(0, 0, 0, 0);
+	
+	const assignedBy = {
+		id: 'admin1',
+		name: 'Admin System',
+		role: 'admin' as UserRole,
+	};
+	
+	const assignedTo = {
+		id: userId,
+		name: userName,
+		role: userRole,
+	};
+	
+	const tasks: Task[] = [
+		// Công việc hôm nay
+		{
+			id: 'task1',
+			title: 'Họp với team về dự án mới',
+			description: 'Thảo luận về kế hoạch triển khai dự án quản lý phòng khám',
+			type: 'personal',
+			status: 'pending',
+			priority: 'high',
+			dueDate: today.toISOString().split('T')[0],
+			dueTime: '09:00',
+			assignedTo,
+			category: 'công việc',
+			tags: ['họp', 'quan trọng'],
+			createdAt: new Date(now.getTime() - 86400000).toISOString(),
+			updatedAt: new Date(now.getTime() - 86400000).toISOString(),
+			estimatedDuration: 60,
+			reminderEnabled: true,
+			reminderTime: '08:30',
+			reminderDate: today.toISOString().split('T')[0],
+			aiGenerated: true,
+			aiContext: 'Tạo từ hội thoại AI',
+		},
+		{
+			id: 'task2',
+			title: 'Kiểm tra báo cáo tháng',
+			description: 'Xem xét và phê duyệt báo cáo hoạt động tháng này',
+			type: 'personal',
+			status: 'in_progress',
+			priority: 'medium',
+			dueDate: today.toISOString().split('T')[0],
+			dueTime: '14:00',
+			assignedTo,
+			category: 'công việc',
+			tags: ['báo cáo'],
+			createdAt: new Date(now.getTime() - 172800000).toISOString(),
+			updatedAt: new Date(now.getTime() - 3600000).toISOString(),
+			estimatedDuration: 90,
+			reminderEnabled: true,
+			reminderTime: '13:30',
+			reminderDate: today.toISOString().split('T')[0],
+			aiGenerated: false,
+		},
+		{
+			id: 'task3',
+			title: 'Gọi điện cho khách hàng VIP',
+			description: 'Liên hệ với khách hàng VIP để xác nhận lịch hẹn',
+			type: 'assigned',
+			status: 'pending',
+			priority: 'urgent',
+			dueDate: today.toISOString().split('T')[0],
+			dueTime: '10:30',
+			assignedBy,
+			assignedTo,
+			category: 'cuộc hẹn',
+			tags: ['khách hàng', 'gấp'],
+			createdAt: new Date(now.getTime() - 3600000).toISOString(),
+			updatedAt: new Date(now.getTime() - 3600000).toISOString(),
+			estimatedDuration: 15,
+			reminderEnabled: true,
+			reminderTime: '10:15',
+			reminderDate: today.toISOString().split('T')[0],
+			aiGenerated: false,
+		},
+		{
+			id: 'task4',
+			title: 'Cập nhật danh sách thuốc',
+			description: 'Kiểm tra và cập nhật danh sách thuốc mới vào hệ thống',
+			type: 'personal',
+			status: 'pending',
+			priority: 'medium',
+			dueDate: today.toISOString().split('T')[0],
+			dueTime: '16:00',
+			assignedTo,
+			category: 'công việc',
+			tags: ['cập nhật'],
+			createdAt: new Date(now.getTime() - 259200000).toISOString(),
+			updatedAt: new Date(now.getTime() - 259200000).toISOString(),
+			estimatedDuration: 45,
+			reminderEnabled: true,
+			reminderTime: '15:45',
+			reminderDate: today.toISOString().split('T')[0],
+			aiGenerated: true,
+			aiContext: 'Tạo từ hội thoại AI',
+		},
+		{
+			id: 'task5',
+			title: 'Hoàn thành báo cáo tuần',
+			description: 'Tổng hợp và gửi báo cáo hoạt động tuần này cho quản lý',
+			type: 'assigned',
+			status: 'pending',
+			priority: 'high',
+			dueDate: today.toISOString().split('T')[0],
+			dueTime: '17:00',
+			assignedBy,
+			assignedTo,
+			category: 'công việc',
+			tags: ['báo cáo', 'quan trọng'],
+			createdAt: new Date(now.getTime() - 432000000).toISOString(),
+			updatedAt: new Date(now.getTime() - 432000000).toISOString(),
+			estimatedDuration: 120,
+			reminderEnabled: true,
+			reminderTime: '16:30',
+			reminderDate: today.toISOString().split('T')[0],
+			aiGenerated: false,
+		},
+		
+		// Công việc ngày mai
+		{
+			id: 'task6',
+			title: 'Họp đánh giá hiệu suất',
+			description: 'Tham gia cuộc họp đánh giá hiệu suất làm việc quý',
+			type: 'personal',
+			status: 'pending',
+			priority: 'high',
+			dueDate: tomorrow.toISOString().split('T')[0],
+			dueTime: '08:30',
+			assignedTo,
+			category: 'công việc',
+			tags: ['họp', 'đánh giá'],
+			createdAt: new Date(now.getTime() - 172800000).toISOString(),
+			updatedAt: new Date(now.getTime() - 172800000).toISOString(),
+			estimatedDuration: 90,
+			reminderEnabled: true,
+			reminderTime: '08:00',
+			reminderDate: tomorrow.toISOString().split('T')[0],
+			aiGenerated: true,
+			aiContext: 'Tạo từ hội thoại AI',
+		},
+		{
+			id: 'task7',
+			title: 'Kiểm tra thiết bị y tế',
+			description: 'Kiểm tra và bảo trì các thiết bị y tế trong phòng khám',
+			type: 'personal',
+			status: 'pending',
+			priority: 'medium',
+			dueDate: tomorrow.toISOString().split('T')[0],
+			dueTime: '10:00',
+			assignedTo,
+			category: 'công việc',
+			tags: ['bảo trì'],
+			createdAt: new Date(now.getTime() - 259200000).toISOString(),
+			updatedAt: new Date(now.getTime() - 259200000).toISOString(),
+			estimatedDuration: 120,
+			reminderEnabled: true,
+			reminderTime: '09:45',
+			reminderDate: tomorrow.toISOString().split('T')[0],
+			aiGenerated: false,
+		},
+		{
+			id: 'task8',
+			title: 'Đào tạo nhân viên mới',
+			description: 'Hướng dẫn nhân viên mới về quy trình làm việc',
+			type: 'assigned',
+			status: 'pending',
+			priority: 'high',
+			dueDate: tomorrow.toISOString().split('T')[0],
+			dueTime: '14:00',
+			assignedBy,
+			assignedTo,
+			category: 'công việc',
+			tags: ['đào tạo'],
+			createdAt: new Date(now.getTime() - 86400000).toISOString(),
+			updatedAt: new Date(now.getTime() - 86400000).toISOString(),
+			estimatedDuration: 180,
+			reminderEnabled: true,
+			reminderTime: '13:30',
+			reminderDate: tomorrow.toISOString().split('T')[0],
+			aiGenerated: false,
+		},
+		{
+			id: 'task9',
+			title: 'Chuẩn bị tài liệu cho cuộc họp',
+			description: 'Soạn thảo và chuẩn bị các tài liệu cần thiết cho cuộc họp tuần tới',
+			type: 'personal',
+			status: 'pending',
+			priority: 'medium',
+			dueDate: tomorrow.toISOString().split('T')[0],
+			dueTime: '15:30',
+			assignedTo,
+			category: 'công việc',
+			tags: ['chuẩn bị'],
+			createdAt: new Date(now.getTime() - 345600000).toISOString(),
+			updatedAt: new Date(now.getTime() - 345600000).toISOString(),
+			estimatedDuration: 60,
+			reminderEnabled: true,
+			reminderTime: '15:15',
+			reminderDate: tomorrow.toISOString().split('T')[0],
+			aiGenerated: true,
+			aiContext: 'Tạo từ hội thoại AI',
+		},
+		{
+			id: 'task10',
+			title: 'Gặp đối tác để thảo luận hợp đồng',
+			description: 'Cuộc gặp với đối tác để thảo luận về hợp đồng cung cấp thiết bị',
+			type: 'assigned',
+			status: 'pending',
+			priority: 'urgent',
+			dueDate: tomorrow.toISOString().split('T')[0],
+			dueTime: '11:00',
+			assignedBy,
+			assignedTo,
+			category: 'cuộc hẹn',
+			tags: ['đối tác', 'gấp'],
+			createdAt: new Date(now.getTime() - 172800000).toISOString(),
+			updatedAt: new Date(now.getTime() - 172800000).toISOString(),
+			estimatedDuration: 90,
+			reminderEnabled: true,
+			reminderTime: '10:45',
+			reminderDate: tomorrow.toISOString().split('T')[0],
+			aiGenerated: false,
+		},
+	];
+	
+	return tasks;
+};
