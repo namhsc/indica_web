@@ -1783,7 +1783,9 @@ export const generateMockNotifications = (
 };
 
 // Convert mockAppointments to Appointment type
-export const generateMockAppointments = (customers: Customer[] = []): Appointment[] => {
+export const generateMockAppointments = (
+	customers: Customer[] = [],
+): Appointment[] => {
 	return mockAppointments.map((apt, index) => {
 		// Try to find customer by customerId or use first available customer
 		let customerId = customers.find((c) => c.customerId === apt.customerId)?.id;
@@ -2183,23 +2185,23 @@ export const generateMockTasks = (
 	const now = new Date();
 	const today = new Date(now);
 	today.setHours(0, 0, 0, 0);
-	
+
 	const tomorrow = new Date(now);
 	tomorrow.setDate(tomorrow.getDate() + 1);
 	tomorrow.setHours(0, 0, 0, 0);
-	
+
 	const assignedBy = {
 		id: 'admin1',
 		name: 'Admin System',
 		role: 'admin' as UserRole,
 	};
-	
+
 	const assignedTo = {
 		id: userId,
 		name: userName,
 		role: userRole,
 	};
-	
+
 	const tasks: Task[] = [
 		// Công việc hôm nay
 		{
@@ -2212,7 +2214,6 @@ export const generateMockTasks = (
 			dueDate: today.toISOString().split('T')[0],
 			dueTime: '09:00',
 			assignedTo,
-			category: 'công việc',
 			tags: ['họp', 'quan trọng'],
 			createdAt: new Date(now.getTime() - 86400000).toISOString(),
 			updatedAt: new Date(now.getTime() - 86400000).toISOString(),
@@ -2233,7 +2234,6 @@ export const generateMockTasks = (
 			dueDate: today.toISOString().split('T')[0],
 			dueTime: '14:00',
 			assignedTo,
-			category: 'công việc',
 			tags: ['báo cáo'],
 			createdAt: new Date(now.getTime() - 172800000).toISOString(),
 			updatedAt: new Date(now.getTime() - 3600000).toISOString(),
@@ -2254,7 +2254,6 @@ export const generateMockTasks = (
 			dueTime: '10:30',
 			assignedBy,
 			assignedTo,
-			category: 'cuộc hẹn',
 			tags: ['khách hàng', 'gấp'],
 			createdAt: new Date(now.getTime() - 3600000).toISOString(),
 			updatedAt: new Date(now.getTime() - 3600000).toISOString(),
@@ -2274,7 +2273,6 @@ export const generateMockTasks = (
 			dueDate: today.toISOString().split('T')[0],
 			dueTime: '16:00',
 			assignedTo,
-			category: 'công việc',
 			tags: ['cập nhật'],
 			createdAt: new Date(now.getTime() - 259200000).toISOString(),
 			updatedAt: new Date(now.getTime() - 259200000).toISOString(),
@@ -2296,7 +2294,6 @@ export const generateMockTasks = (
 			dueTime: '17:00',
 			assignedBy,
 			assignedTo,
-			category: 'công việc',
 			tags: ['báo cáo', 'quan trọng'],
 			createdAt: new Date(now.getTime() - 432000000).toISOString(),
 			updatedAt: new Date(now.getTime() - 432000000).toISOString(),
@@ -2306,7 +2303,7 @@ export const generateMockTasks = (
 			reminderDate: today.toISOString().split('T')[0],
 			aiGenerated: false,
 		},
-		
+
 		// Công việc ngày mai
 		{
 			id: 'task6',
@@ -2318,7 +2315,6 @@ export const generateMockTasks = (
 			dueDate: tomorrow.toISOString().split('T')[0],
 			dueTime: '08:30',
 			assignedTo,
-			category: 'công việc',
 			tags: ['họp', 'đánh giá'],
 			createdAt: new Date(now.getTime() - 172800000).toISOString(),
 			updatedAt: new Date(now.getTime() - 172800000).toISOString(),
@@ -2339,7 +2335,6 @@ export const generateMockTasks = (
 			dueDate: tomorrow.toISOString().split('T')[0],
 			dueTime: '10:00',
 			assignedTo,
-			category: 'công việc',
 			tags: ['bảo trì'],
 			createdAt: new Date(now.getTime() - 259200000).toISOString(),
 			updatedAt: new Date(now.getTime() - 259200000).toISOString(),
@@ -2360,7 +2355,6 @@ export const generateMockTasks = (
 			dueTime: '14:00',
 			assignedBy,
 			assignedTo,
-			category: 'công việc',
 			tags: ['đào tạo'],
 			createdAt: new Date(now.getTime() - 86400000).toISOString(),
 			updatedAt: new Date(now.getTime() - 86400000).toISOString(),
@@ -2373,14 +2367,14 @@ export const generateMockTasks = (
 		{
 			id: 'task9',
 			title: 'Chuẩn bị tài liệu cho cuộc họp',
-			description: 'Soạn thảo và chuẩn bị các tài liệu cần thiết cho cuộc họp tuần tới',
+			description:
+				'Soạn thảo và chuẩn bị các tài liệu cần thiết cho cuộc họp tuần tới',
 			type: 'personal',
 			status: 'pending',
 			priority: 'medium',
 			dueDate: tomorrow.toISOString().split('T')[0],
 			dueTime: '15:30',
 			assignedTo,
-			category: 'công việc',
 			tags: ['chuẩn bị'],
 			createdAt: new Date(now.getTime() - 345600000).toISOString(),
 			updatedAt: new Date(now.getTime() - 345600000).toISOString(),
@@ -2394,7 +2388,8 @@ export const generateMockTasks = (
 		{
 			id: 'task10',
 			title: 'Gặp đối tác để thảo luận hợp đồng',
-			description: 'Cuộc gặp với đối tác để thảo luận về hợp đồng cung cấp thiết bị',
+			description:
+				'Cuộc gặp với đối tác để thảo luận về hợp đồng cung cấp thiết bị',
 			type: 'assigned',
 			status: 'pending',
 			priority: 'urgent',
@@ -2402,7 +2397,6 @@ export const generateMockTasks = (
 			dueTime: '11:00',
 			assignedBy,
 			assignedTo,
-			category: 'cuộc hẹn',
 			tags: ['đối tác', 'gấp'],
 			createdAt: new Date(now.getTime() - 172800000).toISOString(),
 			updatedAt: new Date(now.getTime() - 172800000).toISOString(),
@@ -2413,6 +2407,6 @@ export const generateMockTasks = (
 			aiGenerated: false,
 		},
 	];
-	
+
 	return tasks;
 };

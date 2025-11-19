@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Task, TaskStatus, TaskPriority, TaskType } from '../../types';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import {
@@ -13,19 +13,18 @@ import {
 	User,
 	Clock4,
 	Flag,
-	MoreVertical,
-	Edit,
 	Trash2,
 } from 'lucide-react';
-import { format, isPast, isToday, isTomorrow } from 'date-fns';
+import {
+	format,
+	isPast,
+	isToday,
+	isTomorrow,
+	differenceInDays,
+	startOfDay,
+} from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { motion } from 'motion/react';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
 
 interface TaskListProps {
 	tasks: Task[];
@@ -43,10 +42,10 @@ interface TaskListProps {
 }
 
 const priorityColors: Record<TaskPriority, string> = {
-	low: 'bg-gray-100 text-gray-700',
-	medium: 'bg-blue-100 text-blue-700',
-	high: 'bg-orange-100 text-orange-700',
-	urgent: 'bg-red-100 text-red-700',
+	low: 'bg-gray-50 text-gray-600 border-gray-300',
+	medium: 'bg-blue-50 text-blue-700 border-blue-300',
+	high: 'bg-orange-50 text-orange-700 border-orange-400',
+	urgent: 'bg-red-50 text-red-700 border-red-500',
 };
 
 const priorityIcons: Record<TaskPriority, React.ReactNode> = {
@@ -102,9 +101,7 @@ export function TaskList({
 				if (!t.dueDate) return false;
 				const dueDate = new Date(t.dueDate);
 				return (
-					dueDate < now &&
-					t.status !== 'completed' &&
-					t.status !== 'cancelled'
+					dueDate < now && t.status !== 'completed' && t.status !== 'cancelled'
 				);
 			});
 		}
@@ -116,11 +113,26 @@ export function TaskList({
 		if (!dueDate) return null;
 
 		const date = new Date(dueDate);
-		if (isToday(date)) return 'Hôm nay';
-		if (isTomorrow(date)) return 'Ngày mai';
-		if (isPast(date)) return 'Đã quá hạn';
+		const absoluteDate = format(date, 'dd/MM/yyyy', { locale: vi });
 
-		return format(date, 'dd/MM/yyyy', { locale: vi });
+		if (isToday(date)) return `Hôm nay (${absoluteDate})`;
+		if (isTomorrow(date)) return `Ngày mai (${absoluteDate})`;
+
+		const today = startOfDay(new Date());
+		const dueDateStart = startOfDay(date);
+		const daysDiff = differenceInDays(dueDateStart, today);
+
+		if (isPast(date)) {
+			const daysOverdue = Math.abs(daysDiff);
+			if (daysOverdue === 0) return `Đã quá hạn (${absoluteDate})`;
+			return `Quá hạn ${daysOverdue} ngày (${absoluteDate})`;
+		}
+
+		if (daysDiff > 0) {
+			return `${daysDiff} ngày nữa (${absoluteDate})`;
+		}
+
+		return absoluteDate;
 	};
 
 	const getDueDateColor = (dueDate?: string, status?: TaskStatus) => {
@@ -172,10 +184,10 @@ export function TaskList({
 					task.status !== 'cancelled';
 
 				const priorityBorderColors: Record<TaskPriority, string> = {
-					urgent: 'border-l-red-500',
+					urgent: 'border-l-red-600',
 					high: 'border-l-orange-500',
 					medium: 'border-l-blue-500',
-					low: 'border-l-gray-400',
+					low: 'border-l-gray-300',
 				};
 
 				return (
@@ -198,31 +210,32 @@ export function TaskList({
 									: 'shadow-sm'
 							}`}
 						>
-							<CardContent className="p-5">
-								<div className="flex items-start justify-between gap-4">
-									{/* Checkbox để đánh dấu hoàn thành nhanh */}
-									{task.status !== 'completed' && (
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-6 w-6 mt-0.5 rounded-full border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 flex-shrink-0"
-											onClick={() => onCompleteTask(task.id)}
-										>
-											<CheckCircle2 className="h-4 w-4 text-gray-400 hover:text-green-600" />
-										</Button>
-									)}
-									{task.status === 'completed' && (
-										<div className="h-6 w-6 mt-0.5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-											<CheckCircle2 className="h-4 w-4 text-white" />
-										</div>
-									)}
+							<CardContent className="p-4">
+								{/* Header: Title + Actions */}
+								<div className="flex items-start justify-between gap-3 mb-3">
+									<div className="flex items-start gap-3 flex-1 min-w-0">
+										{/* Checkbox */}
+										{task.status !== 'completed' && (
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-5 w-5 mt-0.5 rounded-full border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 flex-shrink-0"
+												onClick={() => onCompleteTask(task.id)}
+											>
+												<CheckCircle2 className="h-3 w-3 text-gray-400 hover:text-green-600" />
+											</Button>
+										)}
+										{task.status === 'completed' && (
+											<div className="h-5 w-5 mt-0.5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+												<CheckCircle2 className="h-3 w-3 text-white" />
+											</div>
+										)}
 
-									<div className="flex-1 space-y-3">
-										{/* Header */}
-										<div className="flex items-start justify-between gap-2">
-											<div className="flex-1">
+										{/* Title */}
+										<div className="flex-1 min-w-0">
+											<div className="flex items-center gap-2 flex-wrap">
 												<h3
-													className={`font-semibold text-lg ${
+													className={`font-semibold text-base ${
 														task.status === 'completed'
 															? 'line-through text-gray-500'
 															: 'text-gray-900'
@@ -230,193 +243,177 @@ export function TaskList({
 												>
 													{task.title}
 												</h3>
-												{task.description && (
-													<p className="text-sm text-gray-600 mt-1.5 leading-relaxed">
-														{task.description}
-													</p>
-												)}
-											</div>
-
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<Button
-														variant="ghost"
-														size="icon"
-														className="h-8 w-8 hover:bg-gray-100"
-													>
-														<MoreVertical className="h-4 w-4" />
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent align="end">
-													{task.status !== 'completed' && (
-														<DropdownMenuItem
-															onClick={() => onCompleteTask(task.id)}
-														>
-															<CheckCircle2 className="h-4 w-4 mr-2" />
-															Đánh dấu hoàn thành
-														</DropdownMenuItem>
-													)}
-													{task.type === 'assigned' &&
-														task.status === 'pending' &&
-														onAcceptTask && (
-															<>
-																<DropdownMenuItem
-																	onClick={() => onAcceptTask(task.id)}
-																>
-																	<CheckCircle2 className="h-4 w-4 mr-2" />
-																	Chấp nhận
-																</DropdownMenuItem>
-																<DropdownMenuItem
-																	onClick={() =>
-																		onRejectTask?.(task.id, 'Từ chối công việc')
-																	}
-																	className="text-red-600"
-																>
-																	<XCircle className="h-4 w-4 mr-2" />
-																	Từ chối
-																</DropdownMenuItem>
-															</>
-														)}
-													<DropdownMenuItem
-														onClick={() => onDeleteTask(task.id)}
-														className="text-red-600"
-													>
-														<Trash2 className="h-4 w-4 mr-2" />
-														Xóa
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
-										</div>
-
-										{/* Metadata Row 1: Status, Priority, Type */}
-										<div className="flex flex-wrap items-center gap-2">
-											{/* Status */}
-											<Badge
-												variant="outline"
-												className={`${statusColors[task.status]} border-0 shadow-sm`}
-											>
-												{statusIcons[task.status]}
-												<span className="ml-1.5 font-medium">
-													{task.status === 'in_progress'
-														? 'Đang làm'
-														: task.status === 'pending'
-															? 'Chờ xử lý'
-															: task.status === 'completed'
-																? 'Hoàn thành'
-																: task.status === 'rejected'
-																	? 'Đã từ chối'
-																	: 'Đã hủy'}
-												</span>
-											</Badge>
-
-											{/* Priority */}
-											<Badge
-												variant="outline"
-												className={`${priorityColors[task.priority]} border-0 shadow-sm`}
-											>
-												{priorityIcons[task.priority]}
-												<span className="ml-1.5 font-medium">
-													{task.priority === 'urgent'
-														? 'Khẩn cấp'
-														: task.priority === 'high'
-															? 'Cao'
-															: task.priority === 'medium'
-																? 'Trung bình'
-																: 'Thấp'}
-												</span>
-											</Badge>
-
-											{/* Type */}
-											{task.type === 'assigned' && task.assignedBy && (
-												<Badge
-													variant="outline"
-													className="bg-purple-100 text-purple-700 border-0 shadow-sm"
-												>
-													<User className="h-3 w-3 mr-1.5" />
-													<span className="font-medium">
-														Từ {task.assignedBy.name}
-													</span>
-												</Badge>
-											)}
-
-											{/* Category */}
-											{task.category && (
-												<Badge
-													variant="outline"
-													className="bg-gray-100 text-gray-700 border-0 shadow-sm"
-												>
-													<Tag className="h-3 w-3 mr-1.5" />
-													<span className="font-medium">{task.category}</span>
-												</Badge>
-											)}
-										</div>
-
-										{/* Due date and time - Highlighted */}
-										{task.dueDate && (
-											<div
-												className={`flex items-center gap-2 text-sm p-2 rounded-lg ${
-													isOverdue
-														? 'bg-red-50 border border-red-200'
-														: isToday(new Date(task.dueDate))
-															? 'bg-orange-50 border border-orange-200'
-															: 'bg-blue-50 border border-blue-200'
-												}`}
-											>
-												<Calendar
-													className={`h-4 w-4 ${
-														isOverdue
-															? 'text-red-600'
-															: isToday(new Date(task.dueDate))
-																? 'text-orange-600'
-																: 'text-blue-600'
-													}`}
-												/>
-												<span
-													className={`font-medium ${
-														getDueDateColor(task.dueDate, task.status)
-													}`}
-												>
-													{getDueDateLabel(task.dueDate)}
-												</span>
-												{task.dueTime && (
-													<span
-														className={`font-semibold ${
-															isOverdue
-																? 'text-red-600'
-																: isToday(new Date(task.dueDate))
-																	? 'text-orange-600'
-																	: 'text-blue-600'
-														}`}
-													>
-														• {task.dueTime}
-													</span>
-												)}
-											</div>
-										)}
-
-										{/* Tags */}
-										{task.tags && task.tags.length > 0 && (
-											<div className="flex flex-wrap gap-1.5">
-												{task.tags.map((tag, idx) => (
+												{task.type === 'assigned' && task.assignedBy && (
 													<Badge
-														key={idx}
 														variant="outline"
-														className="text-xs bg-gray-50 text-gray-600 border-gray-200"
+														className="bg-purple-100 text-purple-700 border-0 shadow-sm text-xs"
 													>
-														{tag}
+														<User className="h-3 w-3 mr-1" />
+														<span>Từ {task.assignedBy.name}</span>
 													</Badge>
-												))}
+												)}
 											</div>
-										)}
+										</div>
+									</div>
 
-										{/* Rejection reason */}
-										{task.status === 'rejected' && task.rejectionReason && (
-											<div className="text-sm text-red-700 bg-red-50 border border-red-200 p-3 rounded-lg">
-												<strong>Lý do từ chối:</strong> {task.rejectionReason}
-											</div>
+									{/* Action Buttons */}
+									<div className="flex items-center gap-2 flex-shrink-0">
+										{task.status !== 'completed' && (
+											<Button
+												size="sm"
+												onClick={() => onCompleteTask(task.id)}
+												className="h-8 px-3 text-xs font-medium rounded-md border shadow-sm hover:shadow-md transition-all"
+												style={{
+													backgroundColor: '#22c55e',
+													color: '#ffffff',
+													borderColor: '#22c55e',
+												}}
+												onMouseEnter={(e) => {
+													e.currentTarget.style.backgroundColor = '#16a34a';
+													e.currentTarget.style.borderColor = '#16a34a';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.backgroundColor = '#22c55e';
+													e.currentTarget.style.borderColor = '#22c55e';
+												}}
+											>
+												<CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+												Hoàn thành
+											</Button>
 										)}
+										{task.type === 'assigned' &&
+											task.status === 'pending' &&
+											onRejectTask && (
+												<Button
+													size="sm"
+													onClick={() =>
+														onRejectTask?.(task.id, 'Từ chối công việc')
+													}
+													className="h-8 px-3 text-xs font-medium rounded-md border shadow-sm hover:shadow-md transition-all"
+													style={{
+														backgroundColor: '#fed7aa',
+														color: '#c2410c',
+														borderColor: '#fb923c',
+													}}
+													onMouseEnter={(e) => {
+														e.currentTarget.style.backgroundColor = '#fdba74';
+														e.currentTarget.style.borderColor = '#f97316';
+													}}
+													onMouseLeave={(e) => {
+														e.currentTarget.style.backgroundColor = '#fed7aa';
+														e.currentTarget.style.borderColor = '#fb923c';
+													}}
+												>
+													<XCircle className="h-3.5 w-3.5 mr-1.5" />
+													Từ chối
+												</Button>
+											)}
+										<Button
+											size="sm"
+											onClick={() => onDeleteTask(task.id)}
+											className="h-8 px-3 text-xs font-medium rounded-md border shadow-sm hover:shadow-md transition-all"
+											style={{
+												backgroundColor: '#fee2e2',
+												color: '#dc2626',
+												borderColor: '#ef4444',
+											}}
+											onMouseEnter={(e) => {
+												e.currentTarget.style.backgroundColor = '#fecaca';
+												e.currentTarget.style.borderColor = '#dc2626';
+											}}
+											onMouseLeave={(e) => {
+												e.currentTarget.style.backgroundColor = '#fee2e2';
+												e.currentTarget.style.borderColor = '#ef4444';
+											}}
+										>
+											<Trash2 className="h-3.5 w-3.5 mr-1.5" />
+											Xóa
+										</Button>
 									</div>
 								</div>
+
+								{/* Description */}
+								{task.description && (
+									<p className="text-sm text-gray-600 mb-3 leading-relaxed">
+										{task.description}
+									</p>
+								)}
+
+								{/* Main Info: Status, Priority, Due Date */}
+								<div className="flex flex-wrap items-center gap-2 mb-2">
+									<Badge
+										variant="outline"
+										className={`${
+											statusColors[task.status]
+										} border-0 shadow-sm text-xs`}
+									>
+										{statusIcons[task.status]}
+										<span className="ml-1">
+											{task.status === 'in_progress'
+												? 'Đang làm'
+												: task.status === 'pending'
+												? 'Chờ xử lý'
+												: task.status === 'completed'
+												? 'Hoàn thành'
+												: task.status === 'rejected'
+												? 'Đã từ chối'
+												: 'Đã hủy'}
+										</span>
+									</Badge>
+
+									<Badge
+										variant="outline"
+										className={`${
+											priorityColors[task.priority]
+										} shadow-sm text-xs`}
+									>
+										{priorityIcons[task.priority]}
+										<span className="ml-1">
+											{task.priority === 'urgent'
+												? 'Khẩn cấp'
+												: task.priority === 'high'
+												? 'Cao'
+												: task.priority === 'medium'
+												? 'Trung bình'
+												: 'Thấp'}
+										</span>
+									</Badge>
+
+									{task.dueDate && (
+										<div
+											className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded ${
+												isOverdue
+													? 'bg-red-50 text-red-700 border border-red-200'
+													: isToday(new Date(task.dueDate))
+													? 'bg-orange-50 text-orange-700 border border-orange-200'
+													: 'bg-blue-50 text-blue-700 border border-blue-200'
+											}`}
+										>
+											<Calendar
+												className={`h-3 w-3 ${
+													isOverdue
+														? 'text-red-600'
+														: isToday(new Date(task.dueDate))
+														? 'text-orange-600'
+														: 'text-blue-600'
+												}`}
+											/>
+											<span className="font-medium">
+												{getDueDateLabel(task.dueDate)}
+											</span>
+											{task.dueTime && (
+												<span className="font-semibold">{task.dueTime}</span>
+											)}
+										</div>
+									)}
+								</div>
+
+								{/* Rejection reason */}
+								{task.status === 'rejected' && task.rejectionReason && (
+									<div className="mt-3 text-xs text-red-700 bg-red-50 border border-red-200 p-2 rounded">
+										<strong>Lý do từ chối:</strong> {task.rejectionReason}
+									</div>
+								)}
 							</CardContent>
 						</Card>
 					</motion.div>
@@ -425,4 +422,3 @@ export function TaskList({
 		</div>
 	);
 }
-

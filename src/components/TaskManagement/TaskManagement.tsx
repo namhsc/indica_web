@@ -15,7 +15,6 @@ import {
 	Filter,
 	X,
 	Bell,
-	PlayCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -146,11 +145,11 @@ export function TaskManagement({
 							<div className="flex items-center justify-between mb-4">
 								<div className="flex items-center gap-3">
 									<div className="p-2 rounded-xl bg-white/20 backdrop-blur-sm">
-										<Filter className="h-6 w-6 text-white" />
+										<ListTodo className="h-6 w-6 text-white" />
 									</div>
 									<div>
 										<h3 className="font-semibold text-2xl text-white">
-											Bộ lọc công việc
+											Danh sách công việc
 										</h3>
 										<p className="text-sm text-white">
 											Lọc công việc theo trạng thái, ưu tiên và loại
@@ -242,61 +241,6 @@ export function TaskManagement({
 								</Button>
 								<Button
 									variant={
-										(Array.isArray(selectedFilter.status) &&
-											selectedFilter.status.includes('in_progress')) ||
-										selectedFilter.status === 'in_progress'
-											? 'default'
-											: 'outline'
-									}
-									size="sm"
-									onClick={() =>
-										setSelectedFilter((prev) => {
-											const currentStatuses = Array.isArray(prev.status)
-												? prev.status
-												: prev.status
-												? [prev.status]
-												: [];
-
-											if (currentStatuses.includes('in_progress')) {
-												// Bỏ chọn 'in_progress'
-												const newStatuses = currentStatuses.filter(
-													(s) => s !== 'in_progress',
-												);
-												return {
-													...prev,
-													status:
-														newStatuses.length === 0
-															? undefined
-															: newStatuses.length === 1
-															? newStatuses[0]
-															: newStatuses,
-												};
-											} else {
-												// Thêm 'in_progress'
-												const newStatuses = [...currentStatuses, 'in_progress'];
-												return {
-													...prev,
-													status:
-														newStatuses.length === 1
-															? newStatuses[0]
-															: newStatuses,
-												};
-											}
-										})
-									}
-									className={
-										(Array.isArray(selectedFilter.status) &&
-											selectedFilter.status.includes('in_progress')) ||
-										selectedFilter.status === 'in_progress'
-											? 'bg-white text-blue-600 hover:bg-white/90 shadow-md'
-											: 'bg-white/10 text-white border-blue-400/60 hover:bg-blue-400/20 backdrop-blur-sm'
-									}
-								>
-									<Clock className="h-4 w-4 mr-1" />
-									Đang làm
-								</Button>
-								<Button
-									variant={
 										selectedFilter.priority === 'high' ? 'default' : 'outline'
 									}
 									size="sm"
@@ -357,7 +301,7 @@ export function TaskManagement({
 						</CardContent>
 					</Card>
 
-					{/* Stats Cards Grid - 5 cards trên 1 dòng */}
+					{/* Stats Cards Grid - 4 cards trên 1 dòng */}
 					<div className="flex gap-3">
 						<motion.div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex-1">
 							<div className="flex items-center justify-between">
@@ -383,20 +327,6 @@ export function TaskManagement({
 								</div>
 								<div className="p-1.5 rounded-lg">
 									<Clock className="h-8 w-8 text-yellow-600" />
-								</div>
-							</div>
-						</motion.div>
-
-						<motion.div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex-1">
-							<div className="flex items-center justify-between">
-								<div>
-									<p className="text-xs text-gray-500 mb-1">Đang xử lý</p>
-									<p className="text-xl font-bold text-blue-600">
-										{stats.inProgress}
-									</p>
-								</div>
-								<div className="p-1.5 rounded-lg">
-									<PlayCircle className="h-8 w-8 text-blue-600" />
 								</div>
 							</div>
 						</motion.div>
