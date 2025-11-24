@@ -46,6 +46,10 @@ import {
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Checkbox } from './ui/checkbox';
 import administrativeData from '../administrative.json';
+import { Dialog, DialogContent } from './ui/dialog';
+import { Eye, CheckCircle2 } from 'lucide-react';
+import hpTestImage from '../assets/services/hp_test.png';
+import thinprepTestImage from '../assets/services/thinprep_test.png';
 
 interface CustomerBookingPageProps {
 	onSubmit?: (
@@ -119,6 +123,9 @@ interface MedicalExaminationFormData {
 	declarationMonth: string;
 	declarationYear: string;
 	signatureName: string;
+
+	// II. DỊCH VỤ KHÁM
+	selectedServices: string[];
 }
 
 export function CustomerBookingPage({
@@ -177,6 +184,7 @@ export function CustomerBookingPage({
 		declarationMonth: '',
 		declarationYear: '',
 		signatureName: '',
+		selectedServices: [],
 	});
 
 	const [errors, setErrors] = useState<Record<string, boolean>>({});
@@ -188,6 +196,23 @@ export function CustomerBookingPage({
 	const [selectedWardId, setSelectedWardId] = useState('');
 	const dateInputRef = useRef<HTMLInputElement>(null);
 	const [cursorPosition, setCursorPosition] = useState<number | null>(null);
+	const [selectedImageDialog, setSelectedImageDialog] = useState<string | null>(
+		null,
+	);
+
+	// Danh sách dịch vụ test
+	const testServices = [
+		{
+			id: 'hp_test',
+			name: 'Xét nghiệm HP',
+			image: hpTestImage,
+		},
+		{
+			id: 'thinprep_test',
+			name: 'Xét nghiệm ThinPrep',
+			image: thinprepTestImage,
+		},
+	];
 
 	// Filter administrative data
 	const provinces = useMemo(() => {
@@ -563,7 +588,7 @@ export function CustomerBookingPage({
 					cccdNumber: formData.cccdNumber,
 					customerId: formData.code || undefined,
 				},
-				requestedServices: [],
+				requestedServices: formData.selectedServices,
 				status: 'PENDING_CHECKIN',
 				diagnosis: undefined,
 				reason: formData.reason,
@@ -1073,11 +1098,110 @@ export function CustomerBookingPage({
 										</AccordionContent>
 									</AccordionItem>
 
-									{/* II. TIỀN SỬ GIA ĐÌNH */}
+									{/* II. DỊCH VỤ KHÁM */}
 									<AccordionItem value="section2">
 										<AccordionTrigger className="text-base sm:text-lg font-semibold">
 											<div className="flex items-center gap-2">
-												<span>II. TIỀN SỬ GIA ĐÌNH</span>
+												<span>II. DỊCH VỤ KHÁM</span>
+											</div>
+										</AccordionTrigger>
+										<AccordionContent>
+											<div className="space-y-4 pt-2">
+												<Label className="text-sm text-gray-600">
+													Chọn dịch vụ khám bạn muốn đăng ký (có thể chọn
+													nhiều):
+												</Label>
+												<div className="grid grid-cols-2 gap-4">
+													{testServices.map((service) => (
+														<Card
+															key={service.id}
+															className={`border-2 transition-all cursor-pointer ${
+																formData.selectedServices.includes(service.id)
+																	? 'border-blue-500 bg-blue-50'
+																	: 'border-gray-200 hover:border-gray-300'
+															}`}
+															onClick={() => {
+																const isSelected =
+																	formData.selectedServices.includes(
+																		service.id,
+																	);
+																if (isSelected) {
+																	setFormData({
+																		...formData,
+																		selectedServices:
+																			formData.selectedServices.filter(
+																				(id) => id !== service.id,
+																			),
+																	});
+																} else {
+																	setFormData({
+																		...formData,
+																		selectedServices: [
+																			...formData.selectedServices,
+																			service.id,
+																		],
+																	});
+																}
+															}}
+														>
+															<CardContent className="p-3">
+																<div className="flex flex-col gap-2">
+																	<div className="relative aspect-square w-full group">
+																		<img
+																			src={service.image}
+																			alt={service.name}
+																			className={`w-full h-full object-cover rounded-md border-2 transition-all ${
+																				formData.selectedServices.includes(
+																					service.id,
+																				)
+																					? 'border-blue-500 ring-2 ring-blue-300 ring-offset-2 brightness-75 blur-sm'
+																					: 'border-gray-200'
+																			}`}
+																		/>
+																		{/* Overlay khi được chọn */}
+																		{formData.selectedServices.includes(
+																			service.id,
+																		) && (
+																			<div className="absolute inset-0 bg-blue-500/30 rounded-md flex items-center justify-center transition-all animate-in fade-in duration-200">
+																				<CheckCircle2 className="h-16 w-16 text-blue-600 bg-white rounded-full shadow-xl animate-in zoom-in duration-200" />
+																			</div>
+																		)}
+																	</div>
+																	<div>
+																		<Label
+																			htmlFor={service.id}
+																			className="font-semibold text-sm cursor-pointer block"
+																		>
+																			{service.name}
+																		</Label>
+																	</div>
+																	<Button
+																		type="button"
+																		variant="outline"
+																		size="sm"
+																		className="w-full text-xs"
+																		onClick={(e) => {
+																			e.stopPropagation();
+																			setSelectedImageDialog(service.image);
+																		}}
+																	>
+																		<Eye className="h-3 w-3 mr-1" />
+																		Xem chi tiết
+																	</Button>
+																</div>
+															</CardContent>
+														</Card>
+													))}
+												</div>
+											</div>
+										</AccordionContent>
+									</AccordionItem>
+
+									{/* III. TIỀN SỬ GIA ĐÌNH */}
+									<AccordionItem value="section3">
+										<AccordionTrigger className="text-base sm:text-lg font-semibold">
+											<div className="flex items-center gap-2">
+												<span>III. TIỀN SỬ GIA ĐÌNH</span>
 											</div>
 										</AccordionTrigger>
 										<AccordionContent>
@@ -1144,11 +1268,11 @@ export function CustomerBookingPage({
 										</AccordionContent>
 									</AccordionItem>
 
-									{/* III. TIỀN SỬ BẢN THÂN */}
-									<AccordionItem value="section3">
+									{/* IV. TIỀN SỬ BẢN THÂN */}
+									<AccordionItem value="section4">
 										<AccordionTrigger className="text-base sm:text-lg font-semibold">
 											<div className="flex items-center gap-2">
-												<span>III. TIỀN SỬ BẢN THÂN</span>
+												<span>IV. TIỀN SỬ BẢN THÂN</span>
 											</div>
 										</AccordionTrigger>
 
@@ -1231,11 +1355,11 @@ export function CustomerBookingPage({
 										</AccordionContent>
 									</AccordionItem>
 
-									{/* IV. CÂU HỎI KHÁC */}
-									<AccordionItem value="section4">
+									{/* V. CÂU HỎI KHÁC */}
+									<AccordionItem value="section5">
 										<AccordionTrigger className="text-base sm:text-lg font-semibold">
 											<div className="flex items-center gap-2">
-												<span>IV. CÂU HỎI KHÁC</span>
+												<span>V. CÂU HỎI KHÁC</span>
 											</div>
 										</AccordionTrigger>
 										<AccordionContent>
@@ -1371,6 +1495,26 @@ export function CustomerBookingPage({
 					</Card>
 				</motion.div>
 			</div>
+
+			{/* Dialog xem chi tiết ảnh */}
+			<Dialog
+				open={selectedImageDialog !== null}
+				onOpenChange={(open) => {
+					if (!open) setSelectedImageDialog(null);
+				}}
+			>
+				<DialogContent className="max-w-4xl max-h-[90vh] overflow-auto p-0">
+					{selectedImageDialog && (
+						<div>
+							<img
+								src={selectedImageDialog}
+								alt="Chi tiết dịch vụ"
+								className="w-full h-auto rounded-lg"
+							/>
+						</div>
+					)}
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
