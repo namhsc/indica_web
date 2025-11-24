@@ -25,6 +25,7 @@ import {
 	Activity,
 	ClipboardList,
 	PenTool,
+	Loader2,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -50,6 +51,8 @@ import { Dialog, DialogContent } from './ui/dialog';
 import { Eye, CheckCircle2 } from 'lucide-react';
 import hpTestImage from '../assets/services/hp_test.png';
 import thinprepTestImage from '../assets/services/thinprep_test.png';
+import { createBooking, type BookingFormData } from '../services/bookingService';
+import * as validators from '../utils/bookingValidation';
 
 interface CustomerBookingPageProps {
 	onSubmit?: (
@@ -188,6 +191,9 @@ export function CustomerBookingPage({
 	});
 
 	const [errors, setErrors] = useState<Record<string, boolean>>({});
+	const [errorMessages, setErrorMessages] = useState<Record<string, string>>(
+		{},
+	);
 	const [provinceOpen, setProvinceOpen] = useState(false);
 	const [wardOpen, setWardOpen] = useState(false);
 	const [provinceSearch, setProvinceSearch] = useState('');
@@ -199,6 +205,9 @@ export function CustomerBookingPage({
 	const [selectedImageDialog, setSelectedImageDialog] = useState<string | null>(
 		null,
 	);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [showSuccessPage, setShowSuccessPage] = useState(false);
+	const [bookingId, setBookingId] = useState<number | null>(null);
 
 	// Danh sách dịch vụ test
 	const testServices = [
@@ -366,6 +375,12 @@ export function CustomerBookingPage({
 
 		setFormData({ ...formData, cccdIssueDate: formatted });
 
+		// Clear errors khi user change input
+		if (errors.cccdIssueDate) {
+			setErrors({ ...errors, cccdIssueDate: false });
+			setErrorMessages({ ...errorMessages, cccdIssueDate: '' });
+		}
+
 		// Tính toán vị trí cursor mong muốn
 		let desiredCursorPosition = formatted.length;
 
@@ -390,73 +405,123 @@ export function CustomerBookingPage({
 		setCursorPosition(desiredCursorPosition);
 	};
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+
+		// Prevent double submission
+		if (isSubmitting) return;
 
 		// Reset errors
 		const newErrors: Record<string, boolean> = {};
+		const newErrorMessages: Record<string, string> = {};
 
-		// I. THÔNG TIN HÀNH CHÍNH - Validate required fields
-		if (!formData.fullName.trim()) {
+		// I. THÔNG TIN CÁ NHÂN - Validate với validators
+		const fullNameValidation = validators.validateFullName(formData.fullName);
+		if (!fullNameValidation.isValid) {
 			newErrors.fullName = true;
+			newErrorMessages.fullName = fullNameValidation.message || '';
 		}
-		if (!formData.code.trim()) {
-			newErrors.code = true;
-		}
-		if (!formData.phoneNumber.trim()) {
-			newErrors.phoneNumber = true;
-		}
-		if (!formData.gender) {
+
+		const genderValidation = validators.validateGender(formData.gender);
+		if (!genderValidation.isValid) {
 			newErrors.gender = true;
+			newErrorMessages.gender = genderValidation.message || '';
 		}
-		if (!formData.yearOfBirth) {
+
+		const yearOfBirthValidation = validators.validateYearOfBirth(
+			formData.yearOfBirth,
+		);
+		if (!yearOfBirthValidation.isValid) {
 			newErrors.yearOfBirth = true;
+			newErrorMessages.yearOfBirth = yearOfBirthValidation.message || '';
 		}
-		if (!formData.cccdNumber.trim()) {
+
+		const cccdValidation = validators.validateCCCD(formData.cccdNumber);
+		if (!cccdValidation.isValid) {
 			newErrors.cccdNumber = true;
+			newErrorMessages.cccdNumber = cccdValidation.message || '';
 		}
-		if (!formData.cccdIssueDate.trim()) {
+
+		const cccdIssueDateValidation = validators.validateCCCDIssueDate(
+			formData.cccdIssueDate,
+		);
+		if (!cccdIssueDateValidation.isValid) {
 			newErrors.cccdIssueDate = true;
-		} else {
-			const issueDate = parseDateString(formData.cccdIssueDate);
-			if (!issueDate) {
-				newErrors.cccdIssueDate = true;
-			} else {
-				const today = new Date();
-				today.setHours(0, 0, 0, 0);
-				if (issueDate > today) {
-					newErrors.cccdIssueDate = true;
-				}
-			}
+			newErrorMessages.cccdIssueDate = cccdIssueDateValidation.message || '';
 		}
-		if (!formData.cccdIssuePlace.trim()) {
+
+		const issuePlaceValidation = validators.validateIssuePlace(
+			formData.cccdIssuePlace,
+		);
+		if (!issuePlaceValidation.isValid) {
 			newErrors.cccdIssuePlace = true;
+			newErrorMessages.cccdIssuePlace = issuePlaceValidation.message || '';
 		}
-		if (!formData.permanentAddress.trim()) {
+
+		const permanentAddressValidation = validators.validatePermanentAddress(
+			formData.permanentAddress,
+		);
+		if (!permanentAddressValidation.isValid) {
 			newErrors.permanentAddress = true;
+			newErrorMessages.permanentAddress =
+				permanentAddressValidation.message || '';
 		}
-		if (!formData.currentAddress.trim()) {
+
+		const currentAddressValidation = validators.validateCurrentAddress(
+			formData.currentAddress,
+		);
+		if (!currentAddressValidation.isValid) {
 			newErrors.currentAddress = true;
+			newErrorMessages.currentAddress = currentAddressValidation.message || '';
 		}
-		if (!formData.workplace.trim()) {
+
+		const workplaceValidation = validators.validateWorkplace(
+			formData.workplace,
+		);
+		if (!workplaceValidation.isValid) {
 			newErrors.workplace = true;
+			newErrorMessages.workplace = workplaceValidation.message || '';
 		}
-		if (!formData.department.trim()) {
+
+		const departmentValidation = validators.validateDepartment(
+			formData.department,
+		);
+		if (!departmentValidation.isValid) {
 			newErrors.department = true;
+			newErrorMessages.department = departmentValidation.message || '';
 		}
-		if (!formData.reason.trim()) {
+
+		const reasonValidation = validators.validateReason(formData.reason);
+		if (!reasonValidation.isValid) {
 			newErrors.reason = true;
+			newErrorMessages.reason = reasonValidation.message || '';
+		}
+
+		const phoneNumberValidation = validators.validatePhoneNumber(
+			formData.phoneNumber,
+		);
+		if (!phoneNumberValidation.isValid) {
+			newErrors.phoneNumber = true;
+			newErrorMessages.phoneNumber = phoneNumberValidation.message || '';
 		}
 
 		// II. TIỀN SỬ GIA ĐÌNH
-		if (!formData.familyHasDisease) {
+		const familyHistoryValidation = validators.validateFamilyHistory(
+			formData.familyHasDisease,
+		);
+		if (!familyHistoryValidation.isValid) {
 			newErrors.familyHasDisease = true;
+			newErrorMessages.familyHasDisease = familyHistoryValidation.message || '';
 		}
-		if (
-			formData.familyHasDisease === 'yes' &&
-			!formData.familyDiseaseName.trim()
-		) {
-			newErrors.familyDiseaseName = true;
+
+		if (formData.familyHasDisease === 'yes') {
+			const familyDiseaseDetailValidation =
+				validators.validateFamilyDiseaseDetail(formData.familyDiseaseName);
+			if (!familyDiseaseDetailValidation.isValid) {
+				newErrors.familyDiseaseName = true;
+				newErrorMessages.familyDiseaseName =
+					familyDiseaseDetailValidation.message || '';
+			}
 		}
 
 		// III. TIỀN SỬ BẢN THÂN - Validate tất cả các trường
@@ -484,123 +549,165 @@ export function CustomerBookingPage({
 			'drugUse',
 			'otherDisease',
 		];
+
 		personalHistoryKeys.forEach((key) => {
-			if (!formData.personalHistory[key]) {
+			const validation = validators.validatePersonalHistoryItem(
+				formData.personalHistory[key] as string,
+				key,
+			);
+			if (!validation.isValid) {
 				newErrors[`personalHistory.${String(key)}`] = true;
+				newErrorMessages[`personalHistory.${String(key)}`] =
+					validation.message || '';
 			}
 		});
-		if (
-			formData.personalHistory.otherDisease === 'yes' &&
-			!formData.personalHistory.otherDiseaseName.trim()
-		) {
-			newErrors.otherDiseaseName = true;
+
+		if (formData.personalHistory.otherDisease === 'yes') {
+			const otherDiseaseDetailValidation =
+				validators.validateOtherDiseaseDetail(
+					formData.personalHistory.otherDiseaseName,
+				);
+			if (!otherDiseaseDetailValidation.isValid) {
+				newErrors.otherDiseaseName = true;
+				newErrorMessages.otherDiseaseName =
+					otherDiseaseDetailValidation.message || '';
+			}
 		}
 
 		// IV. CÂU HỎI KHÁC
-		if (!formData.currentTreatment) {
+		const currentTreatmentValidation = validators.validateCurrentTreatment(
+			formData.currentTreatment,
+		);
+		if (!currentTreatmentValidation.isValid) {
 			newErrors.currentTreatment = true;
+			newErrorMessages.currentTreatment =
+				currentTreatmentValidation.message || '';
 		}
-		if (
-			formData.currentTreatment === 'yes' &&
-			!formData.currentMedications.trim()
-		) {
-			newErrors.currentMedications = true;
+
+		if (formData.currentTreatment === 'yes') {
+			const medicationDetailValidation = validators.validateMedicationDetail(
+				formData.currentMedications,
+			);
+			if (!medicationDetailValidation.isValid) {
+				newErrors.currentMedications = true;
+				newErrorMessages.currentMedications =
+					medicationDetailValidation.message || '';
+			}
 		}
-		if (!formData.hasPregnancyHistory) {
+
+		const pregnancyHistoryValidation = validators.validatePregnancyHistory(
+			formData.hasPregnancyHistory,
+		);
+		if (!pregnancyHistoryValidation.isValid) {
 			newErrors.hasPregnancyHistory = true;
+			newErrorMessages.hasPregnancyHistory =
+				pregnancyHistoryValidation.message || '';
 		}
-		if (
-			formData.hasPregnancyHistory === 'yes' &&
-			!formData.pregnancyHistory.trim()
-		) {
-			newErrors.pregnancyHistory = true;
+
+		if (formData.hasPregnancyHistory === 'yes') {
+			const pregnancyDetailValidation = validators.validatePregnancyDetail(
+				formData.pregnancyHistory,
+			);
+			if (!pregnancyDetailValidation.isValid) {
+				newErrors.pregnancyHistory = true;
+				newErrorMessages.pregnancyHistory =
+					pregnancyDetailValidation.message || '';
+			}
 		}
 
 		if (Object.keys(newErrors).length > 0) {
 			setErrors(newErrors);
+			setErrorMessages(newErrorMessages);
+
+			// Hiển thị lỗi đầu tiên tìm thấy
+			const firstErrorMessage = Object.values(newErrorMessages)[0];
 			toast.error(
-				'Vui lòng điền đầy đủ thông tin bắt buộc và kiểm tra lại ngày cấp',
+				firstErrorMessage || 'Vui lòng điền đầy đủ thông tin bắt buộc',
 			);
 			return;
 		}
 
-		// Build address
-		const addressParts: string[] = [];
-		if (formData.currentAddress) {
-			addressParts.push(formData.currentAddress);
-		}
-		if (selectedProvince) {
-			const selectedWard = selectedProvince.WARDS?.find(
-				(w: any) => w.ID === selectedWardId,
-			);
-			if (selectedWard) {
-				addressParts.push(selectedWard.TEN);
-			}
-			addressParts.push(selectedProvince.NAME);
-		}
+		// Start submission
+		setIsSubmitting(true);
 
-		const fullAddress =
-			addressParts.length > 0
-				? addressParts.join(', ')
-				: formData.currentAddress;
-
-		// Tạo dateOfBirth từ yearOfBirth
-		const dateOfBirth = formData.yearOfBirth
-			? `${formData.yearOfBirth}-01-01`
-			: '';
-
-		// Chuẩn bị dữ liệu form đầy đủ (không bao gồm file ảnh - sẽ xử lý riêng)
-		const examinationFormData = {
-			...formData,
-			photo1: formData.photo1
-				? {
-						name: formData.photo1.name,
-						size: formData.photo1.size,
-						type: formData.photo1.type,
-				  }
-				: null,
-		};
-
-		// Lưu dữ liệu form đầy đủ vào localStorage với key duy nhất
-		const formDataId = `examination_form_${Date.now()}_${Math.random()
-			.toString(36)
-			.substring(7)}`;
-		localStorage.setItem(formDataId, JSON.stringify(examinationFormData));
-
-		// Lưu ảnh vào localStorage nếu có (convert sang base64)
-		if (formData.photo1) {
-			const reader = new FileReader();
-			reader.onloadend = () => {
-				localStorage.setItem(`${formDataId}_photo1`, reader.result as string);
-			};
-			reader.readAsDataURL(formData.photo1);
-		}
-
-		if (onSubmit) {
-			onSubmit({
-				patient: {
-					id: formData.code || `patient_${Date.now()}`,
-					fullName: formData.fullName.toUpperCase(),
-					phoneNumber: formData.phoneNumber,
-					dateOfBirth: dateOfBirth,
-					gender: formData.gender as Gender,
-					address: fullAddress,
-					cccdNumber: formData.cccdNumber,
-					customerId: formData.code || undefined,
-				},
-				requestedServices: formData.selectedServices,
-				status: 'PENDING_CHECKIN',
-				diagnosis: undefined,
+		try {
+			// Prepare booking data for API
+			const bookingData: BookingFormData = {
+				// I. THÔNG TIN CÁ NHÂN
+				fullName: formData.fullName,
+				gender: formData.gender as 'male' | 'female',
+				yearOfBirth: formData.yearOfBirth,
+				cccdNumber: formData.cccdNumber,
+				cccdIssueDate: formData.cccdIssueDate,
+				cccdIssuePlace: formData.cccdIssuePlace,
+				permanentAddress: formData.permanentAddress,
+				currentAddress: formData.currentAddress,
+				workplace: formData.workplace,
+				department: formData.department,
 				reason: formData.reason,
-				paymentStatus: 'pending',
-				// Lưu ID của form data vào appointmentId để có thể lấy lại sau
-				appointmentId: formDataId,
-			});
-		}
+				phoneNumber: formData.phoneNumber,
 
-		toast.success(
-			'Đặt lịch khám thành công! Vui lòng chờ xác nhận từ phòng khám.',
-		);
+				// II. DỊCH VỤ KHÁM
+				selectedServices: formData.selectedServices,
+
+				// III. TIỀN SỬ GIA ĐÌNH
+				familyHasDisease: formData.familyHasDisease,
+				familyDiseaseName: formData.familyDiseaseName,
+
+				// IV. TIỀN SỬ BẢN THÂN
+				personalHistory: formData.personalHistory,
+
+				// V. CÂU HỎI KHÁC
+				currentTreatment: formData.currentTreatment,
+				currentMedications: formData.currentMedications,
+				hasPregnancyHistory: formData.hasPregnancyHistory,
+				pregnancyHistory: formData.pregnancyHistory,
+			};
+
+			// Call API to create booking
+			const response = await createBooking(bookingData);
+
+			// Save full form data to localStorage for reference (including photo)
+			const examinationFormData = {
+				...formData,
+				bookingId: response.id,
+				photo1: formData.photo1
+					? {
+							name: formData.photo1.name,
+							size: formData.photo1.size,
+							type: formData.photo1.type,
+					  }
+					: null,
+			};
+
+			const formDataId = `examination_form_${response.id}_${Date.now()}`;
+			localStorage.setItem(formDataId, JSON.stringify(examinationFormData));
+
+			// Save photo if exists
+			if (formData.photo1) {
+				const reader = new FileReader();
+				reader.onloadend = () => {
+					localStorage.setItem(`${formDataId}_photo1`, reader.result as string);
+				};
+				reader.readAsDataURL(formData.photo1);
+			}
+
+			// NOTE: Removed onSubmit callback to prevent auto-redirect after 3s
+			// Success page will stay until user clicks "Quay về trang chủ"
+
+			// Show success page
+			setBookingId(response.id);
+			setShowSuccessPage(true);
+		} catch (error) {
+			console.error('Booking submission error:', error);
+			toast.error(
+				error instanceof Error
+					? `Đặt lịch thất bại: ${error.message}`
+					: 'Đặt lịch thất bại. Vui lòng thử lại sau.',
+			);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	const personalHistoryItems = [
@@ -652,6 +759,74 @@ export function CustomerBookingPage({
 		{ key: 'drugUse', label: 'Sử dụng ma túy và chất gây nghiện' },
 		{ key: 'otherDisease', label: 'Bệnh khác (ghi rõ)' },
 	];
+
+	// Success Page - Early return
+	if (showSuccessPage) {
+		return (
+			<div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-4 px-2 sm:px-4">
+				<div className="max-w-4xl mx-auto">
+					<motion.div
+						initial={{ opacity: 0, scale: 0.95 }}
+						animate={{ opacity: 1, scale: 1 }}
+						className="flex items-center justify-center min-h-[80vh]"
+					>
+						<Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-sm max-w-2xl w-full">
+							<CardContent className="p-8 sm:p-12 text-center">
+								<motion.div
+									initial={{ scale: 0 }}
+									animate={{ scale: 1 }}
+									transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+									className="inline-block mb-6"
+								>
+									<CheckCircle2 className="h-20 w-20 sm:h-24 sm:w-24 text-green-500" />
+								</motion.div>
+
+								<motion.h1
+									initial={{ opacity: 0, y: 20 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ delay: 0.3 }}
+									className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4"
+								>
+									Đặt lịch khám thành công!
+								</motion.h1>
+
+								<motion.div
+									initial={{ opacity: 0, y: 20 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ delay: 0.5 }}
+									className="space-y-4 text-gray-700"
+								>
+									<p className="text-base sm:text-lg">
+										Cảm ơn bạn đã đặt lịch khám tại phòng khám đa khoa Indica!
+									</p>
+									<p className="text-sm sm:text-base">
+										Chúng tôi sẽ liên hệ với bạn sớm nhất để xác nhận lịch khám.
+									</p>
+								</motion.div>
+
+								<motion.div
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									transition={{ delay: 0.6 }}
+									className="mt-8 space-y-3"
+								>
+									{onBack && (
+										<Button
+											onClick={onBack}
+											className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+											size="lg"
+										>
+											Quay về trang chủ
+										</Button>
+									)}
+								</motion.div>
+							</CardContent>
+						</Card>
+					</motion.div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-4 px-2 sm:px-4">
@@ -744,6 +919,10 @@ export function CustomerBookingPage({
 																	});
 																	if (errors.fullName) {
 																		setErrors({ ...errors, fullName: false });
+																		setErrorMessages({
+																			...errorMessages,
+																			fullName: '',
+																		});
 																	}
 																}}
 																placeholder="Nhập họ và tên"
@@ -756,6 +935,11 @@ export function CustomerBookingPage({
 																		: ''
 																}`}
 															/>
+															{errors.fullName && errorMessages.fullName && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.fullName}
+																</p>
+															)}
 															<style>{`
 																#fullName::placeholder {
 																	text-transform: none !important;
@@ -817,6 +1001,47 @@ export function CustomerBookingPage({
 													</div>
 
 													<div className="space-y-2">
+														<Label htmlFor="phoneNumber">
+															Số điện thoại{' '}
+															<span className="text-red-500">*</span>
+														</Label>
+														<div className="relative">
+															<Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+															<Input
+																id="phoneNumber"
+																value={formData.phoneNumber}
+																onChange={(e) => {
+																	setFormData({
+																		...formData,
+																		phoneNumber: e.target.value,
+																	});
+																	if (errors.phoneNumber) {
+																		setErrors({
+																			...errors,
+																			phoneNumber: false,
+																		});
+																		setErrorMessages({
+																			...errorMessages,
+																			phoneNumber: '',
+																		});
+																	}
+																}}
+																placeholder="Nhập số điện thoại"
+																className={`pl-10 border-gray-300 focus:border-blue-500 placeholder:text-sm ${
+																	errors.phoneNumber
+																		? 'border-red-500 bg-red-50'
+																		: ''
+																}`}
+															/>
+														</div>
+														{errors.phoneNumber && errorMessages.phoneNumber && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.phoneNumber}
+															</p>
+														)}
+													</div>
+
+													<div className="space-y-2">
 														<Label htmlFor="yearOfBirth">
 															Năm sinh <span className="text-red-500">*</span>
 														</Label>
@@ -828,6 +1053,10 @@ export function CustomerBookingPage({
 																handleYearOfBirthChange(e.target.value);
 																if (errors.yearOfBirth) {
 																	setErrors({ ...errors, yearOfBirth: false });
+																	setErrorMessages({
+																		...errorMessages,
+																		yearOfBirth: '',
+																	});
 																}
 															}}
 															placeholder="Nhập năm sinh"
@@ -839,6 +1068,11 @@ export function CustomerBookingPage({
 																	: ''
 															}`}
 														/>
+														{errors.yearOfBirth && errorMessages.yearOfBirth && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.yearOfBirth}
+															</p>
+														)}
 													</div>
 
 													<div className="space-y-2">
@@ -856,6 +1090,10 @@ export function CustomerBookingPage({
 																});
 																if (errors.cccdNumber) {
 																	setErrors({ ...errors, cccdNumber: false });
+																	setErrorMessages({
+																		...errorMessages,
+																		cccdNumber: '',
+																	});
 																}
 															}}
 															placeholder="Nhập số CCCD/Hộ chiếu"
@@ -865,6 +1103,11 @@ export function CustomerBookingPage({
 																	: ''
 															}`}
 														/>
+														{errors.cccdNumber && errorMessages.cccdNumber && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.cccdNumber}
+															</p>
+														)}
 													</div>
 
 													<div className="space-y-2">
@@ -896,6 +1139,11 @@ export function CustomerBookingPage({
 																	: ''
 															}`}
 														/>
+														{errors.cccdIssueDate && errorMessages.cccdIssueDate && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.cccdIssueDate}
+															</p>
+														)}
 													</div>
 
 													<div className="space-y-2">
@@ -915,6 +1163,10 @@ export function CustomerBookingPage({
 																		...errors,
 																		cccdIssuePlace: false,
 																	});
+																	setErrorMessages({
+																		...errorMessages,
+																		cccdIssuePlace: '',
+																	});
 																}
 															}}
 															placeholder="Nhập nơi cấp"
@@ -924,6 +1176,11 @@ export function CustomerBookingPage({
 																	: ''
 															}`}
 														/>
+														{errors.cccdIssuePlace && errorMessages.cccdIssuePlace && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.cccdIssuePlace}
+															</p>
+														)}
 													</div>
 
 													<div className="space-y-2 sm:col-span-2">
@@ -944,6 +1201,10 @@ export function CustomerBookingPage({
 																		...errors,
 																		permanentAddress: false,
 																	});
+																	setErrorMessages({
+																		...errorMessages,
+																		permanentAddress: '',
+																	});
 																}
 															}}
 															placeholder="Nhập địa chỉ hộ khẩu thường trú"
@@ -954,6 +1215,11 @@ export function CustomerBookingPage({
 															}`}
 															rows={2}
 														/>
+														{errors.permanentAddress && errorMessages.permanentAddress && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.permanentAddress}
+															</p>
+														)}
 													</div>
 
 													<div className="space-y-2 sm:col-span-2">
@@ -974,6 +1240,10 @@ export function CustomerBookingPage({
 																		...errors,
 																		currentAddress: false,
 																	});
+																	setErrorMessages({
+																		...errorMessages,
+																		currentAddress: '',
+																	});
 																}
 															}}
 															placeholder="Nhập địa chỉ chỗ ở hiện tại"
@@ -984,6 +1254,11 @@ export function CustomerBookingPage({
 															}`}
 															rows={2}
 														/>
+														{errors.currentAddress && errorMessages.currentAddress && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.currentAddress}
+															</p>
+														)}
 													</div>
 
 													<div className="space-y-2">
@@ -1001,6 +1276,10 @@ export function CustomerBookingPage({
 																});
 																if (errors.workplace) {
 																	setErrors({ ...errors, workplace: false });
+																	setErrorMessages({
+																		...errorMessages,
+																		workplace: '',
+																	});
 																}
 															}}
 															placeholder="Nhập nơi làm việc"
@@ -1010,6 +1289,11 @@ export function CustomerBookingPage({
 																	: ''
 															}`}
 														/>
+														{errors.workplace && errorMessages.workplace && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.workplace}
+															</p>
+														)}
 													</div>
 
 													<div className="space-y-2">
@@ -1026,6 +1310,10 @@ export function CustomerBookingPage({
 																});
 																if (errors.department) {
 																	setErrors({ ...errors, department: false });
+																	setErrorMessages({
+																		...errorMessages,
+																		department: '',
+																	});
 																}
 															}}
 															placeholder="Nhập bộ phận"
@@ -1035,6 +1323,11 @@ export function CustomerBookingPage({
 																	: ''
 															}`}
 														/>
+														{errors.department && errorMessages.department && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.department}
+															</p>
+														)}
 													</div>
 
 													<div className="space-y-2 sm:col-span-2">
@@ -1052,6 +1345,7 @@ export function CustomerBookingPage({
 																});
 																if (errors.reason) {
 																	setErrors({ ...errors, reason: false });
+																	setErrorMessages({ ...errorMessages, reason: '' });
 																}
 															}}
 															placeholder="Nhập lý do khám sức khỏe"
@@ -1060,39 +1354,13 @@ export function CustomerBookingPage({
 															}`}
 															rows={3}
 														/>
+														{errors.reason && errorMessages.reason && (
+															<p className="text-sm text-red-500 mt-1">
+																{errorMessages.reason}
+															</p>
+														)}
 													</div>
 
-													<div className="space-y-2">
-														<Label htmlFor="phoneNumber">
-															Số điện thoại{' '}
-															<span className="text-red-500">*</span>
-														</Label>
-														<div className="relative">
-															<Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-															<Input
-																id="phoneNumber"
-																value={formData.phoneNumber}
-																onChange={(e) => {
-																	setFormData({
-																		...formData,
-																		phoneNumber: e.target.value,
-																	});
-																	if (errors.phoneNumber) {
-																		setErrors({
-																			...errors,
-																			phoneNumber: false,
-																		});
-																	}
-																}}
-																placeholder="Nhập số điện thoại"
-																className={`pl-10 border-gray-300 focus:border-blue-500 placeholder:text-sm ${
-																	errors.phoneNumber
-																		? 'border-red-500 bg-red-50'
-																		: ''
-																}`}
-															/>
-														</div>
-													</div>
 												</div>
 											</div>
 										</AccordionContent>
@@ -1484,20 +1752,31 @@ export function CustomerBookingPage({
 								<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
 									<Button
 										type="submit"
-										className={`w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg`}
+										disabled={isSubmitting}
+										className={`w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg ${
+											isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+										}`}
 									>
-										<Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-										Đặt lịch khám
+										{isSubmitting ? (
+											<>
+												<Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
+												Đang xử lý...
+											</>
+										) : (
+											<>
+												<Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+												Đặt lịch khám
+											</>
+										)}
 									</Button>
 								</div>
 							</form>
 						</CardContent>
 					</Card>
 				</motion.div>
-			</div>
 
-			{/* Dialog xem chi tiết ảnh */}
-			<Dialog
+				{/* Dialog xem chi tiết ảnh */}
+				<Dialog
 				open={selectedImageDialog !== null}
 				onOpenChange={(open) => {
 					if (!open) setSelectedImageDialog(null);
@@ -1515,6 +1794,7 @@ export function CustomerBookingPage({
 					)}
 				</DialogContent>
 			</Dialog>
+			</div>
 		</div>
 	);
 }

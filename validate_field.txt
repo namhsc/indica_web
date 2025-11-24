@@ -1,0 +1,134 @@
+  I. THÔNG TIN CÁ NHÂN (Personal Information)
+
+  | #   | Trường                        | Validate Rules             | Thông báo lỗi                                  | Ưu tiên |
+  |-----|-------------------------------|----------------------------|------------------------------------------------|---------|
+  | 1   | Họ và tên (fullName)          |                            |                                                | Cao     |
+  |     | - Required                    | Không được để trống        | "Vui lòng nhập họ và tên"                      | ✅       |
+  |     | - Min length: 2 ký tự         | Tối thiểu 2 ký tự          | "Họ tên phải có ít nhất 2 ký tự"               | ✅       |
+  |     | - Max length: 100 ký tự       | Tối đa 100 ký tự           | "Họ tên không được vượt quá 100 ký tự"         | ✅       |
+  |     | - Chỉ chữ cái và khoảng trắng | Cho phép tiếng Việt có dấu | "Họ tên chỉ được chứa chữ cái và khoảng trắng" | ✅       |
+
+  | 2 | Giới tính (gender) | | | Cao |
+  | | - Required | Phải chọn | "Vui lòng chọn giới tính" | ✅ |
+  | | - Value: 'male' hoặc 'female' | Kiểm tra giá trị | "Giới tính không hợp lệ" | ✅ |
+
+  | 3 | Năm sinh (yearOfBirth) | | | Cao |
+  | | - Required | Không được để trống | "Vui lòng nhập năm sinh" | ✅ |
+  | | - Must be number | Phải là số | "Năm sinh không hợp lệ" | ✅ |
+  | | - Min: 1900 | Từ năm 1900 | "Năm sinh phải từ 1900 trở lên" | ✅ |
+  | | - Max: Năm hiện tại | Không quá năm nay | "Năm sinh không được lớn hơn năm hiện tại" | ✅ |
+  | | - Age < 100 tuổi | Tuổi hợp lý | "Năm sinh không hợp lý" | ✅ |
+
+  | 4 | Số CCCD/Hộ chiếu (cccdNumber) | | | Cao |
+  | | - Required | Không được để trống | "Vui lòng nhập số CCCD/Hộ chiếu" | ✅ |
+  | | - CCCD: 12 số | Căn cước công dân | "CCCD phải có 12 số hoặc CMND 9 số" | ✅ |
+  | | - Hộ chiếu: 8-9 ký tự | Passport | "Hộ chiếu phải có 8-9 ký tự" | ✅ |
+
+  | 5 | Ngày cấp (cccdIssueDate) | | | Cao |
+  | | - Required | Không được để trống | "Vui lòng nhập ngày cấp" | ✅ |
+  | | - Format: dd/mm/yyyy | Định dạng ngày | "Ngày cấp phải có định dạng dd/mm/yyyy" | ✅ |
+  | | - Valid date | Ngày hợp lệ | "Ngày không hợp lệ (1-31)" | ✅ |
+  | | - Valid month | Tháng hợp lệ | "Tháng không hợp lệ (1-12)" | ✅ |
+  | | - Min year: 1950 | Năm hợp lý | "Năm cấp phải từ 1950 trở lên" | ✅ |
+  | | - Not future | Không trong tương lai | "Ngày cấp không được sau ngày hôm nay" | ✅ |
+  | | - Max age: 50 năm | Không quá cũ | "Ngày cấp không được quá 50 năm" | ✅ |
+
+  | 6 | Nơi cấp (cccdIssuePlace) | | | Trung bình |
+  | | - Required | Không được để trống | "Vui lòng nhập nơi cấp" | ✅ |
+  | | - Max length: 255 ký tự | Tối đa 255 ký tự | "Nơi cấp không được vượt quá 255 ký tự" | ✅ |
+
+  | 7 | Hộ khẩu thường trú (permanentAddress) | | | Cao |
+  | | - Required | Không được để trống | "Vui lòng nhập hộ khẩu thường trú" | ✅ |
+  | | - Max length: 500 ký tự | Tối đa 500 ký tự | "Hộ khẩu thường trú không được vượt quá 500 ký tự" | ✅ |
+
+  | 8 | Chỗ ở hiện tại (currentAddress) | | | Cao |
+  | | - Required | Không được để trống | "Vui lòng nhập chỗ ở hiện tại" | ✅ |
+  | | - Max length: 500 ký tự | Tối đa 500 ký tự | "Chỗ ở hiện tại không được vượt quá 500 ký tự" | ✅ |
+
+  | 9 | Nơi làm việc (workplace) | | | Trung bình |
+  | | - Required | Không được để trống | "Vui lòng nhập nơi làm việc" | ✅ |
+  | | - Max length: 255 ký tự | Tối đa 255 ký tự | "Nơi làm việc không được vượt quá 255 ký tự" | ✅ |
+
+  | 10 | Bộ phận (department) | | | Trung bình |
+  | | - Required | Không được để trống | "Vui lòng nhập bộ phận" | ✅ |
+  | | - Max length: 255 ký tự | Tối đa 255 ký tự | "Bộ phận không được vượt quá 255 ký tự" | ✅ |
+
+  | 11 | Lý do khám (reason) | | | Cao |
+  | | - Required | Không được để trống | "Vui lòng nhập lý do khám sức khỏe" | ✅ |
+  | | - Max length: 1000 ký tự | Tối đa 1000 ký tự | "Lý do khám không được vượt quá 1000 ký tự" | ✅ |
+
+  | 12 | Số điện thoại (phoneNumber) | | | Cao |
+  | | - Required | Không được để trống | "Vui lòng nhập số điện thoại" | ✅ |
+  | | - Only digits | Chỉ chứa số | "Số điện thoại chỉ được chứa chữ số" | ✅ |
+  | | - Length: 10 số | Độ dài hợp lệ | "Số điện thoại phải có 10 chữ số" | ✅ |
+  | | - Start with 0 | Bắt đầu bằng 0 | "Số điện thoại phải bắt đầu bằng số 0" | ✅ |
+  | | - Valid prefix | Đầu số: 03, 05, 07, 08, 09 | "Đầu số điện thoại không hợp lệ (phải là 03, 05, 07, 08, 09)" | ✅ |
+
+
+  III. TIỀN SỬ GIA ĐÌNH (Family History)
+
+  | #   | Trường                              | Validate Rules | Thông báo lỗi                             | Ưu tiên |
+  |-----|-------------------------------------|----------------|-------------------------------------------|---------|
+  | 14  | Có bệnh gia đình (familyHasDisease) |                |                                           | Cao     |
+  |     | - Required                          | Phải trả lời   | "Vui lòng trả lời có bệnh gia đình không" | ✅       |
+  |     | - Value: 'yes' hoặc 'no'            | Giá trị hợp lệ | "Câu trả lời không hợp lệ"                | ✅       |
+
+  | 15 | Tên bệnh gia đình (familyDiseaseName) | | | Trung bình |
+  | | - Required if familyHasDisease = 'yes' | Bắt buộc khi chọn Có | "Vui lòng mô tả chi tiết bệnh gia đình" | ✅ |
+  | | - Max length: 500 ký tự | Tối đa 500 ký tự | "Mô tả bệnh gia đình không được vượt quá 500 ký tự" | ✅ |
+
+  IV. TIỀN SỬ BẢN THÂN (Personal Medical History - 22 câu)
+
+  | #     | Trường                               | Validate Rules      | Thông báo lỗi                                         | Ưu tiên |
+  |-------|--------------------------------------|---------------------|-------------------------------------------------------|---------|
+  | 16-37 | 22 câu hỏi bệnh án (personalHistory) |                     |                                                       | Cao     |
+  |       | - Required ALL                       | Tất cả phải trả lời | "Vui lòng trả lời tất cả các câu hỏi về tiền sử bệnh" | ✅       |
+  |       | - Value: 'yes' hoặc 'no'             | Giá trị hợp lệ      | "Câu trả lời không hợp lệ"                            | ✅       |
+
+  Danh sách 22 câu hỏi:
+  1. diseaseInjury5Years - Bệnh/thương trong 5 năm
+  2. neurologicalDisease - Bệnh thần kinh
+  3. eyeDisease - Bệnh mắt
+  4. earDisease - Bệnh tai
+  5. heartDisease - Bệnh tim
+  6. heartSurgery - Phẫu thuật tim
+  7. hypertension - Tăng huyết áp
+  8. dyspnea - Khó thở
+  9. lungDisease - Bệnh phổi
+  10. kidneyDisease - Bệnh thận
+  11. alcoholAddiction - Nghiện rượu
+  12. diabetes - Đái tháo đường
+  13. mentalIllness - Bệnh tâm thần
+  14. lossOfConsciousness - Mất ý thức
+  15. fainting - Ngất/chóng mặt
+  16. digestiveDisease - Bệnh tiêu hóa
+  17. sleepDisorder - Rối loạn giấc ngủ
+  18. stroke - Tai biến mạch máu não
+  19. spineDisease - Bệnh cột sống
+  20. regularAlcohol - Sử dụng rượu thường xuyên
+  21. drugUse - Sử dụng ma túy
+  22. otherDisease - Bệnh khác
+
+  | 38 | Bệnh khác chi tiết (otherDiseaseName) | | | Trung bình |
+  | | - Required if otherDisease = 'yes' | Bắt buộc khi chọn Có | "Vui lòng mô tả chi tiết bệnh khác" | ✅ |
+  | | - Max length: 500 ký tự | Tối đa 500 ký tự | "Mô tả bệnh khác không được vượt quá 500 ký tự" | ✅ |
+
+  V. CÂU HỎI KHÁC (Other Questions)
+
+  | #   | Trường                           | Validate Rules | Thông báo lỗi                             | Ưu tiên |
+  |-----|----------------------------------|----------------|-------------------------------------------|---------|
+  | 39  | Đang điều trị (currentTreatment) |                |                                           | Cao     |
+  |     | - Required                       | Phải trả lời   | "Vui lòng trả lời có đang điều trị không" | ✅       |
+  |     | - Value: 'yes' hoặc 'no'         | Giá trị hợp lệ | "Câu trả lời không hợp lệ"                | ✅       |
+
+  | 40 | Thuốc đang dùng (currentMedications) | | | Trung bình |
+  | | - Required if currentTreatment = 'yes' | Bắt buộc khi chọn Có | "Vui lòng mô tả chi tiết thuốc đang dùng" | ✅ |
+  | | - Max length: 500 ký tự | Tối đa 500 ký tự | "Mô tả thuốc đang dùng không được vượt quá 500 ký tự" | ✅ |
+
+  | 41 | Tiền sử thai sản (hasPregnancyHistory) | | | Cao |
+  | | - Required | Phải trả lời | "Vui lòng trả lời có tiền sử thai sản không" | ✅ |
+  | | - Value: 'yes' hoặc 'no' | Giá trị hợp lệ | "Câu trả lời không hợp lệ" | ✅ |
+
+  | 42 | Chi tiết thai sản (pregnancyHistory) | | | Trung bình |
+  | | - Required if hasPregnancyHistory = 'yes' | Bắt buộc khi chọn Có | "Vui lòng mô tả chi tiết tiền sử thai sản" | ✅ |
+  | | - Max length: 500 ký tự | Tối đa 500 ký tự | "Mô tả tiền sử thai sản không được vượt quá 500 ký tự" | ✅ |

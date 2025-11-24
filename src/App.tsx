@@ -248,10 +248,13 @@ function MainApp() {
 						if (isAuthenticated && handlers.handleCreateRecord) {
 							// Nếu đã đăng nhập, tạo record trực tiếp
 							handlers.handleCreateRecord(record);
-							toast.success('Đặt lịch khám thành công!');
-							// Xóa hash và quay về trang chủ
-							window.history.replaceState({}, '', window.location.pathname);
-							setShowBookingPage(false);
+							// Note: Toast đã được hiện trong CustomerBookingPage component
+							// Delay redirect để user có thể đọc thông báo
+							setTimeout(() => {
+								// Xóa hash và quay về trang chủ
+								window.history.replaceState({}, '', window.location.pathname);
+								setShowBookingPage(false);
+							}, 3000); // 3 giây delay
 						} else {
 							// Nếu chưa đăng nhập, lưu vào localStorage để xử lý sau
 							const bookingId = `booking_${Date.now()}_${Math.random()
@@ -274,15 +277,13 @@ function MainApp() {
 								JSON.stringify(existingBookings),
 							);
 
-							toast.success(
-								'Đặt lịch khám thành công! Mã đặt lịch: ' +
-									bookingId.substring(8, 16).toUpperCase() +
-									'. Vui lòng chờ xác nhận từ phòng khám.',
-							);
-
-							// Xóa hash và quay về trang chủ
-							window.history.replaceState({}, '', window.location.pathname);
-							setShowBookingPage(false);
+							// Note: Toast đã được hiện trong CustomerBookingPage component
+							// Delay redirect để user có thể đọc thông báo
+							setTimeout(() => {
+								// Xóa hash và quay về trang chủ
+								window.history.replaceState({}, '', window.location.pathname);
+								setShowBookingPage(false);
+							}, 3000); // 3 giây delay
 						}
 					}}
 					onBack={() => {
