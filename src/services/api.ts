@@ -1,5 +1,6 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+const API_BASE_URL =
+	import.meta.env.VITE_API_URL || 'http://103.61.123.192:8081';
 
 export const API_ENDPOINTS = {
 	BOOKINGS: `${API_BASE_URL}/api/bookings`,
@@ -8,7 +9,7 @@ export const API_ENDPOINTS = {
 // Generic API request function
 export async function apiRequest<T>(
 	url: string,
-	options: RequestInit = {}
+	options: RequestInit = {},
 ): Promise<T> {
 	const defaultHeaders = {
 		'Content-Type': 'application/json',
@@ -28,7 +29,7 @@ export async function apiRequest<T>(
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => ({}));
 			throw new Error(
-				errorData.message || `HTTP error! status: ${response.status}`
+				errorData.message || `HTTP error! status: ${response.status}`,
 			);
 		}
 
