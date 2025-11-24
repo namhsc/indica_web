@@ -51,7 +51,10 @@ import { Dialog, DialogContent } from './ui/dialog';
 import { Eye, CheckCircle2 } from 'lucide-react';
 import hpTestImage from '../assets/services/hp_test.png';
 import thinprepTestImage from '../assets/services/thinprep_test.png';
-import { createBooking, type BookingFormData } from '../services/bookingService';
+import {
+	createBooking,
+	type BookingFormData,
+} from '../services/bookingService';
 import * as validators from '../utils/bookingValidation';
 
 interface CustomerBookingPageProps {
@@ -405,6 +408,39 @@ export function CustomerBookingPage({
 		setCursorPosition(desiredCursorPosition);
 	};
 
+	// Validate ngày cấp khi người dùng rời khỏi trường (onBlur)
+	const handleDateInputBlur = () => {
+		const validation = validators.validateCCCDIssueDate(formData.cccdIssueDate);
+		setErrors((prevErrors) => ({
+			...prevErrors,
+			cccdIssueDate: !validation.isValid,
+		}));
+		setErrorMessages((prevMessages) => ({
+			...prevMessages,
+			cccdIssueDate: validation.isValid
+				? ''
+				: validation.message || 'Vui lòng kiểm tra lại ngày cấp',
+		}));
+	};
+
+	// Validate các trường bắt buộc khi người dùng rời khỏi trường (onBlur)
+	// Sử dụng functional updates để tránh stale closure
+	const validateFieldOnBlur = (
+		fieldName: string,
+		value: string,
+		validator: (val: string) => { isValid: boolean; message?: string },
+	) => {
+		const validation = validator(value);
+		setErrors((prevErrors) => ({
+			...prevErrors,
+			[fieldName]: !validation.isValid,
+		}));
+		setErrorMessages((prevMessages) => ({
+			...prevMessages,
+			[fieldName]: validation.isValid ? '' : validation.message || '',
+		}));
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -553,7 +589,7 @@ export function CustomerBookingPage({
 		personalHistoryKeys.forEach((key) => {
 			const validation = validators.validatePersonalHistoryItem(
 				formData.personalHistory[key] as string,
-				key,
+				String(key),
 			);
 			if (!validation.isValid) {
 				newErrors[`personalHistory.${String(key)}`] = true;
@@ -619,11 +655,18 @@ export function CustomerBookingPage({
 			setErrors(newErrors);
 			setErrorMessages(newErrorMessages);
 
-			// Hiển thị lỗi đầu tiên tìm thấy
-			const firstErrorMessage = Object.values(newErrorMessages)[0];
-			toast.error(
-				firstErrorMessage || 'Vui lòng điền đầy đủ thông tin bắt buộc',
-			);
+			// Kiểm tra nếu có lỗi về ngày cấp, ưu tiên hiển thị thông báo về ngày cấp
+			if (newErrors.cccdIssueDate && newErrorMessages.cccdIssueDate) {
+				toast.error(
+					'Vui lòng điền đầy đủ thông tin bắt buộc và kiểm tra lại ngày cấp',
+				);
+			} else {
+				// Hiển thị lỗi đầu tiên tìm thấy
+				const firstErrorMessage = Object.values(newErrorMessages)[0];
+				toast.error(
+					firstErrorMessage || 'Vui lòng điền đầy đủ thông tin bắt buộc',
+				);
+			}
 			return;
 		}
 
@@ -925,6 +968,13 @@ export function CustomerBookingPage({
 																		});
 																	}
 																}}
+																onBlur={(e) => {
+																	validateFieldOnBlur(
+																		'fullName',
+																		e.target.value,
+																		validators.validateFullName,
+																	);
+																}}
 																placeholder="Nhập họ và tên"
 																style={{
 																	textTransform: 'uppercase',
@@ -966,9 +1016,19 @@ export function CustomerBookingPage({
 																		...formData,
 																		gender: value as Gender,
 																	});
-																	if (errors.gender) {
-																		setErrors({ ...errors, gender: false });
-																	}
+																	// Validate ngay khi thay đổi
+																	const validation =
+																		validators.validateGender(value);
+																	setErrors((prevErrors) => ({
+																		...prevErrors,
+																		gender: !validation.isValid,
+																	}));
+																	setErrorMessages((prevMessages) => ({
+																		...prevMessages,
+																		gender: validation.isValid
+																			? ''
+																			: validation.message || '',
+																	}));
 																}}
 																className="flex flex-row gap-6"
 															>
@@ -1026,6 +1086,13 @@ export function CustomerBookingPage({
 																		});
 																	}
 																}}
+																onBlur={(e) => {
+																	validateFieldOnBlur(
+																		'phoneNumber',
+																		e.target.value,
+																		validators.validatePhoneNumber,
+																	);
+																}}
 																placeholder="Nhập số điện thoại"
 																className={`pl-10 border-gray-300 focus:border-blue-500 placeholder:text-sm ${
 																	errors.phoneNumber
@@ -1034,11 +1101,12 @@ export function CustomerBookingPage({
 																}`}
 															/>
 														</div>
-														{errors.phoneNumber && errorMessages.phoneNumber && (
-															<p className="text-sm text-red-500 mt-1">
-																{errorMessages.phoneNumber}
-															</p>
-														)}
+														{errors.phoneNumber &&
+															errorMessages.phoneNumber && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.phoneNumber}
+																</p>
+															)}
 													</div>
 
 													<div className="space-y-2">
@@ -1059,6 +1127,13 @@ export function CustomerBookingPage({
 																	});
 																}
 															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'yearOfBirth',
+																	e.target.value,
+																	validators.validateYearOfBirth,
+																);
+															}}
 															placeholder="Nhập năm sinh"
 															min="1900"
 															max={new Date().getFullYear()}
@@ -1068,11 +1143,12 @@ export function CustomerBookingPage({
 																	: ''
 															}`}
 														/>
-														{errors.yearOfBirth && errorMessages.yearOfBirth && (
-															<p className="text-sm text-red-500 mt-1">
-																{errorMessages.yearOfBirth}
-															</p>
-														)}
+														{errors.yearOfBirth &&
+															errorMessages.yearOfBirth && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.yearOfBirth}
+																</p>
+															)}
 													</div>
 
 													<div className="space-y-2">
@@ -1095,6 +1171,13 @@ export function CustomerBookingPage({
 																		cccdNumber: '',
 																	});
 																}
+															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'cccdNumber',
+																	e.target.value,
+																	validators.validateCCCD,
+																);
 															}}
 															placeholder="Nhập số CCCD/Hộ chiếu"
 															className={`border-gray-300 focus:border-blue-500 placeholder:text-sm ${
@@ -1123,6 +1206,7 @@ export function CustomerBookingPage({
 															onChange={(e) => {
 																handleDateInputChange(e.target.value);
 															}}
+															onBlur={handleDateInputBlur}
 															onPaste={(e) => {
 																e.preventDefault();
 																const pastedText =
@@ -1139,11 +1223,12 @@ export function CustomerBookingPage({
 																	: ''
 															}`}
 														/>
-														{errors.cccdIssueDate && errorMessages.cccdIssueDate && (
-															<p className="text-sm text-red-500 mt-1">
-																{errorMessages.cccdIssueDate}
-															</p>
-														)}
+														{errors.cccdIssueDate &&
+															errorMessages.cccdIssueDate && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.cccdIssueDate}
+																</p>
+															)}
 													</div>
 
 													<div className="space-y-2">
@@ -1169,6 +1254,13 @@ export function CustomerBookingPage({
 																	});
 																}
 															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'cccdIssuePlace',
+																	e.target.value,
+																	validators.validateIssuePlace,
+																);
+															}}
 															placeholder="Nhập nơi cấp"
 															className={`border-gray-300 focus:border-blue-500 placeholder:text-sm ${
 																errors.cccdIssuePlace
@@ -1176,11 +1268,12 @@ export function CustomerBookingPage({
 																	: ''
 															}`}
 														/>
-														{errors.cccdIssuePlace && errorMessages.cccdIssuePlace && (
-															<p className="text-sm text-red-500 mt-1">
-																{errorMessages.cccdIssuePlace}
-															</p>
-														)}
+														{errors.cccdIssuePlace &&
+															errorMessages.cccdIssuePlace && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.cccdIssuePlace}
+																</p>
+															)}
 													</div>
 
 													<div className="space-y-2 sm:col-span-2">
@@ -1207,6 +1300,13 @@ export function CustomerBookingPage({
 																	});
 																}
 															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'permanentAddress',
+																	e.target.value,
+																	validators.validatePermanentAddress,
+																);
+															}}
 															placeholder="Nhập địa chỉ hộ khẩu thường trú"
 															className={`border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm ${
 																errors.permanentAddress
@@ -1215,11 +1315,12 @@ export function CustomerBookingPage({
 															}`}
 															rows={2}
 														/>
-														{errors.permanentAddress && errorMessages.permanentAddress && (
-															<p className="text-sm text-red-500 mt-1">
-																{errorMessages.permanentAddress}
-															</p>
-														)}
+														{errors.permanentAddress &&
+															errorMessages.permanentAddress && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.permanentAddress}
+																</p>
+															)}
 													</div>
 
 													<div className="space-y-2 sm:col-span-2">
@@ -1246,6 +1347,13 @@ export function CustomerBookingPage({
 																	});
 																}
 															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'currentAddress',
+																	e.target.value,
+																	validators.validateCurrentAddress,
+																);
+															}}
 															placeholder="Nhập địa chỉ chỗ ở hiện tại"
 															className={`border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm ${
 																errors.currentAddress
@@ -1254,11 +1362,12 @@ export function CustomerBookingPage({
 															}`}
 															rows={2}
 														/>
-														{errors.currentAddress && errorMessages.currentAddress && (
-															<p className="text-sm text-red-500 mt-1">
-																{errorMessages.currentAddress}
-															</p>
-														)}
+														{errors.currentAddress &&
+															errorMessages.currentAddress && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.currentAddress}
+																</p>
+															)}
 													</div>
 
 													<div className="space-y-2">
@@ -1281,6 +1390,13 @@ export function CustomerBookingPage({
 																		workplace: '',
 																	});
 																}
+															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'workplace',
+																	e.target.value,
+																	validators.validateWorkplace,
+																);
 															}}
 															placeholder="Nhập nơi làm việc"
 															className={`border-gray-300 focus:border-blue-500 placeholder:text-sm ${
@@ -1316,6 +1432,13 @@ export function CustomerBookingPage({
 																	});
 																}
 															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'department',
+																	e.target.value,
+																	validators.validateDepartment,
+																);
+															}}
 															placeholder="Nhập bộ phận"
 															className={`border-gray-300 focus:border-blue-500 placeholder:text-sm ${
 																errors.department
@@ -1345,8 +1468,18 @@ export function CustomerBookingPage({
 																});
 																if (errors.reason) {
 																	setErrors({ ...errors, reason: false });
-																	setErrorMessages({ ...errorMessages, reason: '' });
+																	setErrorMessages({
+																		...errorMessages,
+																		reason: '',
+																	});
 																}
+															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'reason',
+																	e.target.value,
+																	validators.validateReason,
+																);
 															}}
 															placeholder="Nhập lý do khám sức khỏe"
 															className={`border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm ${
@@ -1360,7 +1493,6 @@ export function CustomerBookingPage({
 															</p>
 														)}
 													</div>
-
 												</div>
 											</div>
 										</AccordionContent>
@@ -1483,12 +1615,25 @@ export function CustomerBookingPage({
 													</Label>
 													<RadioGroup
 														value={formData.familyHasDisease}
-														onValueChange={(value) =>
+														onValueChange={(value) => {
 															setFormData({
 																...formData,
 																familyHasDisease: value as 'yes' | 'no',
-															})
-														}
+															});
+															// Validate ngay khi thay đổi
+															const validation =
+																validators.validateFamilyHistory(value);
+															setErrors((prevErrors) => ({
+																...prevErrors,
+																familyHasDisease: !validation.isValid,
+															}));
+															setErrorMessages((prevMessages) => ({
+																...prevMessages,
+																familyHasDisease: validation.isValid
+																	? ''
+																	: validation.message || '',
+															}));
+														}}
 														className="flex flex-row gap-6"
 													>
 														<div className="flex items-center space-x-2">
@@ -1520,16 +1665,43 @@ export function CustomerBookingPage({
 														<Textarea
 															id="familyDiseaseName"
 															value={formData.familyDiseaseName}
-															onChange={(e) =>
+															onChange={(e) => {
 																setFormData({
 																	...formData,
 																	familyDiseaseName: e.target.value,
-																})
-															}
+																});
+																if (errors.familyDiseaseName) {
+																	setErrors({
+																		...errors,
+																		familyDiseaseName: false,
+																	});
+																	setErrorMessages({
+																		...errorMessages,
+																		familyDiseaseName: '',
+																	});
+																}
+															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'familyDiseaseName',
+																	e.target.value,
+																	validators.validateFamilyDiseaseDetail,
+																);
+															}}
 															placeholder="Nhập tên bệnh gia đình mắc phải"
-															className="border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm"
+															className={`border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm ${
+																errors.familyDiseaseName
+																	? 'border-red-500 bg-red-50'
+																	: ''
+															}`}
 															rows={3}
 														/>
+														{errors.familyDiseaseName &&
+															errorMessages.familyDiseaseName && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.familyDiseaseName}
+																</p>
+															)}
 													</div>
 												)}
 											</div>
@@ -1557,15 +1729,34 @@ export function CustomerBookingPage({
 																	item.key as keyof typeof formData.personalHistory
 																] as string
 															}
-															onValueChange={(value) =>
+															onValueChange={(value) => {
 																setFormData({
 																	...formData,
 																	personalHistory: {
 																		...formData.personalHistory,
 																		[item.key]: value as 'yes' | 'no',
 																	},
-																})
-															}
+																});
+																// Validate ngay khi thay đổi
+																const validation =
+																	validators.validatePersonalHistoryItem(
+																		value,
+																		item.key,
+																	);
+																const errorKey = `personalHistory.${String(
+																	item.key,
+																)}`;
+																setErrors((prevErrors) => ({
+																	...prevErrors,
+																	[errorKey]: !validation.isValid,
+																}));
+																setErrorMessages((prevMessages) => ({
+																	...prevMessages,
+																	[errorKey]: validation.isValid
+																		? ''
+																		: validation.message || '',
+																}));
+															}}
 															className="flex flex-row gap-6"
 														>
 															<div className="flex items-center space-x-2">
@@ -1604,19 +1795,46 @@ export function CustomerBookingPage({
 														<Textarea
 															id="otherDiseaseName"
 															value={formData.personalHistory.otherDiseaseName}
-															onChange={(e) =>
+															onChange={(e) => {
 																setFormData({
 																	...formData,
 																	personalHistory: {
 																		...formData.personalHistory,
 																		otherDiseaseName: e.target.value,
 																	},
-																})
-															}
+																});
+																if (errors.otherDiseaseName) {
+																	setErrors({
+																		...errors,
+																		otherDiseaseName: false,
+																	});
+																	setErrorMessages({
+																		...errorMessages,
+																		otherDiseaseName: '',
+																	});
+																}
+															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'otherDiseaseName',
+																	e.target.value,
+																	validators.validateOtherDiseaseDetail,
+																);
+															}}
 															placeholder="Nhập tên bệnh khác"
-															className="border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm"
+															className={`border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm ${
+																errors.otherDiseaseName
+																	? 'border-red-500 bg-red-50'
+																	: ''
+															}`}
 															rows={3}
 														/>
+														{errors.otherDiseaseName &&
+															errorMessages.otherDiseaseName && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.otherDiseaseName}
+																</p>
+															)}
 													</div>
 												)}
 											</div>
@@ -1638,12 +1856,25 @@ export function CustomerBookingPage({
 													</Label>
 													<RadioGroup
 														value={formData.currentTreatment}
-														onValueChange={(value) =>
+														onValueChange={(value) => {
 															setFormData({
 																...formData,
 																currentTreatment: value as 'yes' | 'no',
-															})
-														}
+															});
+															// Validate ngay khi thay đổi
+															const validation =
+																validators.validateCurrentTreatment(value);
+															setErrors((prevErrors) => ({
+																...prevErrors,
+																currentTreatment: !validation.isValid,
+															}));
+															setErrorMessages((prevMessages) => ({
+																...prevMessages,
+																currentTreatment: validation.isValid
+																	? ''
+																	: validation.message || '',
+															}));
+														}}
 														className="flex flex-row gap-6"
 													>
 														<div className="flex items-center space-x-2">
@@ -1676,16 +1907,43 @@ export function CustomerBookingPage({
 															<Textarea
 																id="currentMedications"
 																value={formData.currentMedications}
-																onChange={(e) =>
+																onChange={(e) => {
 																	setFormData({
 																		...formData,
 																		currentMedications: e.target.value,
-																	})
-																}
+																	});
+																	if (errors.currentMedications) {
+																		setErrors({
+																			...errors,
+																			currentMedications: false,
+																		});
+																		setErrorMessages({
+																			...errorMessages,
+																			currentMedications: '',
+																		});
+																	}
+																}}
+																onBlur={(e) => {
+																	validateFieldOnBlur(
+																		'currentMedications',
+																		e.target.value,
+																		validators.validateMedicationDetail,
+																	);
+																}}
 																placeholder="Nhập tên các thuốc đang dùng"
-																className="border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm"
+																className={`border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm ${
+																	errors.currentMedications
+																		? 'border-red-500 bg-red-50'
+																		: ''
+																}`}
 																rows={3}
 															/>
+															{errors.currentMedications &&
+																errorMessages.currentMedications && (
+																	<p className="text-sm text-red-500 mt-1">
+																		{errorMessages.currentMedications}
+																	</p>
+																)}
 														</div>
 													</>
 												)}
@@ -1694,12 +1952,25 @@ export function CustomerBookingPage({
 													<Label>b) Tiền sử thai sản (Đối với phụ nữ)</Label>
 													<RadioGroup
 														value={formData.hasPregnancyHistory}
-														onValueChange={(value) =>
+														onValueChange={(value) => {
 															setFormData({
 																...formData,
 																hasPregnancyHistory: value as 'yes' | 'no',
-															})
-														}
+															});
+															// Validate ngay khi thay đổi
+															const validation =
+																validators.validatePregnancyHistory(value);
+															setErrors((prevErrors) => ({
+																...prevErrors,
+																hasPregnancyHistory: !validation.isValid,
+															}));
+															setErrorMessages((prevMessages) => ({
+																...prevMessages,
+																hasPregnancyHistory: validation.isValid
+																	? ''
+																	: validation.message || '',
+															}));
+														}}
 														className="flex flex-row gap-6"
 													>
 														<div className="flex items-center space-x-2">
@@ -1731,16 +2002,43 @@ export function CustomerBookingPage({
 														<Textarea
 															id="pregnancyHistory"
 															value={formData.pregnancyHistory}
-															onChange={(e) =>
+															onChange={(e) => {
 																setFormData({
 																	...formData,
 																	pregnancyHistory: e.target.value,
-																})
-															}
+																});
+																if (errors.pregnancyHistory) {
+																	setErrors({
+																		...errors,
+																		pregnancyHistory: false,
+																	});
+																	setErrorMessages({
+																		...errorMessages,
+																		pregnancyHistory: '',
+																	});
+																}
+															}}
+															onBlur={(e) => {
+																validateFieldOnBlur(
+																	'pregnancyHistory',
+																	e.target.value,
+																	validators.validatePregnancyDetail,
+																);
+															}}
 															placeholder="Mô tả tiền sử thai sản"
-															className="border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm"
+															className={`border-gray-300 focus:border-blue-500 resize-none placeholder:text-sm ${
+																errors.pregnancyHistory
+																	? 'border-red-500 bg-red-50'
+																	: ''
+															}`}
 															rows={3}
 														/>
+														{errors.pregnancyHistory &&
+															errorMessages.pregnancyHistory && (
+																<p className="text-sm text-red-500 mt-1">
+																	{errorMessages.pregnancyHistory}
+																</p>
+															)}
 													</div>
 												)}
 											</div>
@@ -1777,23 +2075,23 @@ export function CustomerBookingPage({
 
 				{/* Dialog xem chi tiết ảnh */}
 				<Dialog
-				open={selectedImageDialog !== null}
-				onOpenChange={(open) => {
-					if (!open) setSelectedImageDialog(null);
-				}}
-			>
-				<DialogContent className="max-w-4xl max-h-[90vh] overflow-auto p-0">
-					{selectedImageDialog && (
-						<div>
-							<img
-								src={selectedImageDialog}
-								alt="Chi tiết dịch vụ"
-								className="w-full h-auto rounded-lg"
-							/>
-						</div>
-					)}
-				</DialogContent>
-			</Dialog>
+					open={selectedImageDialog !== null}
+					onOpenChange={(open) => {
+						if (!open) setSelectedImageDialog(null);
+					}}
+				>
+					<DialogContent className="max-w-4xl max-h-[90vh] overflow-auto p-0">
+						{selectedImageDialog && (
+							<div>
+								<img
+									src={selectedImageDialog}
+									alt="Chi tiết dịch vụ"
+									className="w-full h-auto rounded-lg"
+								/>
+							</div>
+						)}
+					</DialogContent>
+				</Dialog>
 			</div>
 		</div>
 	);
