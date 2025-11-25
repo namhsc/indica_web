@@ -3,8 +3,8 @@ docker stop indica-web || true
 docker rm -f indica-web || true    
 
 ## pull github repo
-git checkout main
-git pull origin main
+git checkout addapi
+git pull origin addapi
 
 ## build docker image
 docker build -t indica-web .
